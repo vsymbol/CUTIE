@@ -1,7 +1,8 @@
 outputs/
 data/
 logs/
-graph/
+graph
+.settints
 *.tar.gz
 *ipynb
 *.zip
