@@ -1,0 +1,9 @@
+outputs/
+data/
+logs/
+graph/
+*.tar.gz
+*ipynb
+*.zip
+*.pkl
+*.pyc
