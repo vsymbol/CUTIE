@@ -41,7 +41,7 @@ class DataLoader():
         
         self.rows = 32 # to be updated in self._update_training_rows_cols()
         self.cols = 32 # to be updated in self._update_training_rows_cols()
-        self.encoding_factor = 8 # ensures the size (rows/cols) of grid table compat with the network
+        self.encoding_factor = 16 # ensures the size (rows/cols) of grid table compat with the network
         
         self.num_classes = len(self.classes) 
         self.batch_size = params.batch_size if hasattr(params, 'batch_size') else 0        

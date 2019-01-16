@@ -13,26 +13,27 @@ from model_cutie_sep import CUTIESep
 from data_loader_json import DataLoader
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
-parser.add_argument('--doc_path', type=str, default='data/meals') 
-#parser.add_argument('--validation_doc_path', type=str, default='data/hotel') 
-parser.add_argument('--save_prefix', type=str, default='meals') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/taxi') 
+parser.add_argument('--save_prefix', type=str, default='taxi') # TBD: save log/models with prefix
+parser.add_argument('--future_extension', type=bool, 
+                    help='set to True to use a large dict for future extension', default=True) 
 
-parser.add_argument('--restore_ckpt', type=bool, default=True) 
+parser.add_argument('--restore_ckpt', type=bool, default=False) 
 parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/')
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_10566x9_iter_1.ckpt')  
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_10566x9_iter_10000.ckpt')  
 
 parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/') 
 parser.add_argument('--log_disp_step', type=int, default=100) 
 parser.add_argument('--log_save_step', type=int, default=100) 
-parser.add_argument('--validation_step', type=int, default=500) 
-parser.add_argument('--ckpt_save_step', type=int, default=1)
+parser.add_argument('--validation_step', type=int, default=200) 
+parser.add_argument('--ckpt_save_step', type=int, default=1000)
 
 parser.add_argument('--hard_negative_ratio', type=int, help='the ratio between negative and positive losses', default=3) 
 parser.add_argument('--embedding_size', type=int, default=120) 
 
-parser.add_argument('--batch_size', type=int, default=64) 
-parser.add_argument('--iterations', type=int, default=15000)  
-parser.add_argument('--lr_decay_step', type=int, default=2000) 
+parser.add_argument('--batch_size', type=int, default=32) 
+parser.add_argument('--iterations', type=int, default=10000)  
+parser.add_argument('--lr_decay_step', type=int, default=1500) 
 parser.add_argument('--lr_decay_factor', type=float, default=0.5) 
 parser.add_argument('--learning_rate', type=float, default=0.001)
 parser.add_argument('--weight_decay', type=float, default=0.0005) 
@@ -104,12 +105,15 @@ def cal_accuracy(gird_table, gt_classes, model_output_val):
 if __name__ == '__main__':
     # data
     data_loader = DataLoader(params)
+    num_words = 40000 if params.future_extension else data_loader.num_words
+    num_classes = data_loader.num_classes
     #a = data_loader.next_batch()
     #b = data_loader.fetch_validation_data()
     
     # model
     #network = CUTIE(data_loader.num_words, data_loader.num_classes, params)
-    network = CUTIERes(data_loader.num_words, data_loader.num_classes, params)
+    #network = CUTIERes(data_loader.num_words, data_loader.num_classes, params)
+    network = CUTIERes(num_words, num_classes, params)
     #network = CUTIESep(data_loader.num_words, data_loader.num_classes, params)
     model_loss, regularization_loss, total_loss, model_output = network.build_loss()  
     
@@ -231,7 +235,7 @@ if __name__ == '__main__':
                 ckpt_path = os.path.join(params.ckpt_path, params.save_prefix)
                 if not os.path.exists(ckpt_path):
                     os.makedirs(ckpt_path)
-                filename = os.path.join(ckpt_path, network.name + '_{:d}x{:d}_iter_{:d}'.format(data_loader.num_words, data_loader.num_classes, iter+1) + '.ckpt')
+                filename = os.path.join(ckpt_path, network.name + '_{:d}x{:d}_iter_{:d}'.format(num_words, num_classes, iter+1) + '.ckpt')
                 ckpt_saver.save(sess, filename)
                 print('Checkpoint saved to: {:s}'.format(filename))
     

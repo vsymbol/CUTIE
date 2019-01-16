@@ -4,7 +4,7 @@
 import tensorflow as tf
 import numpy as np
 import argparse
-import os
+import os, csv
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from model_cutie import CUTIE
@@ -17,30 +17,87 @@ parser.add_argument('--doc_path', type=str, default='data/meals')
 parser.add_argument('--save_prefix', type=str, default='meals') 
 
 parser.add_argument('--embedding_size', type=int, default=120) 
-parser.add_argument('--batch_size', type=int, default=64) 
+parser.add_argument('--batch_size', type=int, default=32) 
 
 parser.add_argument('--restore_ckpt', type=bool, default=True) 
 parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/')
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_10566x9_iter_1.ckpt')  
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_10566x9_iter_10000.ckpt')  
 parser.add_argument('--c_threshold', type=float, default=0.5) 
 params = parser.parse_args()
 
-def cal_accuracy(docs, gird_table, gt_classes, model_output_val):
-    
-    for doc in docs:
-        for item in doc:
-            file_name = item[0]
-            text = item[1]
-            word_id = item[2]
-            x_left, y_top, x_right, y_bottom = item[3][:]
-            image_w, image_h = item[4][:]
+def cal_save_results(docs, grid_table, gt_classes, model_output_val):
+    res = ''
+    num_correct = 0
+    num_correct_strict = 0
+    num_all = grid_table.shape[0] * (model_output_val.shape[-1]-1)
+    for b in range(grid_table.shape[0]):
+        filename = docs[b][0][0]
+        
+        data_input_flat = grid_table[b,:,:,0].reshape([-1])
+        labels = gt_classes[b,:,:].reshape([-1])
+        logits = model_output_val[b,:,:,:].reshape([-1, data_loader.num_classes])
+        
+        # ignore inputs that are not word
+        indexes = np.where(data_input_flat != 0)[0]
+        data_selected = data_input_flat[indexes]
+        labels_selected = labels[indexes]
+        logits_array_selected = logits[indexes]
+        
+        # calculate accuracy
+        for c in range(1, data_loader.num_classes):
+            labels_indexes = np.where(labels_selected == c)[0]
+            logits_indexes = np.where(logits_array_selected[:,c] > params.c_threshold)[0]
+            if np.array_equal(labels_indexes, logits_indexes): 
+                num_correct_strict += 1        
+            try:  
+                num_correct += np.shape(np.intersect1d(labels_indexes, logits_indexes))[0] / np.shape(labels_indexes)[0]
+            except ZeroDivisionError:
+                if np.shape(logits_indexes)[0] == 0:
+                    num_correct += 1
+                else:
+                    num_correct += 0                    
+        
+            # show results without the <DontCare> class      
+            res += '\n{}(GT/Inf):\t"'.format(data_loader.classes[c])
+            
+            # ground truth label
+            gt = ' '.join(data_loader.index_to_word[i] for i in data_selected[labels_indexes])
+            predict = ' '.join(data_loader.index_to_word[i] for i in data_selected[logits_indexes])
+            res += gt + '" | "' + predict + '"'
+        
+            # write results to csv
+            csv_filename = 'data/results/' + params.save_prefix + '_' + data_loader.classes[c] + '.csv'
+            fieldnames = ['TaskID', 'GT', 'Predicted']
+            writer = csv.DictWriter(open(csv_filename, 'a'), fieldnames=fieldnames) 
+            row = {'TaskID':filename, 'GT':gt, 'Predicted':predict}
+            writer.writerow(row)
+            
+            # wrong inferences results
+            if not np.array_equal(labels_indexes, logits_indexes): 
+                res += '"\n \t FALSES =>>'
+                logits_flat = logits_array_selected[:,c]
+                fault_logits_indexes = np.setdiff1d(logits_indexes, labels_indexes)
+                for i in range(len(data_selected)):
+                    if i not in fault_logits_indexes: # only show fault_logits_indexes
+                        continue
+                    w = data_loader.index_to_word[data_selected[i]]
+                    l = data_loader.classes[labels_selected[i]]
+                    res += ' "%s"/%s, '%(w, l)
+                    #res += ' "%s"/%.2f%s, '%(w, logits_flat[i], l)
+                        
+            #print(res)
+    recall = num_correct / num_all
+    accuracy_strict = num_correct_strict / num_all
+    return recall, accuracy_strict, res
 
+def cal_accuracy(gird_table, gt_classes, model_output_val):
+    #num_tp = 0
+    #num_fn = 0
     res = ''
     num_correct = 0
     num_correct_strict = 0
     num_all = gird_table.shape[0] * (model_output_val.shape[-1]-1)
     for b in range(gird_table.shape[0]):
-        doc = docs[b]
         data_input_flat = gird_table[b,:,:,0].reshape([-1])
         labels = gt_classes[b,:,:].reshape([-1])
         logits = model_output_val[b,:,:,:].reshape([-1, data_loader.num_classes])
@@ -63,7 +120,7 @@ def cal_accuracy(docs, gird_table, gt_classes, model_output_val):
                 if np.shape(logits_indexes)[0] == 0:
                     num_correct += 1
                 else:
-                    num_correct += 0    
+                    num_correct += 0        
             
             # show results without the <DontCare> class                    
             if b==0:
@@ -124,6 +181,7 @@ if __name__ == '__main__':
         
         recalls, accs_strict = [], []
         while data:
+            print('{:d} samples left to be tested'.format(len(data['grid_table'])))
             grid_tables, gt_classes = [], []
             if len(data['grid_table']) > params.batch_size:
                 docs = data['docs'][:params.batch_size]
@@ -141,7 +199,8 @@ if __name__ == '__main__':
             fetches = [model_output]
             
             [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
-            recall, acc_strict, res = cal_accuracy(np.array(docs), np.array(grid_tables), np.array(gt_classes), model_output_val)
+            #recall, acc_strict, res = cal_save_results(np.array(docs), np.array(grid_tables), np.array(gt_classes), model_output_val)
+            recall, acc_strict, res = cal_accuracy(np.array(grid_tables), np.array(gt_classes), model_output_val)
             recalls += [recall]
             accs_strict += [acc_strict] 
             print(res) # show res for current batch    

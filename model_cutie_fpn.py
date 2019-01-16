@@ -8,7 +8,7 @@ from scipy.sparse.linalg.isolve.tests.test_iterative import params
     
 class CUTIERes(CUTIE):
     def __init__(self, num_vocabs, num_classes, params, trainable=True):
-        self.name = "CUTIE_residual_8x" # 8x down sampling
+        self.name = "CUTIE_fpn_8x" # 8x down sampling
         
         self.data = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='grid_table')
         self.gt_classes = tf.placeholder(tf.int32, shape=[None, None, None], name='gt_classes')
