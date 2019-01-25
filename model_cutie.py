@@ -11,14 +11,17 @@ class CUTIE(Model):
         
         self.data = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='grid_table')
         self.gt_classes = tf.placeholder(tf.int32, shape=[None, None, None], name='gt_classes')
-        self.layers = dict({'data': self.data, 'gt_classes': self.gt_classes})   
+        self.use_ghm = tf.equal(1, params.use_ghm) #params.use_ghm 
+        self.ghm_weights = tf.placeholder(tf.float32, shape=[None, None, None, num_classes], name='ghm_weights')        
+        self.layers = dict({'data': self.data, 'gt_classes': self.gt_classes, 'ghm_weights': self.ghm_weights}) 
+         
         self.num_vocabs = num_vocabs
         self.num_classes = num_classes     
         self.trainable = trainable
         
         self.embedding_size = params.embedding_size
         self.weight_decay = params.weight_decay if hasattr(params, 'weight_decay') else 0.0
-        self.hard_negative_ratio = params.hard_negative_ratio if hasattr(params, 'hard_negative_ratio') else 0
+        self.hard_negative_ratio = params.hard_negative_ratio if hasattr(params, 'hard_negative_ratio') else 0.0
         self.batch_size = params.batch_size if hasattr(params, 'batch_size') else 0
         
         self.layer_inputs = []        
@@ -101,19 +104,23 @@ class CUTIE(Model):
         
     
     def build_loss(self):
-        cls_logits = self.get_output('cls_logits')      
-        labels = self.get_output('gt_classes')  
+        labels = self.get_output('gt_classes')
+        cls_logits = self.get_output('cls_logits') 
+        
+        # GradientHarmonizingMechanism
+        cls_logits = tf.cond(self.use_ghm, lambda: cls_logits*self.get_output('ghm_weights'), lambda: cls_logits)      
+        
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=cls_logits)
             
         with tf.variable_scope('HardNegativeMining'):
             labels = tf.reshape(labels, [-1])  
             cross_entropy = tf.reshape(cross_entropy, [-1])
-             
+              
             fg_idx = tf.where(tf.not_equal(labels, 0))
             fgs = tf.gather(cross_entropy, fg_idx)
             bg_idx = tf.where(tf.equal(labels, 0))
             bgs = tf.gather(cross_entropy, bg_idx)
-            
+             
             num = self.hard_negative_ratio * tf.shape(fgs)[0]
             num_bg = tf.cond(tf.shape(bgs)[0]<num, lambda:tf.shape(bgs)[0], lambda:num)
             sorted_bgs, _ = tf.nn.top_k(tf.transpose(bgs), num_bg, sorted=True)
@@ -128,5 +135,6 @@ class CUTIE(Model):
         tf.summary.scalar('regularization_loss', regularization_loss)
         tf.summary.scalar('total_loss', total_loss)
         
-        results_for_visulization = self.get_output('softmax') #cls_logits
-        return model_loss, regularization_loss, total_loss, results_for_visulization 
+        logits = self.get_output('cls_logits')
+        softmax_logits = self.get_output('softmax') #cls_logits
+        return model_loss, regularization_loss, total_loss, logits, softmax_logits 

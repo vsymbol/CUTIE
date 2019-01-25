@@ -6,7 +6,7 @@ from model_cutie import CUTIE
 from scipy.sparse.linalg.isolve.tests.test_iterative import params
     
     
-class CUTIERes(CUTIE):
+class CUTIEFPN(CUTIE):
     def __init__(self, num_vocabs, num_classes, params, trainable=True):
         self.name = "CUTIE_fpn_8x" # 8x down sampling
         
@@ -41,22 +41,28 @@ class CUTIERes(CUTIE):
              .max_pool(2, 2, 2, 2, name='pool2')
              .conv(3, 5, 256, 1, 1, name='encoder3_1')
              .conv(3, 5, 512, 1, 1, name='encoder3_2')
+             .conv(3, 5, 512, 1, 1, name='encoder3_3')
              .max_pool(2, 2, 2, 2, name='pool3')
              .conv(3, 5, 512, 1, 1, name='encoder4_1')
-             .conv(3, 5, 512, 1, 1, name='encoder4_2'))
+             .conv(3, 5, 512, 1, 1, name='encoder4_2')
+             .conv(3, 5, 512, 1, 1, name='encoder4_3')
+             .conv(3, 5, 512, 1, 1, name='encoder4_4'))
         
         # decoder
-        (self.feed('encoder4_2')
+        (self.feed('encoder4_4')
              .up_conv(3, 5, 512, 1, 1, name='up1'))        
-        (self.feed('up1', 'encoder3_2')
-             .concat(3, name='concat1')
+        (self.feed('up1', 'encoder3_4')
+             .concat(3, name='concat1') # 1x1 before the add operation for FPN
              .conv(3, 5, 256, 1, 1, name='decoder1_1')
              .conv(3, 5, 256, 1, 1, name='decoder1_2')
+             .conv(3, 5, 256, 1, 1, name='decoder1_3')
+             .conv(3, 5, 256, 1, 1, name='decoder1_4')
              .up_conv(3, 5, 256, 1, 1, name='up2'))       
-        (self.feed('up2', 'encoder2_2')
+        (self.feed('up2', 'encoder2_3')
              .concat(3, name='concat2')
              .conv(3, 5, 128, 1, 1, name='decoder2_1')
              .conv(3, 5, 128, 1, 1, name='decoder2_2')
+             .conv(3, 5, 128, 1, 1, name='decoder2_3')
              .up_conv(3, 5, 128, 1, 1, name='up3'))        
         (self.feed('up3', 'encoder1_2')
              .concat(3, name='concat3')

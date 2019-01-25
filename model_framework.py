@@ -133,9 +133,14 @@ class Model(object):
             
         
     @layer
-    def conv(self, layer_input, k_h, k_w, c_o, s_h, s_w, name, activation='relu', trainable=True):
+    def conv(self, layer_input, k_h, k_w, c_o, s_h, s_w, name, 
+             activation='relu', trainable=True):
         convolve = lambda input, filter: tf.nn.conv2d(input, filter, [1,s_h,s_w,1], 'SAME')
-        activate = lambda z: tf.nn.relu(z, 'relu')
+        
+        activate = lambda z: tf.nn.relu(z, 'relu') #if activation == 'relu':
+        if activation == 'sigmoid':
+            activate = lambda z: tf.nn.sigmoid(z, 'sigmoid')
+            
         with tf.variable_scope(name) as scope:
             init_weights = tf.truncated_normal_initializer(0.0, 0.01)
             init_biases = tf.constant_initializer(0.0)
@@ -181,7 +186,8 @@ class Model(object):
         return tf.nn.softmax(layer_input, name=name)       
         
     
-    def convolution(self, convolve, activate, input, k_h, k_w, c_i, c_o, init_weights, init_biases, regularizer, trainable, name=''):   
+    def convolution(self, convolve, activate, input, k_h, k_w, c_i, c_o, init_weights, init_biases, 
+                    regularizer, trainable, name=''):   
         kernel = self.make_var('weights'+name, [k_h, k_w, c_i, c_o], init_weights, regularizer, trainable) 
         biases = self.make_var('biases'+name, [c_o], init_biases, None, trainable)
         tf.summary.histogram('w', kernel)

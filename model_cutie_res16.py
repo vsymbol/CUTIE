@@ -74,4 +74,4 @@ class CUTIERes(CUTIE):
         # classification
         (self.feed('decoder4_2')
              .conv(1, 1, self.num_classes, 1, 1, name='cls_logits')
-             .softmax(name='softmax'))    
+             .softmax(name='softmax'))

@@ -8,6 +8,7 @@ import csv, re, random, json
 
 import numpy as np
 import tensorflow as tf
+from _operator import index
 
 DEBUG = False
 
@@ -30,12 +31,21 @@ class DataLoader():
     """
     training_grid_tables
     """
-    def __init__(self, params, for_train=True):
+    def __init__(self, params, for_train=True, load_dictionary=False, data_split=0.75):
         ## 0> parameters to be tuned
-        self.dictionary = {'<dontcare>':0, '<unknown>':0, '<name>':0} # word/counts. to be updated in self.load_data() and self._update_docs_dictionary()
+        self.load_dictionary = load_dictionary # load dictionary from file rather than start from empty        
+        self.dict_path = params.load_dict_from_path if self.load_dictionary else params.dict_path
+        if self.load_dictionary:
+            self.dictionary = np.load(self.dict_path + '_dictionary.npy').item()
+            self.word_to_index = np.load(self.dict_path + '_word_to_index.npy').item()
+            self.index_to_word = np.load(self.dict_path + '_index_to_word.npy').item()
+        else:
+            self.dictionary = {'<dontcare>':0, '<unknown>':0, '<name>':0} # word/counts. to be updated in self.load_data() and self._update_docs_dictionary()
+            self.word_to_index = {}
+            self.index_to_word = {}
         self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
-        
-        self.data_split = 0.75 if for_train else 1 # split data to training/validation if input data are for training, else not split
+
+        self.data_split = data_split # split data to training/validation, 0 for all for validation
         self.data_mode = 2 # 0 to consider key and value as two different class, 1 the same class, 2 only value considered
         self.remove_lowfreq_words = False # remove low frequency words when set as True
         
@@ -51,46 +61,64 @@ class DataLoader():
         
         ## 1> load words and their location/class as docs and labels 
         self.training_doc_files = self._get_filenames(params.doc_path)
-        self.training_docs, self.training_labels = self.load_data(self.training_doc_files, True)  
+        self.training_docs, self.training_labels = self.load_data(self.training_doc_files, update_dict=for_train) # TBD: optimize the update dict flag 
         
-        # polish dictionary
-        self.num_words = len(self.dictionary) 
-        self.word_to_index = dict(list(zip(self.dictionary.keys(), list(range(self.num_words))))) 
-        self.index_to_word = dict(list(zip(list(range(self.num_words)), self.dictionary.keys())))  
-        if self.remove_lowfreq_words:
-            self._update_docs_dictionary(self.training_docs, 3)
-        sorted(self.dictionary.items(), key=lambda x:x[1], reverse=True)
+        # polish and load dictionary/word_to_index/index_to_word as file
+        self.num_words = len(self.dictionary)              
+        self._updae_word_to_index()
+        self._update_docs_dictionary(self.training_docs, 3) # remove low frequency words and add it under the <unknown> key
         
+        # save dictionary/word_to_index/index_to_word as file
+        np.save(self.dict_path + '_dictionary.npy', self.dictionary)
+        np.save(self.dict_path + '_word_to_index.npy', self.word_to_index)
+        np.save(self.dict_path + '_index_to_word.npy', self.index_to_word)
+        np.save(self.dict_path + '_classes.npy', self.classes)
+        # sorted(self.dictionary.items(), key=lambda x:x[1], reverse=True)
+        
+        # split training / validation docs and show statistics
         num_training = int(len(self.training_docs)*self.data_split)
         data_to_be_fetched = [i for i in range(len(self.training_docs))]
-        selected_training_index = random.sample(data_to_be_fetched, num_training)
+        selected_training_index = data_to_be_fetched[:num_training] #random.sample(data_to_be_fetched, num_training)
         selected_validation_index = list(set(data_to_be_fetched).difference(set(selected_training_index)))
         self.validation_docs = [self.training_docs[x] for x in selected_validation_index]
         self.training_docs = [self.training_docs[x] for x in selected_training_index]
         self.validation_labels = self.training_labels
-        print('DATASET: %d vocabularies, %d target classes'%(len(self.dictionary), len(self.classes)))
+        print('\nDATASET: %d vocabularies, %d target classes'%(len(self.dictionary), len(self.classes)))
         print('DATASET: %d for training, %d for validation'%(len(self.training_docs), len(self.validation_docs)))
         
-        self._update_training_rows_cols() # adapt grid table size according to training data
+        self._update_training_rows_cols() # adapt grid table size according to training docs
          
         # TBD: adjust bbox in @training_docs to eliminate overlaps
         #self.training_docs = self.eliminate_overlap(self.training_docs)
-        
-        ## 2> call self.next_batch() outside to generate a batch of grid tables data and labels
+                
+        ## 3> call self.next_batch() outside to generate a batch of grid tables data and labels
         self.training_data_tobe_fetched = [i for i in range(len(self.training_docs))]
-        self.validation_data_tobe_fetched = [i for i in range(len(self.validation_docs))]
+        self.validation_data_tobe_fetched = [i for i in range(len(self.validation_docs))]        
+    
+    def _updae_word_to_index(self):
+        if self.load_dictionary:
+            max_index = len(self.word_to_index.keys())
+            for word in self.dictionary:
+                if word not in self.word_to_index:
+                    max_index += 1
+                    self.word_to_index[word] = max_index
+                    self.index_to_word[max_index] = word            
+        else:   
+            self.word_to_index = dict(list(zip(self.dictionary.keys(), list(range(self.num_words))))) 
+            self.index_to_word = dict(list(zip(list(range(self.num_words)), self.dictionary.keys())))
     
     def _update_docs_dictionary(self, docs, lower_limit):
         # assign docs words that appear less than @lower_limit times to word <unknown>
-        for doc in docs:
-            for line in doc:
-                [file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
-                    [image_w, image_h], max_row_words, max_col_words] = line 
-                if self.dictionary[dressed_text] < lower_limit:
-                    line = [file_name, '<unknown>', self.word_to_index['<unknown>'], [x_left, y_top, x_right, y_bottom], \
-                            [image_w, image_h], max_row_words, max_col_words]
-                    self.dictionary[dressed_text] -= 1
-                    self.dictionary['<unknown>'] += 1
+        if self.remove_lowfreq_words: 
+            for doc in docs:
+                for line in doc:
+                    [file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
+                        [image_w, image_h], max_row_words, max_col_words] = line 
+                    if self.dictionary[dressed_text] < lower_limit:
+                        line = [file_name, '<unknown>', self.word_to_index['<unknown>'], [x_left, y_top, x_right, y_bottom], \
+                                [image_w, image_h], max_row_words, max_col_words]
+                        self.dictionary[dressed_text] -= 1
+                        self.dictionary['<unknown>'] += 1
     
     def next_batch(self):
         #grid_table = np.ones([self.batch_size, self.rows, self.cols, 1])
@@ -115,11 +143,9 @@ class DataLoader():
         return batch
     
     def fetch_test_data(self):        
-        if self.data_split:
-            grid_table, gt_classes = self._positional_mapping(self.validation_docs, self.validation_labels)        
-            batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'docs': self.validation_docs}
-            return batch
-        raise("not implemented testing with only test data")
+        grid_table, gt_classes = self._positional_mapping(self.validation_docs, self.validation_labels)        
+        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'docs': self.validation_docs}
+        return batch
     
     def _positional_mapping(self, docs, labels):
         """
