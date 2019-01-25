@@ -1,19 +1,9 @@
 # written by Xiaohui Zhao
 # 2018-01 
 # xiaohui.zhao@accenture.com
-import tensorflow as tf
 import numpy as np
-import argparse
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-from model_cutie import CUTIE
-from model_cutie_res import CUTIERes
-from model_cutie_unet8 import CUTIEUNet
-from data_loader_json import DataLoader
-
-
-def cal_accuracy(gird_table, gt_classes, model_output_val, c_threshold):
+def cal_accuracy(data_loader, gird_table, gt_classes, model_output_val, c_threshold):
     #num_tp = 0
     #num_fn = 0
     res = ''
@@ -73,23 +63,20 @@ def cal_accuracy(gird_table, gt_classes, model_output_val, c_threshold):
     accuracy_strict = num_correct_strict / num_all
     return recall, accuracy_strict, res
 
-acc_sum = [0.0 for _ in range(params.ghm_bins)]
-def calc_ghm_weights(logits, labels): 
+def calc_ghm_weights(logits, labels, acc_sum, bins, momentum): 
     """
     calculate gradient harmonizing mechanism weights
     """
-    bins = params.ghm_bins
+    bins = bins
     shape = logits.shape
     edges = [float(x)/bins for x in range(bins+1)]
-    edges[-1] += params.eps
-    
-    momentum = params.ghm_momentum    
+    edges[-1] += 1e-6 
     
     logits_flat = logits.reshape([-1])
     labels_flat = labels.reshape([-1])
     arr = []
     for l in labels_flat:
-        arr.extend([i==l for i in range(num_classes)]) 
+        arr.extend([i==l for i in range(shape[-1])]) 
     labels_flat = np.array(arr)
     
     grad = abs(logits_flat - labels_flat) # equation for logits from the sigmoid activation

@@ -11,6 +11,7 @@ from model_cutie import CUTIE
 from model_cutie_res import CUTIERes
 from model_cutie_unet8 import CUTIEUNet
 from data_loader_json import DataLoader
+from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
@@ -31,7 +32,7 @@ parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_16x_40000x9
 
 # log
 parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/') 
-parser.add_argument('--log_disp_step', type=int, default=50) 
+parser.add_argument('--log_disp_step', type=int, default=100) 
 parser.add_argument('--log_save_step', type=int, default=100) 
 parser.add_argument('--validation_step', type=int, default=200) 
 parser.add_argument('--ckpt_save_step', type=int, default=1000)
@@ -122,6 +123,8 @@ if __name__ == '__main__':
             except:
                 raise('Check your pretrained {:s}'.format(ckpt_path))
             
+        
+        acc_sum = [0.0 for _ in range(params.ghm_bins)] # used for ghm, to be updated in calc_ghm_weights
         for iter in range(iter_start, params.iterations):
             # learning rate decay
             if iter!=0 and iter%params.lr_decay_step==0:
@@ -143,7 +146,10 @@ if __name__ == '__main__':
             # one step training
             ghm_weights = np.ones(np.shape(model_logit_val))
             if params.use_ghm:
-                ghm_weights = calc_ghm_weights(np.array(model_logit_val), np.array(data['gt_classes']))
+                ghm_weights = calc_ghm_weights(np.array(model_logit_val), 
+                                               np.array(data['gt_classes']),
+                                               acc_sum, params.ghm_bins,
+                                               params.ghm_momentum)
             feed_dict = {
                 network.ghm_weights: ghm_weights,
             }
@@ -153,7 +159,8 @@ if __name__ == '__main__':
                                 
             # calculate training accuracy and display results
             if iter%params.log_disp_step == 0: 
-                recall, acc_strict, res = cal_accuracy(np.array(data['grid_table']), 
+                recall, acc_strict, res = cal_accuracy(data_loader,
+                                                       np.array(data['grid_table']), 
                                                        np.array(data['gt_classes']), 
                                                        model_output_val, params.c_threshold)
                 training_recall += [recall]        
@@ -185,7 +192,8 @@ if __name__ == '__main__':
                     fetches = [model_output]
                     
                     [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
-                    recall, acc_strict, res = cal_accuracy(np.array(grid_tables), 
+                    recall, acc_strict, res = cal_accuracy(data_loader,
+                                                           np.array(grid_tables), 
                                                            np.array(gt_classes),
                                                            model_output_val, 
                                                            params.c_threshold)
