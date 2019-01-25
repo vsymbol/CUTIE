@@ -1,10 +1,7 @@
 outputs/
 data/
 logs/
-graph
-.settints
-*.tar.gz
-*ipynb
-*.zip
-*.pkl
+graph/
 *.pyc
+.DS_Store
+*/.DS_Store
