@@ -1,11 +1,8 @@
-
 # written by Xiaohui Zhao
 # 2018-12 
 # xiaohui.zhao@accenture.com
 import tensorflow as tf
-from model_cutie import CUTIE
-from scipy.sparse.linalg.isolve.tests.test_iterative import params
-    
+from model_cutie import CUTIE    
     
 class CUTIERes(CUTIE):
     def __init__(self, num_vocabs, num_classes, params, trainable=True):
@@ -13,10 +10,11 @@ class CUTIERes(CUTIE):
         
         self.data = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='grid_table')
         self.gt_classes = tf.placeholder(tf.int32, shape=[None, None, None], name='gt_classes')
-        self.use_ghm = tf.equal(1, params.use_ghm) #params.use_ghm 
+        self.use_ghm = tf.equal(1, params.use_ghm) if hasattr(params, 'use_ghm') else tf.equal(1, 0) #params.use_ghm 
+        self.activation = 'sigmoid' if (hasattr(params, 'use_ghm') and params.use_ghm) else 'relu'
         self.ghm_weights = tf.placeholder(tf.float32, shape=[None, None, None, num_classes], name='ghm_weights')        
         self.layers = dict({'data': self.data, 'gt_classes': self.gt_classes, 'ghm_weights':self.ghm_weights})
-        #self.layers = dict({'data': self.data, 'gt_classes': self.gt_classes})
+
         self.num_vocabs = num_vocabs
         self.num_classes = num_classes     
         self.trainable = trainable
@@ -70,5 +68,5 @@ class CUTIERes(CUTIE):
         # classification
         (self.feed('decoder3_2') 
              #.conv(1, 1, self.num_classes, 1, 1, name='cls_logits') # sigmoid for ghm
-             .conv(1, 1, self.num_classes, 1, 1, activation='sigmoid', name='cls_logits') # sigmoid for ghm
+             .conv(1, 1, self.num_classes, 1, 1, activation=self.activation, name='cls_logits') # sigmoid for ghm
              .softmax(name='softmax'))

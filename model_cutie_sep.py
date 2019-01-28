@@ -2,8 +2,7 @@
 # 2018-12 
 # xiaohui.zhao@accenture.com
 import tensorflow as tf
-from model_cutie import CUTIE
-    
+from model_cutie import CUTIE    
     
 class CUTIESep(CUTIE):
     def __init__(self, num_vocabs, num_classes, params, trainable=True):

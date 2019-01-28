@@ -31,16 +31,16 @@ class DataLoader():
     """
     training_grid_tables
     """
-    def __init__(self, params, for_train=True, load_dictionary=False, data_split=0.75):
+    def __init__(self, params, update_dict=True, load_dictionary=False, data_split=0.75):
         ## 0> parameters to be tuned
-        self.load_dictionary = load_dictionary # load dictionary from file rather than start from empty        
+        self.load_dictionary = load_dictionary # load dictionary from file rather than start from empty 
         self.dict_path = params.load_dict_from_path if self.load_dictionary else params.dict_path
         if self.load_dictionary:
             self.dictionary = np.load(self.dict_path + '_dictionary.npy').item()
             self.word_to_index = np.load(self.dict_path + '_word_to_index.npy').item()
             self.index_to_word = np.load(self.dict_path + '_index_to_word.npy').item()
         else:
-            self.dictionary = {'<dontcare>':0, '<unknown>':0, '<name>':0} # word/counts. to be updated in self.load_data() and self._update_docs_dictionary()
+            self.dictionary = {'[PAD]':0, '[UNK]':0} # word/counts. to be updated in self.load_data() and self._update_docs_dictionary()
             self.word_to_index = {}
             self.index_to_word = {}
         self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
@@ -54,19 +54,19 @@ class DataLoader():
         self.encoding_factor = 16 # ensures the size (rows/cols) of grid table compat with the network
         
         self.num_classes = len(self.classes) 
-        self.batch_size = params.batch_size if hasattr(params, 'batch_size') else 0        
+        self.batch_size = params.batch_size if hasattr(params, 'batch_size') else 1        
         
         # TBD: build a special cared dictionary
         self.special_dict = {'some_word': '<dontcare>'} # map texts to specific tokens        
         
         ## 1> load words and their location/class as docs and labels 
         self.training_doc_files = self._get_filenames(params.doc_path)
-        self.training_docs, self.training_labels = self.load_data(self.training_doc_files, update_dict=for_train) # TBD: optimize the update dict flag 
+        self.training_docs, self.training_labels = self.load_data(self.training_doc_files, update_dict=update_dict) # TBD: optimize the update dict flag 
         
         # polish and load dictionary/word_to_index/index_to_word as file
         self.num_words = len(self.dictionary)              
         self._updae_word_to_index()
-        self._update_docs_dictionary(self.training_docs, 3) # remove low frequency words and add it under the <unknown> key
+        self._update_docs_dictionary(self.training_docs, 3, self.remove_lowfreq_words) # remove low frequency words and add it under the <unknown> key
         
         # save dictionary/word_to_index/index_to_word as file
         np.save(self.dict_path + '_dictionary.npy', self.dictionary)
@@ -107,18 +107,18 @@ class DataLoader():
             self.word_to_index = dict(list(zip(self.dictionary.keys(), list(range(self.num_words))))) 
             self.index_to_word = dict(list(zip(list(range(self.num_words)), self.dictionary.keys())))
     
-    def _update_docs_dictionary(self, docs, lower_limit):
+    def _update_docs_dictionary(self, docs, lower_limit, remove_lowfreq_words):
         # assign docs words that appear less than @lower_limit times to word <unknown>
-        if self.remove_lowfreq_words: 
+        if remove_lowfreq_words: 
             for doc in docs:
                 for line in doc:
                     [file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
                         [image_w, image_h], max_row_words, max_col_words] = line 
                     if self.dictionary[dressed_text] < lower_limit:
-                        line = [file_name, '<unknown>', self.word_to_index['<unknown>'], [x_left, y_top, x_right, y_bottom], \
+                        line = [file_name, '[UNK]', self.word_to_index['[UNK]'], [x_left, y_top, x_right, y_bottom], \
                                 [image_w, image_h], max_row_words, max_col_words]
                         self.dictionary[dressed_text] -= 1
-                        self.dictionary['<unknown>'] += 1
+                        self.dictionary['[UNK]'] += 1
     
     def next_batch(self):
         #grid_table = np.ones([self.batch_size, self.rows, self.cols, 1])
@@ -359,9 +359,8 @@ class DataLoader():
             if update_dict:
                 self.dictionary[string] = 0
             else:
-                string = '<unknown>' # TBD: take special care to unmet words
-        if update_dict:
-            self.dictionary[string] += 1
+                string = '[UNK]' # TBD: take special care to unmet words\
+        self.dictionary[string] += 1
         return string, len(string) # len(string) not used   
             
     def _dress_bbox(self, bbox):

@@ -2,9 +2,7 @@
 # 2018-12 
 # xiaohui.zhao@accenture.com
 import tensorflow as tf
-from model_cutie import CUTIE
-from scipy.sparse.linalg.isolve.tests.test_iterative import params
-    
+from model_cutie import CUTIE    
     
 class CUTIEUNet(CUTIE):
     def __init__(self, num_vocabs, num_classes, params, trainable=True):

@@ -11,7 +11,8 @@ class CUTIE(Model):
         
         self.data = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='grid_table')
         self.gt_classes = tf.placeholder(tf.int32, shape=[None, None, None], name='gt_classes')
-        self.use_ghm = tf.equal(1, params.use_ghm) #params.use_ghm 
+        self.use_ghm = tf.equal(1, params.use_ghm) if hasattr(params, 'use_ghm') else tf.equal(1, 0) #params.use_ghm 
+        self.activation = 'sigmoid' if (hasattr(params, 'use_ghm') and params.use_ghm) else 'relu'
         self.ghm_weights = tf.placeholder(tf.float32, shape=[None, None, None, num_classes], name='ghm_weights')        
         self.layers = dict({'data': self.data, 'gt_classes': self.gt_classes, 'ghm_weights': self.ghm_weights}) 
          
@@ -61,7 +62,7 @@ class CUTIE(Model):
         
         # classification
         (self.feed('decoder3_2')
-             .conv(1, 1, self.num_classes, 1, 1, name='cls_logits')
+             .conv(1, 1, self.num_classes, 1, 1, activation=self.activation, name='cls_logits')
              .softmax(name='softmax'))  
     
     def disp_results(self, data_input, data_label, model_output, threshold):
@@ -105,10 +106,9 @@ class CUTIE(Model):
     
     def build_loss(self):
         labels = self.get_output('gt_classes')
-        cls_logits = self.get_output('cls_logits') 
-        
-        # GradientHarmonizingMechanism
-        cls_logits = tf.cond(self.use_ghm, lambda: cls_logits*self.get_output('ghm_weights'), lambda: cls_logits)      
+        cls_logits = self.get_output('cls_logits')         
+        cls_logits = tf.cond(self.use_ghm, lambda: cls_logits*self.get_output('ghm_weights'), 
+                             lambda: cls_logits, name="GradientHarmonizingMechanism")      
         
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=cls_logits)
             

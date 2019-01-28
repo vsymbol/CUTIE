@@ -9,23 +9,24 @@ import os, csv
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 from model_cutie import CUTIE
-from model_cutie_res16 import CUTIERes
+from model_cutie_res import CUTIERes
 from model_cutie_unet8 import CUTIEUNet
 from model_cutie_sep import CUTIESep
 from data_loader_json import DataLoader
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
-parser.add_argument('--doc_path', type=str, default='data/meals_1215') 
-parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for ckpt and results') 
+parser.add_argument('--doc_path', type=str, default='data/meals_1215') # modify this
+parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for ckpt and results') # modify this
 
-parser.add_argument('--dict_path', type=str, default='dict/meals') 
+parser.add_argument('--e_ckpt_path', type=str, default='../graph/CUTIE/graph/') # modify this
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_16x_40000x9_iter_10000.ckpt')  
+
+parser.add_argument('--dict_path', type=str, default='dict/meals') # not used, only use 40000
 parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') 
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
 parser.add_argument('--large_dict', type=bool, default=True, help='True to use large dict for future ext') 
 
 parser.add_argument('--restore_ckpt', type=bool, default=True) 
-parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/')
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_16x_40000x9_iter_10000.ckpt')  
 
 parser.add_argument('--embedding_size', type=int, default=120) 
 parser.add_argument('--batch_size', type=int, default=32) 
@@ -120,13 +121,13 @@ if __name__ == '__main__':
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         try:
-            ckpt_path = os.path.join(params.ckpt_path, params.save_prefix, params.ckpt_file)
+            ckpt_path = os.path.join(params.e_ckpt_path, params.save_prefix, params.ckpt_file)
             ckpt = tf.train.get_checkpoint_state(ckpt_path)
             print('Restoring from {}...'.format(ckpt_path))
             ckpt_saver.restore(sess, ckpt_path)
             print('{} restored'.format(ckpt_path))
         except:
-            raise('Check your pretrained {:s}'.format(ckpt_path))
+            raise Exception('Check your pretrained {:s}'.format(ckpt_path))
             
         # calculate validation accuracy and display results   
         recalls, accs_strict = [], []

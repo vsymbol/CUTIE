@@ -1,5 +1,5 @@
 # written by Xiaohui Zhao
-# 2018-12 
+# 2018-01 
 # xiaohui.zhao@accenture.com
 import tensorflow as tf
 import numpy as np
@@ -18,15 +18,16 @@ parser.add_argument('--doc_path', type=str, default='data/taxi_small')
 parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for ckpt') # TBD: save log/models with prefix
 
 # dict
-parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
+parser.add_argument('--dict_path', type=str, default='dict/119547') # not used if load_dict is True
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') 
+parser.add_argument('--load_dict_from_path', type=str, default='dict/119547') 
 parser.add_argument('--large_dict', type=bool, default=True, help='True to use large dict for future ext') 
 
 # ckpt
 parser.add_argument('--restore_ckpt', type=bool, default=True) 
 parser.add_argument('--restore_embedding_only', type=bool, default=True) 
-parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt')  
+parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt') 
+parser.add_argument('--bert_dict_file', type=str, default='dict/vocab.txt')  
 
 # training
 parser.add_argument('--embedding_size', type=int, default=768) 
@@ -140,8 +141,20 @@ class BertEmbedding(object):
 
 if __name__ == '__main__':
     # data
-    data_loader = DataLoader(params, for_train=True, load_dictionary=params.load_dict, data_split=0.75)
+    data_loader = DataLoader(params, update_dict=False, load_dictionary=params.load_dict, data_split=0.75)
 
+    # save bert dictionary
+    with open(params.bert_dict_file, encoding='utf-8') as f:
+        vocabs = f.read().split('\n')
+    num_words = len(vocabs)
+    dictionary = {vocab:0 for vocab in vocabs}
+    word_to_index = dict(list(zip(dictionary.keys(), list(range(num_words)))))
+    index_to_word = dict(list(zip(list(range(num_words)), dictionary.keys())))
+    np.save(params.dict_path + '_dictionary.npy', dictionary)
+    np.save(params.dict_path + '_word_to_index.npy', word_to_index)
+    np.save(params.dict_path + '_index_to_word.npy', index_to_word)
+    
+    
     # model
     bert = BertEmbedding() 
     
@@ -155,7 +168,8 @@ if __name__ == '__main__':
             pass
         elif params.restore_embedding_only:
             try:
-                ckpt = tf.train.get_checkpoint_state(params.embedding_file)
+                ckpt_path = params.embedding_file
+                ckpt = tf.train.get_checkpoint_state(ckpt_path)
                 print('Restoring from {}...'.format(ckpt_path))
                 ckpt_saver.restore(sess, ckpt_path)
                 print('Restored from {}'.format(ckpt_path))

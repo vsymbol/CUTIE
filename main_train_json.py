@@ -18,21 +18,23 @@ parser = argparse.ArgumentParser(description='CUTIE parameters')
 parser.add_argument('--doc_path', type=str, default='data/taxi') 
 parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for ckpt') # TBD: save log/models with prefix
 
+# ckpt
+parser.add_argument('--restore_ckpt', type=bool, default=False) 
+parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/')
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_16x_40000x9_iter_10000.ckpt')  
+
+parser.add_argument('--restore_embedding_only', type=bool, default=True) 
+parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt') 
+
 # dict
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') 
+parser.add_argument('--load_dict_from_path', type=str, default='dict/119547') 
 parser.add_argument('--large_dict', type=bool, default=True, help='True to use large dict for future ext') 
-
-# ckpt
-parser.add_argument('--restore_ckpt', type=bool, default=False) 
-parser.add_argument('--restore_embedding_only', type=bool, default=True) 
-parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/meals/')
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_16x_40000x9_iter_10000.ckpt')  
 
 # log
 parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/') 
-parser.add_argument('--log_disp_step', type=int, default=100) 
+parser.add_argument('--log_disp_step', type=int, default=50) 
 parser.add_argument('--log_save_step', type=int, default=100) 
 parser.add_argument('--validation_step', type=int, default=200) 
 parser.add_argument('--ckpt_save_step', type=int, default=1000)
@@ -57,9 +59,45 @@ parser.add_argument('--eps', type=float, default=1e-6)
 parser.add_argument('--c_threshold', type=float, default=0.5) 
 params = parser.parse_args()
 
+acc_sum = [0.0 for _ in range(params.ghm_bins)]
+def calc_ghm_weights(logits, labels): 
+    """
+    calculate gradient harmonizing mechanism weights
+    """
+    bins = params.ghm_bins
+    shape = logits.shape
+    edges = [float(x)/bins for x in range(bins+1)]
+    edges[-1] += params.eps
+    
+    momentum = params.ghm_momentum    
+    
+    logits_flat = logits.reshape([-1])
+    labels_flat = labels.reshape([-1])
+    arr = []
+    for l in labels_flat:
+        arr.extend([i==l for i in range(num_classes)]) 
+    labels_flat = np.array(arr)
+    
+    grad = abs(logits_flat - labels_flat) # equation for logits from the sigmoid activation
+    
+    weights = np.ones(logits_flat.shape)
+    N = shape[0] * shape[1] * shape[2] * shape[3]
+    M = 0
+    for i in range(bins):
+        idxes = np.multiply(grad>=edges[i], grad<edges[i+1])
+        num_in_bin = np.sum(idxes)
+        if num_in_bin > 0: 
+            acc_sum[i] = momentum * acc_sum[i] + (1-momentum) * num_in_bin
+            weights[np.where(idxes)] = N / acc_sum[i]
+            M += 1
+    if M > 0:
+        weights = weights / M
+        
+    return weights.reshape(shape)
+
 if __name__ == '__main__':
     # data
-    data_loader = DataLoader(params, for_train=True, load_dictionary=params.load_dict, data_split=0.75)
+    data_loader = DataLoader(params, update_dict=False, load_dictionary=params.load_dict, data_split=0.75)
     num_words = 40000 if params.large_dict else data_loader.num_words
     num_classes = data_loader.num_classes
     #a = data_loader.next_batch()
@@ -123,8 +161,6 @@ if __name__ == '__main__':
             except:
                 raise('Check your pretrained {:s}'.format(ckpt_path))
             
-        
-        acc_sum = [0.0 for _ in range(params.ghm_bins)] # used for ghm, to be updated in calc_ghm_weights
         for iter in range(iter_start, params.iterations):
             # learning rate decay
             if iter!=0 and iter%params.lr_decay_step==0:
@@ -146,10 +182,7 @@ if __name__ == '__main__':
             # one step training
             ghm_weights = np.ones(np.shape(model_logit_val))
             if params.use_ghm:
-                ghm_weights = calc_ghm_weights(np.array(model_logit_val), 
-                                               np.array(data['gt_classes']),
-                                               acc_sum, params.ghm_bins,
-                                               params.ghm_momentum)
+                ghm_weights = calc_ghm_weights(np.array(model_logit_val), np.array(data['gt_classes']))
             feed_dict = {
                 network.ghm_weights: ghm_weights,
             }
@@ -159,10 +192,7 @@ if __name__ == '__main__':
                                 
             # calculate training accuracy and display results
             if iter%params.log_disp_step == 0: 
-                recall, acc_strict, res = cal_accuracy(data_loader,
-                                                       np.array(data['grid_table']), 
-                                                       np.array(data['gt_classes']), 
-                                                       model_output_val, params.c_threshold)
+                recall, acc_strict, res = cal_accuracy(np.array(data['grid_table']), np.array(data['gt_classes']), model_output_val)
                 training_recall += [recall]        
                 training_acc_strict += [acc_strict]          
                 print('\nIter: %d/%d, total loss: %.4f, model loss: %.4f, regularization loss: %.4f'%\
@@ -192,11 +222,8 @@ if __name__ == '__main__':
                     fetches = [model_output]
                     
                     [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
-                    recall, acc_strict, res = cal_accuracy(data_loader,
-                                                           np.array(grid_tables), 
-                                                           np.array(gt_classes),
-                                                           model_output_val, 
-                                                           params.c_threshold)
+                    recall, acc_strict, res = \
+                        cal_accuracy(np.array(grid_tables), np.array(gt_classes), model_output_val)
                     recalls += [recall]
                     accs_strict += [acc_strict] 
 

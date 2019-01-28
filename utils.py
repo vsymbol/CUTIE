@@ -63,36 +63,4 @@ def cal_accuracy(data_loader, gird_table, gt_classes, model_output_val, c_thresh
     accuracy_strict = num_correct_strict / num_all
     return recall, accuracy_strict, res
 
-def calc_ghm_weights(logits, labels, acc_sum, bins, momentum): 
-    """
-    calculate gradient harmonizing mechanism weights
-    """
-    bins = bins
-    shape = logits.shape
-    edges = [float(x)/bins for x in range(bins+1)]
-    edges[-1] += 1e-6 
-    
-    logits_flat = logits.reshape([-1])
-    labels_flat = labels.reshape([-1])
-    arr = []
-    for l in labels_flat:
-        arr.extend([i==l for i in range(shape[-1])]) 
-    labels_flat = np.array(arr)
-    
-    grad = abs(logits_flat - labels_flat) # equation for logits from the sigmoid activation
-    
-    weights = np.ones(logits_flat.shape)
-    N = shape[0] * shape[1] * shape[2] * shape[3]
-    M = 0
-    for i in range(bins):
-        idxes = np.multiply(grad>=edges[i], grad<edges[i+1])
-        num_in_bin = np.sum(idxes)
-        if num_in_bin > 0: 
-            acc_sum[i] = momentum * acc_sum[i] + (1-momentum) * num_in_bin
-            weights[np.where(idxes)] = N / acc_sum[i]
-            M += 1
-    if M > 0:
-        weights = weights / M
-        
-    return weights.reshape(shape)
     
