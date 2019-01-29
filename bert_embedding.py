@@ -25,7 +25,7 @@ parser.add_argument('--large_dict', type=bool, default=True, help='True to use l
 
 # ckpt
 parser.add_argument('--restore_ckpt', type=bool, default=True) 
-parser.add_argument('--restore_embedding_only', type=bool, default=True) 
+parser.add_argument('--restore_bertembedding_only', type=bool, default=True) 
 parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt') 
 parser.add_argument('--bert_dict_file', type=str, default='dict/vocab.txt')  
 
@@ -158,23 +158,22 @@ if __name__ == '__main__':
     # model
     bert = BertEmbedding() 
     
-    load_variable = {"bert/embeddings/word_embeddings": bert.embedding_table}
-    ckpt_saver = tf.train.Saver(load_variable, max_to_keep=50)
     config = tf.ConfigProto(allow_soft_placement=True)
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         
-        if False:
-            pass
-        elif params.restore_embedding_only:
-            try:
-                ckpt_path = params.embedding_file
-                ckpt = tf.train.get_checkpoint_state(ckpt_path)
-                print('Restoring from {}...'.format(ckpt_path))
-                ckpt_saver.restore(sess, ckpt_path)
-                print('Restored from {}'.format(ckpt_path))
-            except:
-                raise('Check your path {:s}'.format(ckpt_path))
+        if params.restore_ckpt:
+            if params.restore_bertembedding_only:
+                try:
+                    load_variable = {"bert/embeddings/word_embeddings": bert.embedding_table}
+                    ckpt_saver = tf.train.Saver(load_variable, max_to_keep=50)
+                    ckpt_path = params.embedding_file
+                    ckpt = tf.train.get_checkpoint_state(ckpt_path)
+                    print('Restoring from {}...'.format(ckpt_path))
+                    ckpt_saver.restore(sess, ckpt_path)
+                    print('Restored from {}'.format(ckpt_path))
+                except:
+                    raise('Check your path {:s}'.format(ckpt_path))
             
         data = data_loader.next_batch()
         # one step training

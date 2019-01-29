@@ -67,6 +67,5 @@ class CUTIERes(CUTIE):
         
         # classification
         (self.feed('decoder3_2') 
-             #.conv(1, 1, self.num_classes, 1, 1, name='cls_logits') # sigmoid for ghm
              .conv(1, 1, self.num_classes, 1, 1, activation=self.activation, name='cls_logits') # sigmoid for ghm
              .softmax(name='softmax'))

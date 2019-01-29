@@ -24,7 +24,8 @@ class CUTIERes(CUTIE):
         self.hard_negative_ratio = params.hard_negative_ratio if hasattr(params, 'hard_negative_ratio') else 0.0
         self.batch_size = params.batch_size if hasattr(params, 'batch_size') else 0
         
-        self.layer_inputs = []        
+        self.layer_inputs = []   
+        self.embedding_table = None   
         self.setup()
         
     
@@ -34,7 +35,7 @@ class CUTIERes(CUTIE):
              .bert_embed(self.num_vocabs, 768, name='embeddings'))  
         
         # encoder
-        (self.feed('embedding')
+        (self.feed('embeddings')
              .conv(3, 5, 64, 1, 1, name='encoder1_1')
              .conv(3, 5, 128, 1, 1, name='encoder1_2')
              .max_pool(2, 2, 2, 2, name='pool1')
@@ -67,6 +68,5 @@ class CUTIERes(CUTIE):
         
         # classification
         (self.feed('decoder3_2') 
-             #.conv(1, 1, self.num_classes, 1, 1, name='cls_logits') # sigmoid for ghm
              .conv(1, 1, self.num_classes, 1, 1, activation=self.activation, name='cls_logits') # sigmoid for ghm
              .softmax(name='softmax'))

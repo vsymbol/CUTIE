@@ -3,9 +3,9 @@
 # xiaohui.zhao@accenture.com
 import tensorflow as tf
 import numpy as np
-import argparse
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+import argparse, os
+import timeit
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 from model_cutie import CUTIE
 from model_cutie_res import CUTIERes
@@ -20,17 +20,15 @@ parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for 
 
 # ckpt
 parser.add_argument('--restore_ckpt', type=bool, default=False) 
+parser.add_argument('--restore_bertembedding_only', type=bool, default=True) # only works with restore_ckpt as True
+parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt') 
 parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/')
 parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_16x_40000x9_iter_10000.ckpt')  
 
-parser.add_argument('--restore_embedding_only', type=bool, default=True) 
-parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt') 
-
 # dict
-parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/119547') 
-parser.add_argument('--large_dict', type=bool, default=True, help='True to use large dict for future ext') 
+parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') # 40000 or 119547  
+parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
 # log
 parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/') 
@@ -43,10 +41,10 @@ parser.add_argument('--ckpt_save_step', type=int, default=1000)
 parser.add_argument('--hard_negative_ratio', type=int, help='the ratio between negative and positive losses', default=3) 
 parser.add_argument('--use_ghm', type=int, default=1) # 1 or 0
 parser.add_argument('--ghm_bins', type=int, default=30) 
-parser.add_argument('--ghm_momentum', type=int, default=0) 
+parser.add_argument('--ghm_momentum', type=int, default=0.75) # 0 or 0.75
 
 # training
-parser.add_argument('--embedding_size', type=int, default=120) 
+parser.add_argument('--embedding_size', type=int, default=120) # not used for bert embedding with default 768
 parser.add_argument('--batch_size', type=int, default=32) 
 parser.add_argument('--iterations', type=int, default=10000)  
 parser.add_argument('--lr_decay_step', type=int, default=1500) 
@@ -59,23 +57,22 @@ parser.add_argument('--eps', type=float, default=1e-6)
 parser.add_argument('--c_threshold', type=float, default=0.5) 
 params = parser.parse_args()
 
+edges = [float(x)/params.ghm_bins for x in range(params.ghm_bins+1)]
+edges[-1] += params.eps
 acc_sum = [0.0 for _ in range(params.ghm_bins)]
 def calc_ghm_weights(logits, labels): 
     """
     calculate gradient harmonizing mechanism weights
     """
     bins = params.ghm_bins
-    shape = logits.shape
-    edges = [float(x)/bins for x in range(bins+1)]
-    edges[-1] += params.eps
-    
-    momentum = params.ghm_momentum    
+    momentum = params.ghm_momentum   
+    shape = logits.shape     
     
     logits_flat = logits.reshape([-1])
     labels_flat = labels.reshape([-1])
-    arr = []
-    for l in labels_flat:
-        arr.extend([i==l for i in range(num_classes)]) 
+    arr = [0 for _ in range(len(labels_flat)*num_classes)]
+    for i,l in enumerate(labels_flat):
+        arr[i*num_classes + l] = 1
     labels_flat = np.array(arr)
     
     grad = abs(logits_flat - labels_flat) # equation for logits from the sigmoid activation
@@ -98,7 +95,7 @@ def calc_ghm_weights(logits, labels):
 if __name__ == '__main__':
     # data
     data_loader = DataLoader(params, update_dict=False, load_dictionary=params.load_dict, data_split=0.75)
-    num_words = 40000 if params.large_dict else data_loader.num_words
+    num_words = max(40000, data_loader.num_words)
     num_classes = data_loader.num_classes
     #a = data_loader.next_batch()
     #b = data_loader.fetch_validation_data()
@@ -143,25 +140,44 @@ if __name__ == '__main__':
     summary_path = os.path.join(params.log_path, params.save_prefix, network.name)
     summary_writer = tf.summary.FileWriter(summary_path, tf.get_default_graph(), flush_secs=10)
     
-    config = tf.ConfigProto(allow_soft_placement=True)
+    config = tf.ConfigProto(allow_soft_placement=False)
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         
         iter_start = 0
+        
+        # restore parameters
         if params.restore_ckpt:
-            try:
-                ckpt_path = os.path.join(params.ckpt_path, params.ckpt_file)
-                ckpt = tf.train.get_checkpoint_state(ckpt_path)
-                print('Restoring from {}...'.format(ckpt_path))
-                ckpt_saver.restore(sess, ckpt_path)
-                print('Restored from {}'.format(ckpt_path))
-                #stem = os.path.splitext(os.path.basename(ckpt_path))[0]
-                #iter_start = int(stem.split('_')[-1]) - 1
-                #sess.run(global_step.assign(iter_start))
-            except:
-                raise('Check your pretrained {:s}'.format(ckpt_path))
+            if params.restore_bertembedding_only:
+                if 'bert' not in network.name:
+                    raise Exception('no bert embedding in the model config, switch restore_bertembedding_only off or built a related model')
+                try:
+                    load_variable = {"bert/embeddings/word_embeddings": network.embedding_table}
+                    ckpt_saver = tf.train.Saver(load_variable, max_to_keep=50)
+                    ckpt_path = params.embedding_file
+                    ckpt = tf.train.get_checkpoint_state(ckpt_path)
+                    print('Restoring from {}...'.format(ckpt_path))
+                    ckpt_saver.restore(sess, ckpt_path)
+                    print('Restored from {}'.format(ckpt_path))
+                except:
+                    raise Exception('Check your path {:s}'.format(ckpt_path))
+            else:
+                try:
+                    ckpt_path = os.path.join(params.ckpt_path, params.ckpt_file)
+                    ckpt = tf.train.get_checkpoint_state(ckpt_path)
+                    print('Restoring from {}...'.format(ckpt_path))
+                    ckpt_saver.restore(sess, ckpt_path)
+                    print('Restored from {}'.format(ckpt_path))
+                    #stem = os.path.splitext(os.path.basename(ckpt_path))[0]
+                    #iter_start = int(stem.split('_')[-1]) - 1
+                    #sess.run(global_step.assign(iter_start))
+                except:
+                    raise Exception('Check your pretrained {:s}'.format(ckpt_path))
             
+        # iterations
         for iter in range(iter_start, params.iterations):
+            timer_start = timeit.default_timer()
+            
             # learning rate decay
             if iter!=0 and iter%params.lr_decay_step==0:
                 sess.run(tf.assign(lr, lr.eval()*params.lr_decay_factor))
@@ -189,10 +205,13 @@ if __name__ == '__main__':
             fetches = [model_loss, regularization_loss, total_loss, summary_op, train_dummy]
             (model_loss_val, regularization_loss_val, total_loss_val, summary_str, _) =\
                 sess.partial_run(h, fetches=fetches, feed_dict=feed_dict)
-                                
+                
             # calculate training accuracy and display results
             if iter%params.log_disp_step == 0: 
-                recall, acc_strict, res = cal_accuracy(np.array(data['grid_table']), np.array(data['gt_classes']), model_output_val)
+                timer_stop = timeit.default_timer()
+                print('\t >>time per step: %.2fs <<'%(timer_stop - timer_start))
+                
+                recall, acc_strict, res = cal_accuracy(data_loader, np.array(data['grid_table']), np.array(data['gt_classes']), model_output_val, params.c_threshold)
                 training_recall += [recall]        
                 training_acc_strict += [acc_strict]          
                 print('\nIter: %d/%d, total loss: %.4f, model loss: %.4f, regularization loss: %.4f'%\
@@ -222,8 +241,9 @@ if __name__ == '__main__':
                     fetches = [model_output]
                     
                     [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
-                    recall, acc_strict, res = \
-                        cal_accuracy(np.array(grid_tables), np.array(gt_classes), model_output_val)
+                    recall, acc_strict, res = cal_accuracy(data_loader, np.array(grid_tables), 
+                                                           np.array(gt_classes), model_output_val, 
+                                                           params.c_threshold)
                     recalls += [recall]
                     accs_strict += [acc_strict] 
 

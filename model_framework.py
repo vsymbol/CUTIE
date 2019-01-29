@@ -54,16 +54,17 @@ class Model(object):
     
     
     @layer
-    def bert_embed(self, layer_input, vocabulary_size, embedding_size=768, use_one_hot_embeddings=False, initializer_range=0.02, name="embeddings", trainable=False):
+    def bert_embed(self, layer_input, vocab_size, embedding_size=768, use_one_hot_embeddings=False, initializer_range=0.02, name="embeddings", trainable=False):
         with tf.variable_scope("bert"):
           with tf.variable_scope("embeddings"):
             # Perform embedding lookup on the word ids.
             (embedding_output, embedding_table) = self.embedding_lookup(
-                input_ids=layer_input, vocab_size=vocab_size, embedding_size=hidden_size,
+                input_ids=layer_input, vocab_size=vocab_size, embedding_size=embedding_size,
                 initializer_range=initializer_range,
                 word_embedding_name="word_embeddings",
                 use_one_hot_embeddings=use_one_hot_embeddings,
                 trainable=trainable)
+            self.embedding_table = embedding_table # the inherited class need a self.embedding_table variable
             return embedding_output        
     
      
