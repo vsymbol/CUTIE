@@ -15,4 +15,4 @@ params = parser.parse_args()
 
 if __name__ == '__main__':
     ## run this program before training to create a basic dictionary for training
-    data_loader = DataLoader(params, for_train=True, load_dictionary=False)
+    data_loader = DataLoader(params, update_dict=True, load_dictionary=False)

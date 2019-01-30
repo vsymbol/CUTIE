@@ -19,12 +19,11 @@ parser.add_argument('--doc_path', type=str, default='data/meals_1215') # modify 
 parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for ckpt and results') # modify this
 
 parser.add_argument('--e_ckpt_path', type=str, default='../graph/CUTIE/graph/') # modify this
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_16x_40000x9_iter_10000.ckpt')  
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_8x_40000x9_iter_10000.ckpt')  
 
-parser.add_argument('--dict_path', type=str, default='dict/meals') # not used, only use 40000
-parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') 
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--large_dict', type=bool, default=True, help='True to use large dict for future ext') 
+parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') # 40000 or 119547  
+parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
 parser.add_argument('--restore_ckpt', type=bool, default=True) 
 
@@ -108,8 +107,8 @@ def cal_save_results(docs, grid_table, gt_classes, model_output_val):
 if __name__ == '__main__':
     # data
     #data_loader = DataLoader(params, True, True) # True to use 25% training data
-    data_loader = DataLoader(params, for_train=False, load_dictionary=True, data_split=0) # False to provide a path with only test data
-    num_words = 40000 if params.large_dict else data_loader.num_words
+    data_loader = DataLoader(params, update_dict=False, load_dictionary=True, data_split=0) # False to provide a path with only test data
+    num_words = max(40000, data_loader.num_words)
     num_classes = data_loader.num_classes
 
     # model

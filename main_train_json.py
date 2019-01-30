@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 import argparse, os
 import timeit
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from model_cutie import CUTIE
 from model_cutie_res import CUTIERes
@@ -15,15 +15,15 @@ from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/taxi') 
-parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/hotel') 
+parser.add_argument('--save_prefix', type=str, default='hotel', help='prefix for ckpt') # TBD: save log/models with prefix
 
 # ckpt
 parser.add_argument('--restore_ckpt', type=bool, default=False) 
-parser.add_argument('--restore_bertembedding_only', type=bool, default=True) # only works with restore_ckpt as True
+parser.add_argument('--restore_bertembedding_only', type=bool, default=True) # effective when restore_ckpt is True
 parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt') 
 parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/')
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_16x_40000x9_iter_10000.ckpt')  
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_8x_40000x9_iter_10000.ckpt')  
 
 # dict
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
@@ -32,22 +32,22 @@ parser.add_argument('--dict_path', type=str, default='dict/---') # not used if l
 
 # log
 parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/') 
-parser.add_argument('--log_disp_step', type=int, default=50) 
+parser.add_argument('--log_disp_step', type=int, default=100) 
 parser.add_argument('--log_save_step', type=int, default=100) 
 parser.add_argument('--validation_step', type=int, default=200) 
 parser.add_argument('--ckpt_save_step', type=int, default=1000)
 
 # loss optimization
 parser.add_argument('--hard_negative_ratio', type=int, help='the ratio between negative and positive losses', default=3) 
-parser.add_argument('--use_ghm', type=int, default=1) # 1 or 0
-parser.add_argument('--ghm_bins', type=int, default=30) 
-parser.add_argument('--ghm_momentum', type=int, default=0.75) # 0 or 0.75
+parser.add_argument('--use_ghm', type=int, default=0) # 1 or 0
+parser.add_argument('--ghm_bins', type=int, default=30) # to be tuned
+parser.add_argument('--ghm_momentum', type=int, default=0) # to be tuned 0 / 0.75
 
 # training
 parser.add_argument('--embedding_size', type=int, default=120) # not used for bert embedding with default 768
 parser.add_argument('--batch_size', type=int, default=32) 
 parser.add_argument('--iterations', type=int, default=10000)  
-parser.add_argument('--lr_decay_step', type=int, default=1500) 
+parser.add_argument('--lr_decay_step', type=int, default=2000) 
 parser.add_argument('--lr_decay_factor', type=float, default=0.5) 
 parser.add_argument('--learning_rate', type=float, default=0.001)
 parser.add_argument('--weight_decay', type=float, default=0.0005) 
@@ -94,7 +94,7 @@ def calc_ghm_weights(logits, labels):
 
 if __name__ == '__main__':
     # data
-    data_loader = DataLoader(params, update_dict=False, load_dictionary=params.load_dict, data_split=0.75)
+    data_loader = DataLoader(params, update_dict=True, load_dictionary=params.load_dict, data_split=0.75)
     num_words = max(40000, data_loader.num_words)
     num_classes = data_loader.num_classes
     #a = data_loader.next_batch()
