@@ -49,8 +49,10 @@ class DataLoader():
         self.data_mode = 2 # 0 to consider key and value as two different class, 1 the same class, 2 only value considered
         self.remove_lowfreq_words = False # remove low frequency words when set as True
         
-        self.rows = 32 # to be updated in self._update_training_rows_cols()
-        self.cols = 32 # to be updated in self._update_training_rows_cols()
+        self.data_augmentation = params.data_augmentation # cal rows/cols for each batch of data
+        self.data_augmentation_extra = params.data_augmentation_extra # randomly expand rows/cols
+        self.rows = 0#32 # to be updated in self._update_training_rows_cols()
+        self.cols = 0#32 # to be updated in self._update_training_rows_cols()
         self.encoding_factor = 16 # ensures the size (rows/cols) of grid table compat with the network
         
         self.num_classes = len(self.classes) 
@@ -61,7 +63,8 @@ class DataLoader():
         
         ## 1> load words and their location/class as docs and labels 
         self.training_doc_files = self._get_filenames(params.doc_path)
-        self.training_docs, self.training_labels = self.load_data(self.training_doc_files, update_dict=update_dict) # TBD: optimize the update dict flag 
+        self.training_docs, self.training_labels = self.load_data(self.training_doc_files, update_dict=update_dict) # TBD: optimize the update dict flag
+        self._update_training_rows_cols() # adapt grid table size to all dataset docs 
         
         # polish and load dictionary/word_to_index/index_to_word as file
         self.num_words = len(self.dictionary)              
@@ -85,9 +88,7 @@ class DataLoader():
         self.validation_labels = self.training_labels
         print('\nDATASET: %d vocabularies, %d target classes'%(len(self.dictionary), len(self.classes)))
         print('DATASET: %d for training, %d for validation'%(len(self.training_docs), len(self.validation_docs)))
-        
-        self._update_training_rows_cols() # adapt grid table size according to training docs
-         
+                 
         # TBD: adjust bbox in @training_docs to eliminate overlaps
         #self.training_docs = self.eliminate_overlap(self.training_docs)
                 
@@ -108,7 +109,7 @@ class DataLoader():
             self.index_to_word = dict(list(zip(list(range(self.num_words)), self.dictionary.keys())))
     
     def _update_docs_dictionary(self, docs, lower_limit, remove_lowfreq_words):
-        # assign docs words that appear less than @lower_limit times to word <unknown>
+        # assign docs words that appear less than @lower_limit times to word [UNK]
         if remove_lowfreq_words: 
             for doc in docs:
                 for line in doc:
@@ -124,7 +125,6 @@ class DataLoader():
         #grid_table = np.ones([self.batch_size, self.rows, self.cols, 1])
         #gt_classes = np.ones([self.batch_size, self.rows, self.cols])
         #gt_classes[:,:,0:32] = 0
-        # TBD: data augmentation
         
         if len(self.training_data_tobe_fetched) < self.batch_size:
             self.training_data_tobe_fetched = [i for i in range(len(self.training_docs))]            
@@ -132,22 +132,35 @@ class DataLoader():
         self.training_data_tobe_fetched = list(set(self.training_data_tobe_fetched).difference(set(selected_index)))
 
         training_docs = [self.training_docs[x] for x in selected_index]
-        grid_table, gt_classes = self._positional_mapping(training_docs, self.training_labels)
         
+        # data augmentation in each batch
+        rows = self.rows
+        cols = self.cols
+        if self.data_augmentation:
+            rows, cols = self._cal_rows_cols(training_docs, self.data_augmentation_extra)            
+            print('Batch grid table size: ({},{})'.format(rows, cols))
+            
+        grid_table, gt_classes = self._positional_mapping(training_docs, self.training_labels, rows, cols)        
         batch = {'grid_table': grid_table, 'gt_classes': gt_classes}
         return batch
     
     def fetch_validation_data(self):
-        grid_table, gt_classes = self._positional_mapping(self.validation_docs, self.validation_labels)        
+        rows = self.rows
+        cols = self.cols
+        
+        grid_table, gt_classes = self._positional_mapping(self.validation_docs, self.validation_labels, rows, cols)        
         batch = {'grid_table': grid_table, 'gt_classes': gt_classes}
         return batch
     
-    def fetch_test_data(self):        
-        grid_table, gt_classes = self._positional_mapping(self.validation_docs, self.validation_labels)        
+    def fetch_test_data(self):   
+        rows = self.rows
+        cols = self.cols     
+        
+        grid_table, gt_classes = self._positional_mapping(self.validation_docs, self.validation_labels, rows, cols)        
         batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'docs': self.validation_docs}
         return batch
     
-    def _positional_mapping(self, docs, labels):
+    def _positional_mapping(self, docs, labels, rows, cols):
         """
         docs in format:
         [[file_name, text, word_id, [x_left, y_top, x_right, y_bottom], [image_w, image_h]], max_row_words, max_col_words ]
@@ -155,9 +168,9 @@ class DataLoader():
         grid_tables = []
         gird_labels = []
         for doc in docs:
-            grid_table = np.zeros([self.rows, self.cols], dtype=np.int32)
-            grid_label = np.zeros([self.rows, self.cols], dtype=np.int8)
-            drawing_board = np.zeros([self.rows, self.cols], dtype=str)
+            grid_table = np.zeros([rows, cols], dtype=np.int32)
+            grid_label = np.zeros([rows, cols], dtype=np.int8)
+            drawing_board = np.zeros([rows, cols], dtype=str)
             for item in doc:
                 file_name = item[0]
                 text = item[1]
@@ -168,8 +181,8 @@ class DataLoader():
                 dict_id = self.word_to_index[text]
                     
                 class_id = self._dress_class(file_name, word_id, labels)    
-                col = int(self.cols * (x_left + (x_right-x_left)/2) / image_w) 
-                row = int(self.rows * (y_top + (y_bottom-y_top)/2) / image_h)  
+                col = int(cols * (x_left + (x_right-x_left)/2) / image_w) 
+                row = int(rows * (y_top + (y_bottom-y_top)/2) / image_h)  
                 if grid_label[row, col] == 0: # TBD: overlap avoidance should be done before this
                     grid_table[row, col] = dict_id
                 if grid_label[row, col] == 0:
@@ -222,11 +235,11 @@ class DataLoader():
         
     def _update_training_rows_cols(self):
         self.rows, self.cols = self._cal_rows_cols(self.training_docs)  
-        print('DATASHAPE: updated to ({},{}) in DataLoader._update_training_rows_cols() \n'.format(self.rows, self.cols))      
+        print('\nDATASHAPE: data set with maximum grid table of ({},{}), updated in DataLoader._update_training_rows_cols() \n'.format(self.rows, self.cols))      
         
-    def _cal_rows_cols(self, docs):
-        max_row = self.rows
-        max_col = self.cols
+    def _cal_rows_cols(self, docs, extra_augmentation=False):
+        max_row = 0
+        max_col = 0
         for doc in docs:
             for line in doc: 
                 _, _, _, _, _, max_row_words, max_col_words = line
@@ -234,8 +247,12 @@ class DataLoader():
                     max_row = max_row_words
                 if max_col_words > max_col:
                     max_col = max_col_words
-        rows = (max_row//self.encoding_factor+1) * self.encoding_factor
-        cols = (max_col//self.encoding_factor+1) * self.encoding_factor  
+        pad_row, pad_col = 0, 0
+        if extra_augmentation:
+            pad_row = random.randint(0, 2*self.encoding_factor)
+            pad_col = random.randint(0, 2*self.encoding_factor)
+        rows = ((max_row+pad_row)//self.encoding_factor+1) * self.encoding_factor
+        cols = ((max_col+pad_col)//self.encoding_factor+1) * self.encoding_factor  
         return rows, cols   
     
     def _collect_data(self, file_name, content, update_dict):

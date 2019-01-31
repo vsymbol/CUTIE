@@ -37,19 +37,23 @@ parser.add_argument('--log_save_step', type=int, default=100)
 parser.add_argument('--validation_step', type=int, default=200) 
 parser.add_argument('--ckpt_save_step', type=int, default=1000)
 
-# loss optimization
-parser.add_argument('--hard_negative_ratio', type=int, help='the ratio between negative and positive losses', default=3) 
-parser.add_argument('--use_ghm', type=int, default=0) # 1 or 0
-parser.add_argument('--ghm_bins', type=int, default=30) # to be tuned
-parser.add_argument('--ghm_momentum', type=int, default=0) # to be tuned 0 / 0.75
-
 # training
-parser.add_argument('--embedding_size', type=int, default=120) # not used for bert embedding with default 768
+parser.add_argument('--data_augmentation', type=bool, default=True) # augment data row/col in each batch
+parser.add_argument('--data_augmentation_extra', type=bool, default=True) # randomly expand rows/cols
 parser.add_argument('--batch_size', type=int, default=32) 
-parser.add_argument('--iterations', type=int, default=10000)  
-parser.add_argument('--lr_decay_step', type=int, default=2000) 
+parser.add_argument('--iterations', type=int, default=20000)  
+parser.add_argument('--lr_decay_step', type=int, default=4000) 
 parser.add_argument('--lr_decay_factor', type=float, default=0.5) 
 parser.add_argument('--learning_rate', type=float, default=0.001)
+
+# loss optimization
+parser.add_argument('--hard_negative_ratio', type=int, help='the ratio between negative and positive losses', default=3) 
+parser.add_argument('--use_ghm', type=int, default=0) # 1 to use GHM, 0 to not use
+parser.add_argument('--ghm_bins', type=int, default=30) # to be tuned
+parser.add_argument('--ghm_momentum', type=int, default=0) # 0 / 0.75
+
+# model
+parser.add_argument('--embedding_size', type=int, default=120) # not used for bert embedding with default 768
 parser.add_argument('--weight_decay', type=float, default=0.0005) 
 parser.add_argument('--eps', type=float, default=1e-6) 
 
