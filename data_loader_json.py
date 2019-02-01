@@ -8,7 +8,6 @@ import csv, re, random, json
 
 import numpy as np
 import tensorflow as tf
-from _operator import index
 
 DEBUG = False
 
@@ -32,6 +31,8 @@ class DataLoader():
     training_grid_tables
     """
     def __init__(self, params, update_dict=True, load_dictionary=False, data_split=0.75):
+        self.encoding_factor = 16 # ensures the size (rows/cols) of grid table compat with the network
+        
         ## 0> parameters to be tuned
         self.load_dictionary = load_dictionary # load dictionary from file rather than start from empty 
         self.dict_path = params.load_dict_from_path if self.load_dictionary else params.dict_path
@@ -49,17 +50,19 @@ class DataLoader():
         self.data_mode = 2 # 0 to consider key and value as two different class, 1 the same class, 2 only value considered
         self.remove_lowfreq_words = False # remove low frequency words when set as True
         
-        self.data_augmentation = params.data_augmentation # cal rows/cols for each batch of data
-        self.data_augmentation_extra = params.data_augmentation_extra # randomly expand rows/cols
+        self.data_augmentation = params.data_augmentation if hasattr(params, 'data_augmentation') else False # cal rows/cols for each batch of data
+        self.data_augmentation_extra = params.data_augmentation_extra if hasattr(params, 'data_augmentation_extra') else False # randomly expand rows/cols
+        self.da_extra_rows = params.data_augmentation_extra_rows if hasattr(params, 'data_augmentation_extra_rows') else 0 # randomly expand rows/cols
+        self.da_extra_cols = params.data_augmentation_extra_cols if hasattr(params, 'data_augmentation_extra_cols') else 0 # randomly expand rows/cols
         self.rows = 0#32 # to be updated in self._update_training_rows_cols()
         self.cols = 0#32 # to be updated in self._update_training_rows_cols()
-        self.encoding_factor = 16 # ensures the size (rows/cols) of grid table compat with the network
         
         self.num_classes = len(self.classes) 
         self.batch_size = params.batch_size if hasattr(params, 'batch_size') else 1        
         
         # TBD: build a special cared dictionary
-        self.special_dict = {'some_word': '<dontcare>'} # map texts to specific tokens        
+        self.special_dict = {'0': '[unused10]', '1': '[unused1]', '2': '[unused2]', '3': '[unused3]', '4': '[unused4]', '5': '[unused5]', 
+                             '6': '[unused6]', '7': '[unused7]', '8': '[unused8]', '9': '[unused9]'} # map texts to specific tokens        
         
         ## 1> load words and their location/class as docs and labels 
         self.training_doc_files = self._get_filenames(params.doc_path)
@@ -125,10 +128,11 @@ class DataLoader():
         #grid_table = np.ones([self.batch_size, self.rows, self.cols, 1])
         #gt_classes = np.ones([self.batch_size, self.rows, self.cols])
         #gt_classes[:,:,0:32] = 0
+        batch_size = self.batch_size
         
-        if len(self.training_data_tobe_fetched) < self.batch_size:
+        if len(self.training_data_tobe_fetched) < batch_size:
             self.training_data_tobe_fetched = [i for i in range(len(self.training_docs))]            
-        selected_index = random.sample(self.training_data_tobe_fetched, self.batch_size)
+        selected_index = random.sample(self.training_data_tobe_fetched, batch_size)
         self.training_data_tobe_fetched = list(set(self.training_data_tobe_fetched).difference(set(selected_index)))
 
         training_docs = [self.training_docs[x] for x in selected_index]
@@ -137,28 +141,50 @@ class DataLoader():
         rows = self.rows
         cols = self.cols
         if self.data_augmentation:
-            rows, cols = self._cal_rows_cols(training_docs, self.data_augmentation_extra)            
-            print('Batch grid table size: ({},{})'.format(rows, cols))
+            rows, cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra)            
+            print('Training grid table augment size: ({},{})'.format(rows, cols))
             
         grid_table, gt_classes = self._positional_mapping(training_docs, self.training_labels, rows, cols)        
         batch = {'grid_table': grid_table, 'gt_classes': gt_classes}
         return batch
     
     def fetch_validation_data(self):
+        batch_size = 1
+        
+        if len(self.validation_data_tobe_fetched) < 1:
+            self.validation_data_tobe_fetched = [i for i in range(len(self.validation_docs))]            
+        selected_index = random.sample(self.validation_data_tobe_fetched, 1)
+        self.validation_data_tobe_fetched = list(set(self.validation_data_tobe_fetched).difference(set(selected_index)))
+
+        validation_docs = [self.validation_docs[x] for x in selected_index]
+        
         rows = self.rows
         cols = self.cols
+        if self.data_augmentation: # calculate rows/cols for current grid table
+            rows, cols = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
+            print('Validation grid table real size: ({},{})'.format(rows, cols))
         
-        grid_table, gt_classes = self._positional_mapping(self.validation_docs, self.validation_labels, rows, cols)        
+        grid_table, gt_classes = self._positional_mapping(validation_docs, self.validation_labels, rows, cols)        
         batch = {'grid_table': grid_table, 'gt_classes': gt_classes}
         return batch
     
-    def fetch_test_data(self):   
-        rows = self.rows
-        cols = self.cols     
+    def fetch_test_data(self): 
+        batch_size = 1
         
-        grid_table, gt_classes = self._positional_mapping(self.validation_docs, self.validation_labels, rows, cols)        
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'docs': self.validation_docs}
-        return batch
+        if len(self.validation_data_tobe_fetched) == 0:
+            return None, 0                   
+        
+        selected_index = self.validation_data_tobe_fetched[0]
+        self.validation_data_tobe_fetched = list(set(self.validation_data_tobe_fetched).difference(set(selected_index)))
+
+        validation_docs = [self.validation_docs[x] for x in selected_index]
+        
+        rows, cols = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
+        print('Test grid table real size: ({},{})'.format(rows, cols))
+        
+        grid_table, gt_classes = self._positional_mapping(validation_docs, self.validation_labels, rows, cols)        
+        batch = {'grid_table': grid_table, 'gt_classes': gt_classes}
+        return batch, len(self.validation_data_tobe_fetched)
     
     def _positional_mapping(self, docs, labels, rows, cols):
         """
@@ -249,11 +275,11 @@ class DataLoader():
                     max_col = max_col_words
         pad_row, pad_col = 0, 0
         if extra_augmentation:
-            pad_row = random.randint(0, 2*self.encoding_factor)
-            pad_col = random.randint(0, 2*self.encoding_factor)
+            pad_row = random.randint(0, self.da_extra_rows*self.encoding_factor) #abs(random.gauss(0, 3*self.encoding_factor))
+            pad_col = random.randint(0, self.da_extra_cols*self.encoding_factor)
         rows = ((max_row+pad_row)//self.encoding_factor+1) * self.encoding_factor
         cols = ((max_col+pad_col)//self.encoding_factor+1) * self.encoding_factor  
-        return rows, cols   
+        return min(rows, 12*self.encoding_factor), min(cols, 12*self.encoding_factor) # 22x upper boundary
     
     def _collect_data(self, file_name, content, update_dict):
         """
@@ -376,6 +402,7 @@ class DataLoader():
             if update_dict:
                 self.dictionary[string] = 0
             else:
+                print('unknown text: ' + string)
                 string = '[UNK]' # TBD: take special care to unmet words\
         self.dictionary[string] += 1
         return string, len(string) # len(string) not used   

@@ -54,7 +54,8 @@ class Model(object):
     
     
     @layer
-    def bert_embed(self, layer_input, vocab_size, embedding_size=768, use_one_hot_embeddings=False, initializer_range=0.02, name="embeddings", trainable=False):
+    def bert_embed(self, layer_input, vocab_size, embedding_size=768, use_one_hot_embeddings=False, 
+                   initializer_range=0.02, name="embeddings", trainable=False):
         with tf.variable_scope("bert"):
           with tf.variable_scope("embeddings"):
             # Perform embedding lookup on the word ids.

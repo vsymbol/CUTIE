@@ -32,7 +32,7 @@ class CUTIERes(CUTIE):
     def setup(self):        
         # input
         (self.feed('data')
-             .bert_embed(self.num_vocabs, 768, name='embeddings'))  
+             .bert_embed(self.num_vocabs, 768, name='embeddings', trainable=False))  
         
         # encoder
         (self.feed('embeddings')

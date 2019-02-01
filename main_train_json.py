@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 import argparse, os
 import timeit
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 from model_cutie import CUTIE
 from model_cutie_res import CUTIERes
@@ -40,11 +40,13 @@ parser.add_argument('--ckpt_save_step', type=int, default=1000)
 # training
 parser.add_argument('--data_augmentation', type=bool, default=True) # augment data row/col in each batch
 parser.add_argument('--data_augmentation_extra', type=bool, default=True) # randomly expand rows/cols
+parser.add_argument('--data_augmentation_extra_rows', type=int, default=4) 
+parser.add_argument('--data_augmentation_extra_cols', type=int, default=8) 
 parser.add_argument('--batch_size', type=int, default=32) 
-parser.add_argument('--iterations', type=int, default=20000)  
+parser.add_argument('--iterations', type=int, default=80000)  
 parser.add_argument('--lr_decay_step', type=int, default=4000) 
-parser.add_argument('--lr_decay_factor', type=float, default=0.5) 
 parser.add_argument('--learning_rate', type=float, default=0.001)
+parser.add_argument('--lr_decay_factor', type=float, default=0.5) 
 
 # loss optimization
 parser.add_argument('--hard_negative_ratio', type=int, help='the ratio between negative and positive losses', default=3) 
@@ -98,14 +100,13 @@ def calc_ghm_weights(logits, labels):
 
 if __name__ == '__main__':
     # data
-    data_loader = DataLoader(params, update_dict=True, load_dictionary=params.load_dict, data_split=0.75)
+    data_loader = DataLoader(params, update_dict=False, load_dictionary=params.load_dict, data_split=0.75)
     num_words = max(40000, data_loader.num_words)
     num_classes = data_loader.num_classes
     #a = data_loader.next_batch()
     #b = data_loader.fetch_validation_data()
     
     # model
-    #network = CUTIE(num_words, num_classes, params
     network = CUTIERes(num_words, num_classes, params)
     #network = CUTIEUNet(num_words, num_classes, params)
     model_loss, regularization_loss, total_loss, model_logits, model_output = network.build_loss()  
@@ -154,7 +155,8 @@ if __name__ == '__main__':
         if params.restore_ckpt:
             if params.restore_bertembedding_only:
                 if 'bert' not in network.name:
-                    raise Exception('no bert embedding in the model config, switch restore_bertembedding_only off or built a related model')
+                    raise Exception('no bert embedding was designed in the built model, \
+                        switch restore_bertembedding_only off or built a related model')
                 try:
                     load_variable = {"bert/embeddings/word_embeddings": network.embedding_table}
                     ckpt_saver = tf.train.Saver(load_variable, max_to_keep=50)
@@ -172,9 +174,9 @@ if __name__ == '__main__':
                     print('Restoring from {}...'.format(ckpt_path))
                     ckpt_saver.restore(sess, ckpt_path)
                     print('Restored from {}'.format(ckpt_path))
-                    #stem = os.path.splitext(os.path.basename(ckpt_path))[0]
-                    #iter_start = int(stem.split('_')[-1]) - 1
-                    #sess.run(global_step.assign(iter_start))
+                    stem = os.path.splitext(os.path.basename(ckpt_path))[0]
+                    iter_start = int(stem.split('_')[-1]) - 1
+                    sess.run(global_step.assign(iter_start))
                 except:
                     raise Exception('Check your pretrained {:s}'.format(ckpt_path))
             
@@ -225,25 +227,17 @@ if __name__ == '__main__':
                 
             # calculate validation accuracy and display results
             if (iter+1)%params.validation_step == 0:
-                data = data_loader.fetch_validation_data()
                 
                 recalls, accs_strict = [], []
-                while data:
-                    grid_tables, gt_classes = [], []
-                    if len(data['grid_table']) > params.batch_size:
-                        grid_tables = data['grid_table'][:params.batch_size]
-                        gt_classes = data['gt_classes'][:params.batch_size]
-                        del data['grid_table'][:params.batch_size]
-                        del data['gt_classes'][:params.batch_size]
-                    else:
-                        grid_tables = data['grid_table'][:]
-                        gt_classes = data['gt_classes'][:]
-                        data = None
+                for _ in range(params.batch_size):
+                    data = data_loader.fetch_validation_data()
+                    grid_tables = data['grid_table']
+                    gt_classes = data['gt_classes']
+                    
                     feed_dict = {
                         network.data: grid_tables
                     }
-                    fetches = [model_output]
-                    
+                    fetches = [model_output]                    
                     [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
                     recall, acc_strict, res = cal_accuracy(data_loader, np.array(grid_tables), 
                                                            np.array(gt_classes), model_output_val, 
@@ -285,4 +279,6 @@ if __name__ == '__main__':
                 ckpt_saver.save(sess, filename)
                 print('Checkpoint saved to: {:s}'.format(filename))
     
+    from pprint import pprint
+    pprint(params)
     summary_writer.close()

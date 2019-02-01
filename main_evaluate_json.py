@@ -130,21 +130,16 @@ if __name__ == '__main__':
             
         # calculate validation accuracy and display results   
         recalls, accs_strict = [], []
-        data = data_loader.fetch_test_data()        
+        data = data_loader.fetch_test_data() # TBD: mind rows/cols
         model_output = network.inference()    
-        while data:
-            print('{:d} samples left to be tested'.format(len(data['grid_table'])))
-            grid_tables, gt_classes = [], []
-            if len(data['grid_table']) > params.batch_size:
-                docs = data['docs'][:params.batch_size]
-                grid_tables = data['grid_table'][:params.batch_size]
-                gt_classes = data['gt_classes'][:params.batch_size]
-                del data['grid_table'][:params.batch_size]
-                del data['gt_classes'][:params.batch_size]
-            else:
-                grid_tables = data['grid_table'][:]
-                gt_classes = data['gt_classes'][:]
-                data = None
+        while True:
+            data, samples_left = data_loader.fetch_test_data()
+            if not data:
+                break            
+            print('{:d} samples left to be tested'.format(samples_left))
+            
+            grid_tables = data['grid_table']
+            gt_classes = data['gt_classes']
             feed_dict = {
                 network.data: grid_tables
             }
@@ -154,7 +149,7 @@ if __name__ == '__main__':
             recall, acc_strict, res = cal_save_results(np.array(docs), np.array(grid_tables), np.array(gt_classes), model_output_val)
             recalls += [recall]
             accs_strict += [acc_strict] 
-            print(res) # show res for current batch    
+            #print(res) # show res for current batch    
 
         recall = sum(recalls) / len(recalls)
         acc_strict = sum(accs_strict) / len(accs_strict)

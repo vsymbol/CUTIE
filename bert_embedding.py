@@ -158,7 +158,7 @@ if __name__ == '__main__':
     # model
     bert = BertEmbedding() 
     
-    config = tf.ConfigProto(allow_soft_placement=True)
+    config = tf.ConfigProto(allow_soft_placement=False)
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         

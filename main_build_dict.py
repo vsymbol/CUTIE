@@ -9,7 +9,6 @@ from data_loader_json import DataLoader
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 parser.add_argument('--dict_path', type=str, default='dict/taxi') 
 parser.add_argument('--doc_path', type=str, default='data/taxi') 
-parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for ckpt and dict') # TBD: save log/models with prefix
 parser.add_argument('--batch_size', type=int, default=32) 
 params = parser.parse_args()
 
