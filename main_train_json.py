@@ -8,18 +8,18 @@ import timeit
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 from model_cutie import CUTIE
-from model_cutie_res import CUTIERes
+from model_cutie_res_bert import CUTIERes
 from model_cutie_unet8 import CUTIEUNet
 from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/hotel') 
-parser.add_argument('--save_prefix', type=str, default='hotel', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/meals') 
+parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for ckpt') # TBD: save log/models with prefix
 
 # ckpt
-parser.add_argument('--restore_ckpt', type=bool, default=False) 
+parser.add_argument('--restore_ckpt', type=bool, default=True) 
 parser.add_argument('--restore_bertembedding_only', type=bool, default=True) # effective when restore_ckpt is True
 parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt') 
 parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/')
@@ -27,7 +27,8 @@ parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_8x_40000x9_
 
 # dict
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') # 40000 or 119547  
+parser.add_argument('--load_dict_from_path', type=str, default='dict/119547') # 40000 or 119547  
+parser.add_argument('--update_dict', type=bool, default=True) 
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
 # log
@@ -100,7 +101,7 @@ def calc_ghm_weights(logits, labels):
 
 if __name__ == '__main__':
     # data
-    data_loader = DataLoader(params, update_dict=False, load_dictionary=params.load_dict, data_split=0.75)
+    data_loader = DataLoader(params, update_dict=params.update_dict, load_dictionary=params.load_dict, data_split=0.75)
     num_words = max(40000, data_loader.num_words)
     num_classes = data_loader.num_classes
     #a = data_loader.next_batch()

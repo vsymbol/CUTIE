@@ -35,7 +35,7 @@ class DataLoader():
         
         ## 0> parameters to be tuned
         self.load_dictionary = load_dictionary # load dictionary from file rather than start from empty 
-        self.dict_path = params.load_dict_from_path if self.load_dictionary else params.dict_path
+        self.dict_path = params.load_dict_from_path if load_dictionary else params.dict_path
         if self.load_dictionary:
             self.dictionary = np.load(self.dict_path + '_dictionary.npy').item()
             self.word_to_index = np.load(self.dict_path + '_word_to_index.npy').item()

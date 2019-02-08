@@ -220,6 +220,7 @@ class Model(object):
         Returns:
           float Tensor of shape [batch_size, seq_length, embedding_size].
         """
+        bert_vocab_size = 119547
         # This function assumes that the input is of shape [batch_size, seq_length,
         # num_inputs].
         #
@@ -228,11 +229,18 @@ class Model(object):
         if input_ids.shape.ndims == 3: # originally 2
             input_ids = tf.expand_dims(input_ids, axis=[-1])
         
-        embedding_table = tf.get_variable(
+        bert_embedding_table = embedding_table = tf.get_variable(
             name=word_embedding_name,
-            shape=[vocab_size, embedding_size],
+            shape=[bert_vocab_size, embedding_size],
             initializer=tf.truncated_normal_initializer(stddev=initializer_range),
             trainable=trainable)
+        if vocab_size > bert_vocab_size: # handle dict augmentation
+            embedding_table_plus = tf.get_variable(
+                name=word_embedding_name + '_plus',
+                shape=[vocab_size-bert_vocab_size, embedding_size],
+                initializer=tf.truncated_normal_initializer(stddev=initializer_range),
+                trainable=trainable)
+            embedding_table = tf.concat([embedding_table, embedding_table_plus], 0)        
         
         if use_one_hot_embeddings:
             flat_input_ids = tf.reshape(input_ids, [-1])
@@ -245,7 +253,7 @@ class Model(object):
         
         output = tf.reshape(output,
                             input_shape[0:-1] + [input_shape[-1] * embedding_size])
-        return (output, embedding_table)
+        return (output, bert_embedding_table)
     
     def get_shape_list(self, tensor, expected_rank=None, name=None):
         """Returns a list of the shape of tensor, preferring static dimensions.
