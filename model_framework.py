@@ -2,7 +2,7 @@
 # 2018-12 
 # xiaohui.zhao@accenture.com
 import tensorflow as tf
-
+import math
 
 def layer(op):
     def layer_decorated(self, *args, **kwargs):
@@ -187,6 +187,49 @@ class Model(object):
     
     
     @layer
+    def attention(self, layer_input, num_heads, name, dropout=0.0, trainable=True):
+        """
+        implement self attention with residual addition,
+        layer_input[0] and layer_input[1] should have the same shape for residual addition 
+        """
+        f = layer_input[0]
+        x = layer_input[1]
+        
+        convolve = lambda input, filter: tf.nn.conv2d(input, filter, [1,1,1,1], 'SAME')
+        with tf.variable_scope(name) as scope:
+            init_weights = tf.truncated_normal_initializer(0.0, 0.02)
+            regularizer = self.l2_regularizer(self.weight_decay)
+            shape = tf.shape(f)
+            c_i = f.get_shape()[-1]
+            c_o = f.get_shape()[-1]
+            c_a = c_o // 8 # attention kernel depth
+            size_per_head = c_o // num_heads
+            
+            query = self.make_var('weights_query', [1, 1, c_i, c_a], init_weights, regularizer, trainable)
+            query_layer = convolve(f, query) # [B, H, W, c_a]
+            query_layer = tf.reshape(query_layer, [shape[0], -1, c_a]) # [B, H*W, c_a]
+            
+            key = self.make_var('weights_key', [1, 1, c_i, c_a], init_weights, regularizer, trainable)
+            key_layer = convolve(f, key) # [B, H, W, c_a]
+            key_layer = tf.reshape(key_layer, [shape[0], -1, c_a]) # [B, H*W, c_a]
+            
+            value = self.make_var('weights_value', [1, 1, c_i, c_o], init_weights, regularizer, trainable)
+            value_layer = convolve(f, value) 
+            value_layer = tf.reshape(value_layer, [shape[0], -1, c_o])# [B, H*W, c_o]
+            
+            attention_scores = tf.matmul(query_layer, key_layer, transpose_b=True) # [B, H*W, H*W]
+            attention_scores = tf.multiply(attention_scores, 1.0 / math.sqrt(float(size_per_head.value)))
+            
+            attention_probs = tf.nn.softmax(attention_scores)
+            #attention_probs = dropout(attention_probs, dropout)
+            
+            context_layer = tf.matmul(attention_probs, value_layer) # [B, H*W, c_o]
+            context_layer = tf.reshape(context_layer, shape) # [B, H, W, c_o]
+            
+            return context_layer + x
+    
+    
+    @layer
     def concat(self, layer_input, axis, name):
         return tf.concat(layer_input, axis)
     
@@ -239,7 +282,7 @@ class Model(object):
                 name=word_embedding_name + '_plus',
                 shape=[vocab_size-bert_vocab_size, embedding_size],
                 initializer=tf.truncated_normal_initializer(stddev=initializer_range),
-                trainable=trainable)
+                trainable=True)
             embedding_table = tf.concat([embedding_table, embedding_table_plus], 0)        
         
         if use_one_hot_embeddings:

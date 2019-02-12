@@ -19,4 +19,4 @@ if __name__ == '__main__':
     ## convert data into tokenized data with updated bbox
     #data_loader = DataLoader(params, update_dict=True, load_dictionary=False)
     tokenizer = tokenization.FullTokenizer(vocab_file=params.dict_path, do_lower_case=True)
-    print('done')
+

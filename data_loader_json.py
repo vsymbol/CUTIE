@@ -32,6 +32,7 @@ class DataLoader():
     """
     def __init__(self, params, update_dict=True, load_dictionary=False, data_split=0.75):
         self.encoding_factor = 16 # ensures the size (rows/cols) of grid table compat with the network
+        self.fill_bbox = params.fill_bbox  # fill bbox with labels or use one single lable for the entire bbox
         
         ## 0> parameters to be tuned
         self.load_dictionary = load_dictionary # load dictionary from file rather than start from empty 
@@ -144,8 +145,8 @@ class DataLoader():
             rows, cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra)            
             print('Training grid table augment size: ({},{})'.format(rows, cols))
             
-        grid_table, gt_classes = self._positional_mapping(training_docs, self.training_labels, rows, cols)        
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes}
+        grid_table, gt_classes, bboxes, file_name = self._positional_mapping(training_docs, self.training_labels, rows, cols)        
+        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 'file_name': file_name, 'shape': [rows,cols]}
         return batch
     
     def fetch_validation_data(self):
@@ -164,8 +165,8 @@ class DataLoader():
             rows, cols = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
             print('Validation grid table real size: ({},{})'.format(rows, cols))
         
-        grid_table, gt_classes = self._positional_mapping(validation_docs, self.validation_labels, rows, cols)        
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes}
+        grid_table, gt_classes, bboxes, file_name = self._positional_mapping(validation_docs, self.validation_labels, rows, cols)        
+        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 'file_name': file_name, 'shape': [rows,cols]}
         return batch
     
     def fetch_test_data(self): 
@@ -182,20 +183,24 @@ class DataLoader():
         rows, cols = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
         print('Test grid table real size: ({},{})'.format(rows, cols))
         
-        grid_table, gt_classes = self._positional_mapping(validation_docs, self.validation_labels, rows, cols)        
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes}
+        grid_table, gt_classes, bboxes, file_name = self._positional_mapping(validation_docs, self.validation_labels, rows, cols)        
+        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 'file_name': file_name, 'shape': [rows,cols]}
         return batch, len(self.validation_data_tobe_fetched)
     
     def _positional_mapping(self, docs, labels, rows, cols):
         """
         docs in format:
         [[file_name, text, word_id, [x_left, y_top, x_right, y_bottom], [image_w, image_h]], max_row_words, max_col_words ]
+        return grid_tables, gird_labels, dict bboxes {file_name:[]}, file_names
         """
         grid_tables = []
         gird_labels = []
+        bboxes = {}
+        file_names = []
         for doc in docs:
             grid_table = np.zeros([rows, cols], dtype=np.int32)
             grid_label = np.zeros([rows, cols], dtype=np.int8)
+            bbox = [[[] for c in range(cols)] for r in range(rows)]
             drawing_board = np.zeros([rows, cols], dtype=str)
             for item in doc:
                 file_name = item[0]
@@ -204,24 +209,40 @@ class DataLoader():
                 x_left, y_top, x_right, y_bottom = item[3][:]
                 image_w, image_h = item[4][:]
                 
-                dict_id = self.word_to_index[text]
+                dict_id = self.word_to_index[text]                
+                class_id = self._dress_class(file_name, word_id, labels)
+                  
+                if self.fill_bbox: # TBD: overlap avoidance
+                    top = int(rows * y_top / image_h)
+                    bottom = int(rows * y_bottom / image_h)
+                    left = int(cols * x_left / image_w)
+                    right = int(cols * x_right / image_w)
+                    grid_table[top:bottom, left:right] = dict_id  
+                    grid_label[top:bottom, left:right] = class_id  
                     
-                class_id = self._dress_class(file_name, word_id, labels)    
-                col = int(cols * (x_left + (x_right-x_left)/2) / image_w) 
-                row = int(rows * (y_top + (y_bottom-y_top)/2) / image_h)  
-                if grid_label[row, col] == 0: # TBD: overlap avoidance should be done before this
-                    grid_table[row, col] = dict_id
-                if grid_label[row, col] == 0:
-                    grid_label[row, col] = class_id
-                    if DEBUG:
-                        filler = text if class_id == 0 else str(class_id)+text+'>>' 
-                        drawing_board[row, col] = filler
+                    box = [x_left, y_top, x_right-x_left, y_bottom-y_top]
+                    for y in range(top, bottom):
+                        for x in range(left, right):
+                            bbox[y][x] = box
+                else:
+                    col = int(cols * (x_left + (x_right-x_left)/2) / image_w) 
+                    row = int(rows * (y_top + (y_bottom-y_top)/2) / image_h)  
+                    if grid_label[row, col] == 0:
+                        grid_table[row, col] = dict_id
+                        grid_label[row, col] = class_id
+                        bbox[row][col] = [x_left, y_top, x_right-x_left, y_bottom-y_top]
+                        
+                if DEBUG:
+                    filler = text if class_id == 0 else str(class_id)+text+'>>' 
+                    drawing_board[row, col] = filler
             if DEBUG:
                 self.grid_visualization(drawing_board)
             grid_tables.append(np.expand_dims(grid_table, -1)) 
             gird_labels.append(grid_label) 
+            bboxes[file_name] = bbox
+            file_names.append(file_name)
             
-        return grid_tables, gird_labels 
+        return grid_tables, gird_labels, bboxes, file_names
             
     def grid_visualization(self, data):
         import pandas as pd
@@ -261,7 +282,7 @@ class DataLoader():
         
     def _update_training_rows_cols(self):
         self.rows, self.cols = self._cal_rows_cols(self.training_docs)  
-        print('\nDATASHAPE: data set with maximum grid table of ({},{}), updated in DataLoader._update_training_rows_cols() \n'.format(self.rows, self.cols))      
+        print('\nDATASHAPE: data set with maximum grid table of ({},{}), updated in DataLoader._update_training_rows_cols()'.format(self.rows, self.cols))      
         
     def _cal_rows_cols(self, docs, extra_augmentation=False):
         max_row = 0
@@ -275,8 +296,8 @@ class DataLoader():
                     max_col = max_col_words
         pad_row, pad_col = 0, 0
         if extra_augmentation:
-            pad_row = random.randint(0, self.da_extra_rows*self.encoding_factor) #abs(random.gauss(0, 3*self.encoding_factor))
-            pad_col = random.randint(0, self.da_extra_cols*self.encoding_factor)
+            pad_row = abs(int(random.gauss(0, self.da_extra_rows*self.encoding_factor))) #abs(random.gauss(0, u))
+            pad_col = abs(int(random.gauss(0, self.da_extra_cols*self.encoding_factor))) #random.randint(0, u)
         rows = ((max_row+pad_row)//self.encoding_factor+1) * self.encoding_factor
         cols = ((max_col+pad_col)//self.encoding_factor+1) * self.encoding_factor  
         return min(rows, 12*self.encoding_factor), min(cols, 12*self.encoding_factor) # 22x upper boundary

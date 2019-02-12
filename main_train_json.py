@@ -5,21 +5,21 @@ import tensorflow as tf
 import numpy as np
 import argparse, os
 import timeit
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from model_cutie import CUTIE
-from model_cutie_res_bert import CUTIERes
+from model_cutie_res_att import CUTIERes
 from model_cutie_unet8 import CUTIEUNet
 from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/meals') 
-parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/taxi_small')
+parser.add_argument('--save_prefix', type=str, default='taxi_small', help='prefix for ckpt') # TBD: save log/models with prefix
 
 # ckpt
-parser.add_argument('--restore_ckpt', type=bool, default=True) 
+parser.add_argument('--restore_ckpt', type=bool, default=False) 
 parser.add_argument('--restore_bertembedding_only', type=bool, default=True) # effective when restore_ckpt is True
 parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt') 
 parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/')
@@ -27,24 +27,21 @@ parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_8x_40000x9_
 
 # dict
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/119547') # 40000 or 119547  
-parser.add_argument('--update_dict', type=bool, default=True) 
+parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') # 40000 or 119547  
+parser.add_argument('--update_dict', type=bool, default=False) 
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
-# log
-parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/') 
-parser.add_argument('--log_disp_step', type=int, default=100) 
-parser.add_argument('--log_save_step', type=int, default=100) 
-parser.add_argument('--validation_step', type=int, default=200) 
-parser.add_argument('--ckpt_save_step', type=int, default=1000)
+# data manipulation
+parser.add_argument('--fill_bbox', type=bool, default=False) # fill bbox with dict_id / label_id
+
+parser.add_argument('--data_augmentation', type=bool, default=False) # augment data row/col in each batch
+parser.add_argument('--data_augmentation_extra', type=bool, default=True) # randomly expand rows/cols
+parser.add_argument('--data_augmentation_extra_rows', type=int, default=2) 
+parser.add_argument('--data_augmentation_extra_cols', type=int, default=3) 
 
 # training
-parser.add_argument('--data_augmentation', type=bool, default=True) # augment data row/col in each batch
-parser.add_argument('--data_augmentation_extra', type=bool, default=True) # randomly expand rows/cols
-parser.add_argument('--data_augmentation_extra_rows', type=int, default=4) 
-parser.add_argument('--data_augmentation_extra_cols', type=int, default=8) 
 parser.add_argument('--batch_size', type=int, default=32) 
-parser.add_argument('--iterations', type=int, default=80000)  
+parser.add_argument('--iterations', type=int, default=40000)  
 parser.add_argument('--lr_decay_step', type=int, default=4000) 
 parser.add_argument('--learning_rate', type=float, default=0.001)
 parser.add_argument('--lr_decay_factor', type=float, default=0.5) 
@@ -55,13 +52,20 @@ parser.add_argument('--use_ghm', type=int, default=0) # 1 to use GHM, 0 to not u
 parser.add_argument('--ghm_bins', type=int, default=30) # to be tuned
 parser.add_argument('--ghm_momentum', type=int, default=0) # 0 / 0.75
 
+# log
+parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/') 
+parser.add_argument('--log_disp_step', type=int, default=200) 
+parser.add_argument('--log_save_step', type=int, default=200) 
+parser.add_argument('--validation_step', type=int, default=200) 
+parser.add_argument('--ckpt_save_step', type=int, default=1000)
+
 # model
 parser.add_argument('--embedding_size', type=int, default=120) # not used for bert embedding with default 768
 parser.add_argument('--weight_decay', type=float, default=0.0005) 
 parser.add_argument('--eps', type=float, default=1e-6) 
 
 # inference
-parser.add_argument('--c_threshold', type=float, default=0.5) 
+#parser.add_argument('--c_threshold', type=float, default=0.5) 
 params = parser.parse_args()
 
 edges = [float(x)/params.ghm_bins for x in range(params.ghm_bins+1)]
@@ -99,6 +103,14 @@ def calc_ghm_weights(logits, labels):
         
     return weights.reshape(shape)
 
+def save_ckpt(sess, path, save_prefix, network, num_words, num_classes, iter):
+    ckpt_path = os.path.join(path, save_prefix)
+    if not os.path.exists(ckpt_path):
+        os.makedirs(ckpt_path)
+    filename = os.path.join(ckpt_path, network.name + '_{:d}x{:d}_iter_{:d}'.format(num_words, num_classes, iter+1) + '.ckpt')
+    ckpt_saver.save(sess, filename)
+    print('Checkpoint saved to: {:s}'.format(filename))
+    
 if __name__ == '__main__':
     # data
     data_loader = DataLoader(params, update_dict=params.update_dict, load_dictionary=params.load_dict, data_split=0.75)
@@ -142,7 +154,7 @@ if __name__ == '__main__':
     training_acc_strict = []
     validation_acc_strict = []
     
-    ckpt_saver = tf.train.Saver(max_to_keep=50)
+    ckpt_saver = tf.train.Saver(max_to_keep=200)
     summary_path = os.path.join(params.log_path, params.save_prefix, network.name)
     summary_writer = tf.summary.FileWriter(summary_path, tf.get_default_graph(), flush_secs=10)
     
@@ -218,7 +230,7 @@ if __name__ == '__main__':
                 timer_stop = timeit.default_timer()
                 print('\t >>time per step: %.2fs <<'%(timer_stop - timer_start))
                 
-                recall, acc_strict, res = cal_accuracy(data_loader, np.array(data['grid_table']), np.array(data['gt_classes']), model_output_val, params.c_threshold)
+                recall, acc_strict, res = cal_accuracy(data_loader, np.array(data['grid_table']), np.array(data['gt_classes']), model_output_val)
                 training_recall += [recall]        
                 training_acc_strict += [acc_strict]          
                 print('\nIter: %d/%d, total loss: %.4f, model loss: %.4f, regularization loss: %.4f'%\
@@ -227,7 +239,7 @@ if __name__ == '__main__':
                 print('TRAINING ACC (Recall/Acc): %.3f / %.3f | highest %.3f / %.3f'%(recall, acc_strict, max(training_recall), max(training_acc_strict)))
                 
             # calculate validation accuracy and display results
-            if (iter+1)%params.validation_step == 0:
+            if (iter)%params.validation_step == 0:
                 
                 recalls, accs_strict = [], []
                 for _ in range(params.batch_size):
@@ -241,8 +253,7 @@ if __name__ == '__main__':
                     fetches = [model_output]                    
                     [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
                     recall, acc_strict, res = cal_accuracy(data_loader, np.array(grid_tables), 
-                                                           np.array(gt_classes), model_output_val, 
-                                                           params.c_threshold)
+                                                           np.array(gt_classes), model_output_val)
                     recalls += [recall]
                     accs_strict += [acc_strict] 
 
@@ -265,20 +276,20 @@ if __name__ == '__main__':
                                   format(i*params.log_disp_step,w) for i,w in enumerate(training_recall)]))
                 print('VALIDATION RECALL CURVE: ' 
                       + ' >'.join(['{:d}:{:.2f}'.
-                                  format(i*params.validation_step,w) for i,w in enumerate(validation_recall)]))
+                                  format(i*params.validation_step,w) for i,w in enumerate(validation_recall)]))            
                 
-            # save logs
-            if (iter+1)%params.log_save_step == 0:
-                summary_writer.add_summary(summary_str, iter+1)                
+                # save best performance checkpoint
+                if validation_acc_strict[-1] > max(validation_acc_strict[:-1]):
+                    save_ckpt(sess, params.ckpt_path, params.save_prefix, network, num_words, num_classes, iter)
+                    print('\nBest up-to-date performance checkpoint saved.\n')
                 
             # save checkpoints
             if (iter+1)%params.ckpt_save_step == 0:
-                ckpt_path = os.path.join(params.ckpt_path, params.save_prefix)
-                if not os.path.exists(ckpt_path):
-                    os.makedirs(ckpt_path)
-                filename = os.path.join(ckpt_path, network.name + '_{:d}x{:d}_iter_{:d}'.format(num_words, num_classes, iter+1) + '.ckpt')
-                ckpt_saver.save(sess, filename)
-                print('Checkpoint saved to: {:s}'.format(filename))
+                save_ckpt(sess, params.ckpt_path, params.save_prefix, network, num_words, num_classes, iter)
+                
+            # save logs
+            if (iter+1)%params.log_save_step == 0:
+                summary_writer.add_summary(summary_str, iter+1)    
     
     from pprint import pprint
     pprint(params)
