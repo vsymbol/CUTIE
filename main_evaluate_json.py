@@ -60,7 +60,7 @@ if __name__ == '__main__':
             raise Exception('Check your pretrained {:s}'.format(ckpt_path))
             
         # calculate validation accuracy and display results   
-        recalls, accs_strict = [], []
+        recalls, accs_strict, accs_soft = [], [], []
         num_test = len(data_loader.validation_docs)
         for i in range(num_test):
             data = data_loader.fetch_validation_data()
@@ -73,9 +73,10 @@ if __name__ == '__main__':
             }
             fetches = [model_output]
             
-            [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                     
-            recall, acc_strict, res = cal_accuracy(data_loader, np.array(grid_table), 
-                                                   np.array(gt_classes), model_output_val)                   
+            [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)
+            recall, acc_strict, acc_soft, res = cal_accuracy(data_loader, np.array(data['grid_table']), 
+                                                   np.array(data['gt_classes']), model_output_val, 
+                                                   np.array(data['label_mapids']), data['bbox_mapids'])                  
 #             recall, acc_strict, res = cal_save_results(data_loader, params.save_prefix,
 #                                                        np.array(docs), 
 #                                                        np.array(grid_table), 
@@ -83,6 +84,7 @@ if __name__ == '__main__':
 #                                                        model_output_val)
             recalls += [recall]
             accs_strict += [acc_strict] 
+            accs_soft += [acc_soft]
             #print(res) # show res for current batch  
             
 #             # visualize result
@@ -95,4 +97,5 @@ if __name__ == '__main__':
 
         recall = sum(recalls) / len(recalls)
         acc_strict = sum(accs_strict) / len(accs_strict)
-        print('EVALUATION ACC (Recall/Acc): %.3f / %.3f\n'%(recall, acc_strict))
+        acc_soft = sum(accs_soft) / len(accs_soft)
+        print('EVALUATION ACC (Recall/Acc): %.3f / %.3f (%.3f) \n'%(recall, acc_strict, acc_soft))

@@ -96,7 +96,7 @@ class DataLoader():
         ## 1.2> load test files
         self.test_doc_files = self._get_filenames(params.test_path) if hasattr(params, 'test_path') else []
         self.test_docs, self.test_labels = self.load_data(self.test_doc_files, update_dict=update_dict) # TBD: optimize the update dict flag
-        print('DATASET: %d for test from %s \n'%(len(self.test_docs), params.test_path if hasattr(params, 'test_path') else ''))
+        print('DATASET: %d for test from %s \n'%(len(self.test_docs), params.test_path if hasattr(params, 'test_path') else '_'))
         
         # TBD: adjust bbox in @training_docs to eliminate overlaps
         #self.training_docs = self.eliminate_overlap(self.training_docs)
@@ -151,8 +151,11 @@ class DataLoader():
             rows, cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra)            
             print('Training grid table augment size: ({},{})'.format(rows, cols))
             
-        grid_table, gt_classes, bboxes, file_name = self._positional_mapping(training_docs, self.training_labels, rows, cols)        
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 'file_name': file_name, 'shape': [rows,cols]}
+        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
+            self._positional_mapping(training_docs, self.training_labels, rows, cols)    
+        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 
+                 'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
+                 'file_name': file_name, 'shape': [rows,cols]}
         return batch
     
     def fetch_validation_data(self):
@@ -172,8 +175,11 @@ class DataLoader():
         #    rows, cols = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
         #    print('Validation grid table real size: ({},{})'.format(rows, cols))
         
-        grid_table, gt_classes, bboxes, file_name = self._positional_mapping(validation_docs, self.validation_labels, rows, cols)        
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 'file_name': file_name, 'shape': [rows,cols]}
+        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
+            self._positional_mapping(validation_docs, self.validation_labels, rows, cols)       
+        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 
+                 'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
+                 'file_name': file_name, 'shape': [rows,cols]}
         return batch
     
     def fetch_test_data(self): 
@@ -196,8 +202,11 @@ class DataLoader():
         if len(self.test_docs) % 100: # show static every 100        
             print('Test grid table size: ({},{}), {} left to be tested'.format(rows, cols, len(self.test_docs)))
             
-        grid_table, gt_classes, bboxes, file_name = self._positional_mapping(test_docs, self.test_labels, rows, cols)        
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 'file_name': file_name, 'shape': [rows,cols]}
+        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
+            self._positional_mapping(test_docs, self.test_labels, rows, cols)        
+        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 
+                 'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
+                 'file_name': file_name, 'shape': [rows,cols]}
         return batch
     
     def _positional_mapping(self, docs, labels, rows, cols):
@@ -209,11 +218,15 @@ class DataLoader():
         grid_tables = []
         gird_labels = []
         bboxes = {}
+        label_mapids = []
+        bbox_mapids = [] # [{}, ] bbox identifier, each id with one or multiple bbox/bboxes
         file_names = []
         for doc in docs:
             grid_table = np.zeros([rows, cols], dtype=np.int32)
             grid_label = np.zeros([rows, cols], dtype=np.int8)
             bbox = [[[] for c in range(cols)] for r in range(rows)]
+            bbox_id, bbox_mapid = 0, {} # one word in one or many positions in a bbox is mapped in bbox_mapid
+            label_mapid = [[] for _ in range(self.num_classes)] # each class is connected to several bboxes (words)
             drawing_board = np.zeros([rows, cols], dtype=str)
             for item in doc:
                 file_name = item[0]
@@ -225,6 +238,7 @@ class DataLoader():
                 dict_id = self.word_to_index[text]                
                 class_id = self._dress_class(file_name, word_id, labels)
                   
+                bbox_id += 1
                 if self.fill_bbox: # TBD: overlap avoidance
                     top = int(rows * y_top / image_h)
                     bottom = int(rows * y_bottom / image_h)
@@ -232,6 +246,11 @@ class DataLoader():
                     right = int(cols * x_right / image_w)
                     grid_table[top:bottom, left:right] = dict_id  
                     grid_label[top:bottom, left:right] = class_id  
+                    
+                    label_mapid[class_id].append(bbox_id)
+                    for row in range(top, bottom):
+                        for col in range(left, right):
+                            bbox_mapid[row*cols+col] = bbox_id
                     
                     box = [x_left, y_top, x_right-x_left, y_bottom-y_top]
                     for y in range(top, bottom):
@@ -243,6 +262,10 @@ class DataLoader():
                     if grid_label[row, col] == 0:
                         grid_table[row, col] = dict_id
                         grid_label[row, col] = class_id
+                        
+                        label_mapid[class_id].append(bbox_id)
+                        bbox_mapid[row*cols+col] = bbox_id
+                        
                         bbox[row][col] = [x_left, y_top, x_right-x_left, y_bottom-y_top]
                         
                 if DEBUG:
@@ -253,9 +276,11 @@ class DataLoader():
             grid_tables.append(np.expand_dims(grid_table, -1)) 
             gird_labels.append(grid_label) 
             bboxes[file_name] = bbox
+            label_mapids.append(label_mapid)
+            bbox_mapids.append(bbox_mapid)
             file_names.append(file_name)
             
-        return grid_tables, gird_labels, bboxes, file_names
+        return grid_tables, gird_labels, bboxes, label_mapids, bbox_mapids, file_names
             
     def grid_visualization(self, data):
         import pandas as pd
@@ -439,7 +464,7 @@ class DataLoader():
                 print('unknown text: ' + string)
                 string = '[UNK]' # TBD: take special care to unmet words\
         self.dictionary[string] += 1
-        return string, len(string) # len(string) not used   
+        return string, len(string) # len(string) not used
             
     def _dress_bbox(self, bbox):
         positions = np.array(bbox).reshape([-1])

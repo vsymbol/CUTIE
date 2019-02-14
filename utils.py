@@ -6,33 +6,47 @@ import numpy as np
 
 c_threshold = 0.5
 
-def cal_accuracy(data_loader, gird_table, gt_classes, model_output_val):
+def cal_accuracy(data_loader, grid_table, gt_classes, model_output_val, label_mapids, bbox_mapids):
     #num_tp = 0
     #num_fn = 0
     res = ''
     num_correct = 0
     num_correct_strict = 0
-    num_all = gird_table.shape[0] * (model_output_val.shape[-1]-1)
-    for b in range(gird_table.shape[0]):
-        data_input_flat = gird_table[b,:,:,0].reshape([-1])
+    num_correct_soft = 0
+    num_all = grid_table.shape[0] * (model_output_val.shape[-1]-1)
+    for b in range(grid_table.shape[0]):
+        data_input_flat = grid_table[b,:,:,0].reshape([-1])
         labels = gt_classes[b,:,:].reshape([-1])
         logits = model_output_val[b,:,:,:].reshape([-1, data_loader.num_classes])
+        label_mapid = label_mapids[b]
+        bbox_mapid = bbox_mapids[b]
+        rows, cols = grid_table.shape[1:3]
+        bbox_id = np.array([row*cols+col for row in range(rows) for col in range(cols)])
         
         # ignore inputs that are not word
         indexes = np.where(data_input_flat != 0)[0]
         data_selected = data_input_flat[indexes]
         labels_selected = labels[indexes]
         logits_array_selected = logits[indexes]
+        bbox_id_selected = bbox_id[indexes]
         
         # calculate accuracy
         for c in range(1, data_loader.num_classes):
             labels_indexes = np.where(labels_selected == c)[0]
             logits_indexes = np.where(logits_array_selected[:,c] > c_threshold)[0]
+            
             labels_words = list(data_loader.index_to_word[i] for i in data_selected[labels_indexes])
             logits_words = list(data_loader.index_to_word[i] for i in data_selected[logits_indexes])
-            if np.array_equal(labels_indexes, logits_indexes): 
-            #if set(labels_words) == set(logits_words): 
-                num_correct_strict += 1        
+            
+            label_bbox_ids = label_mapid[c] # GT bbox_ids related to the type of class
+            logit_bbox_ids = [bbox_mapid[bbox] for bbox in bbox_id_selected[logits_indexes] if bbox in bbox_mapid]            
+            
+            #if np.array_equal(labels_indexes, logits_indexes):
+            if set(label_bbox_ids) == set(logit_bbox_ids): 
+                num_correct_strict += 1  
+                num_correct_soft += 1
+            elif set(label_bbox_ids).issubset(set(logit_bbox_ids)):
+                num_correct_soft += 1
             try:  
                 num_correct += np.shape(np.intersect1d(labels_indexes, logits_indexes))[0] / np.shape(labels_indexes)[0]
             except ZeroDivisionError:
@@ -67,7 +81,8 @@ def cal_accuracy(data_loader, gird_table, gt_classes, model_output_val):
                 #print(res)
     recall = num_correct / num_all
     accuracy_strict = num_correct_strict / num_all
-    return recall, accuracy_strict, res
+    accuracy_soft = num_correct_soft / num_all
+    return recall, accuracy_strict, accuracy_soft, res 
 
 
 def cal_save_results(data_loader, save_prefix, docs, grid_table, gt_classes, model_output_val):

@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
 parser.add_argument('--doc_path', type=str, default='data/taxi_small')
 parser.add_argument('--save_prefix', type=str, default='taxi_small', help='prefix for ckpt') # TBD: save log/models with prefix
-parser.add_argument('--test_path', type=str, default='data/taxi_small')
+parser.add_argument('--test_path', type=str, default='') # leave empty is no test data provided
 
 # ckpt
 parser.add_argument('--restore_ckpt', type=bool, default=False) 
@@ -152,18 +152,16 @@ if __name__ == '__main__':
     print(network.name, ': ', total_parameters/1000/1000, 'M parameters \n')
 
     # training
-    training_recall = []
-    validation_recall = []
-    test_recall = []
-    training_acc_strict = []
-    validation_acc_strict = []
-    test_acc_strict = []
+    training_recall, validation_recall, test_recall = [], [], []
+    training_acc_strict, validation_acc_strict, test_acc_strict = [], [], []
+    training_acc_soft, validation_acc_soft, test_acc_soft = [], [], []
     
     ckpt_saver = tf.train.Saver(max_to_keep=200)
     summary_path = os.path.join(params.log_path, params.save_prefix, network.name)
     summary_writer = tf.summary.FileWriter(summary_path, tf.get_default_graph(), flush_secs=10)
     
-    config = tf.ConfigProto(allow_soft_placement=False)
+    config = tf.ConfigProto(allow_soft_placement=True)
+    config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         
@@ -231,22 +229,26 @@ if __name__ == '__main__':
                 sess.partial_run(h, fetches=fetches, feed_dict=feed_dict)
                 
             # calculate training accuracy and display results
-            if iter%params.log_disp_step == 0: 
+            if True or iter%params.log_disp_step == 0: 
                 timer_stop = timeit.default_timer()
                 print('\t >>time per step: %.2fs <<'%(timer_stop - timer_start))
                 
-                recall, acc_strict, res = cal_accuracy(data_loader, np.array(data['grid_table']), np.array(data['gt_classes']), model_output_val)
+                recall, acc_strict, acc_soft, res = cal_accuracy(data_loader, np.array(data['grid_table']), 
+                                                       np.array(data['gt_classes']), model_output_val, 
+                                                       np.array(data['label_mapids']), np.array(data['bbox_mapids']))
                 training_recall += [recall]        
-                training_acc_strict += [acc_strict]          
+                training_acc_strict += [acc_strict]   
+                training_acc_soft += [acc_soft]       
                 print('\nIter: %d/%d, total loss: %.4f, model loss: %.4f, regularization loss: %.4f'%\
                       (iter, params.iterations, total_loss_val, model_loss_val, regularization_loss_val))
                 print(res)
-                print('TRAINING ACC (Recall/Acc): %.3f / %.3f | highest %.3f / %.3f'%(recall, acc_strict, max(training_recall), max(training_acc_strict)))
+                print('TRAINING ACC (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f)'\
+                      %(recall, acc_strict, acc_soft, max(training_recall), max(training_acc_strict), max(training_acc_soft)))
                 
             # calculate validation accuracy and display results
-            if iter%params.validation_step == 0:
+            if True or iter%params.validation_step == 0:
                 
-                recalls, accs_strict = [], []
+                recalls, accs_strict, accs_soft = [], [], []
                 for _ in range(params.batch_size):
                     data = data_loader.fetch_validation_data()
                     grid_tables = data['grid_table']
@@ -256,39 +258,45 @@ if __name__ == '__main__':
                         network.data: grid_tables
                     }
                     fetches = [model_output]                    
-                    [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
-                    recall, acc_strict, res = cal_accuracy(data_loader, np.array(grid_tables), 
-                                                           np.array(gt_classes), model_output_val)
+                    [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)  
+                    recall, acc_strict, acc_soft, res = cal_accuracy(data_loader, np.array(grid_tables), 
+                                                           np.array(gt_classes), model_output_val,
+                                                           np.array(data['label_mapids']), np.array(data['bbox_mapids']))
                     recalls += [recall]
                     accs_strict += [acc_strict] 
+                    accs_soft += [acc_soft]
 
                 recall = sum(recalls) / len(recalls)
                 acc_strict = sum(accs_strict) / len(accs_strict)
+                acc_soft = sum(accs_soft) / len(accs_soft)
                 validation_recall += [recall]
                 validation_acc_strict += [acc_strict]  
+                validation_acc_soft += [acc_soft]
                 print(res) # show res from the last execution of the while loop    
-                print('VALIDATION ACC (Recall/Acc): %.3f / %.3f | highest %.3f / %.3f \n'
-                      %(recall, acc_strict, max(validation_recall), max(validation_acc_strict)))
+                print('VALIDATION ACC (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f) \n'
+                      %(recall, acc_strict, acc_soft, max(validation_recall), max(validation_acc_strict), max(validation_acc_soft)))
 
                 print('TRAINING ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                   format(i*params.log_disp_step,w) for i,w in enumerate(training_acc_strict)]))
-                print('VALIDATION ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
+                print('VALIDATION ACC (STRICT) CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                   format(i*params.validation_step,w) for i,w in enumerate(validation_acc_strict)]))
+                print('VALIDATION ACC (SOFT) CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
+                                  format(i*params.validation_step,w) for i,w in enumerate(validation_acc_soft)]))
                 print('TRAINING RECALL CURVE: ' + ' >'.join(['{:d}:{:.2f}'.
                                   format(i*params.log_disp_step,w) for i,w in enumerate(training_recall)]))
                 print('VALIDATION RECALL CURVE: ' + ' >'.join(['{:d}:{:.2f}'.
                                   format(i*params.validation_step,w) for i,w in enumerate(validation_recall)]))            
                 
                 # save best performance checkpoint
-                if iter>=params.ckpt_save_step and validation_acc_strict[-1] > max(validation_acc_strict[:-1]):
+                if iter>=params.ckpt_save_step and validation_acc_strict[-1] > max(validation_acc_strict[:-1]+[0]):
                     # save as iter+1 to indicate best validation
                     save_ckpt(sess, params.ckpt_path, params.save_prefix, data_loader, network, num_words, num_classes, iter+1)
                     print('\nBest up-to-date performance validation checkpoint saved.\n')
                 
             # calculate validation accuracy and display results
-            if iter>=params.test_step and iter%params.test_step == 0:
+            if params.test_path!='' and iter>=params.test_step and iter%params.test_step == 0:
                 
-                recalls, accs_strict = [], []
+                recalls, accs_strict, accs_soft = [], [], []
                 while True:
                     data = data_loader.fetch_test_data()
                     if data == None:
@@ -301,24 +309,30 @@ if __name__ == '__main__':
                     }
                     fetches = [model_output]                    
                     [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
-                    recall, acc_strict, res = cal_accuracy(data_loader, np.array(grid_tables), 
-                                                           np.array(gt_classes), model_output_val)
+                    recall, acc_strict, acc_soft, res = cal_accuracy(data_loader, np.array(grid_tables), 
+                                                           np.array(gt_classes), model_output_val,
+                                                           np.array(data['label_mapids']), np.array(data['bbox_mapids']))
                     recalls += [recall]
                     accs_strict += [acc_strict] 
+                    accs_soft += [acc_soft]
 
                 recall = sum(recalls) / len(recalls)
                 acc_strict = sum(accs_strict) / len(accs_strict)
+                acc_soft = sum(accs_soft) / len(accs_soft)
                 test_recall += [recall]
                 test_acc_strict += [acc_strict]   
-                print('\n TEST ACC (Recall/Acc): %.3f / %.3f | highest %.3f / %.3f \n'
-                      %(recall, acc_strict, max(test_recall), max(test_acc_strict)))
-                print('TEST ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
+                test_acc_soft += [acc_soft]
+                print('\n TEST ACC (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f) \n'
+                      %(recall, acc_strict, acc_soft, max(test_recall), max(test_acc_strict), max(test_acc_soft)))
+                print('TEST ACC (STRICT) CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                 format(i*params.test_step,w) for i,w in enumerate(test_acc_strict)]))
+                print('TEST ACC (SOFT) CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
+                                format(i*params.test_step,w) for i,w in enumerate(test_acc_soft)]))
                 print('TEST RECALL CURVE: ' + ' >'.join(['{:d}:{:.2f}'.
                                 format(i*params.test_step,w) for i,w in enumerate(test_recall)]))            
                 
                 # save best performance checkpoint
-                if iter>=params.ckpt_save_step and test_acc_strict[-1] > max(test_acc_strict[:-1]):
+                if iter>=params.ckpt_save_step and test_acc_strict[-1] > max(test_acc_strict[:-1]+[0]):
                     # save as iter+1 to indicate best test
                     save_ckpt(sess, params.ckpt_path, params.save_prefix, data_loader, network, num_words, num_classes, iter+2)
                     print('\nBest up-to-date performance test checkpoint saved.\n')
