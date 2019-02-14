@@ -187,7 +187,7 @@ class Model(object):
     
     
     @layer
-    def attention(self, layer_input, num_heads, name, dropout=0.0, trainable=True):
+    def attention(self, layer_input, num_heads, name, att_dropout=0.0, hidden_dropout=0.1, trainable=True):
         """
         implement self attention with residual addition,
         layer_input[0] and layer_input[1] should have the same shape for residual addition 
@@ -221,12 +221,17 @@ class Model(object):
             attention_scores = tf.multiply(attention_scores, 1.0 / math.sqrt(float(size_per_head.value)))
             
             attention_probs = tf.nn.softmax(attention_scores)
-            #attention_probs = dropout(attention_probs, dropout)
+            #attention_probs = dropout(attention_probs, att_dropout)
             
             context_layer = tf.matmul(attention_probs, value_layer) # [B, H*W, c_o]
             context_layer = tf.reshape(context_layer, shape) # [B, H, W, c_o]
             
-            return context_layer + x
+            kernel = self.make_var('output', [1, 1, c_o, c_o], init_weights, regularizer, trainable)
+            attention_output = convolve(context_layer, kernel) 
+            #attention_output = dropout(attention_output, hidden_dropout)
+            attention_output = attention_output + x
+            
+            return tf.contrib.layers.instance_norm(attention_output, center=False, scale=False)
     
     
     @layer

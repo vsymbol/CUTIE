@@ -2,7 +2,7 @@
 # 2018-01 
 # xiaohui.zhao@accenture.com
 import numpy as np
-import cv2
+#import cv2
 
 c_threshold = 0.5
 
@@ -28,12 +28,15 @@ def cal_accuracy(data_loader, gird_table, gt_classes, model_output_val):
         for c in range(1, data_loader.num_classes):
             labels_indexes = np.where(labels_selected == c)[0]
             logits_indexes = np.where(logits_array_selected[:,c] > c_threshold)[0]
+            labels_words = list(data_loader.index_to_word[i] for i in data_selected[labels_indexes])
+            logits_words = list(data_loader.index_to_word[i] for i in data_selected[logits_indexes])
             if np.array_equal(labels_indexes, logits_indexes): 
+            #if set(labels_words) == set(logits_words): 
                 num_correct_strict += 1        
             try:  
                 num_correct += np.shape(np.intersect1d(labels_indexes, logits_indexes))[0] / np.shape(labels_indexes)[0]
             except ZeroDivisionError:
-                if np.shape(logits_indexes)[0] == 0:
+                if np.shape(labels_indexes)[0] == 0:
                     num_correct += 1
                 else:
                     num_correct += 0        

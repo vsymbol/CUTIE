@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
 parser.add_argument('--doc_path', type=str, default='data/taxi_small')
 parser.add_argument('--save_prefix', type=str, default='taxi_small', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--test_path', type=str, default='data/taxi_small')
 
 # ckpt
 parser.add_argument('--restore_ckpt', type=bool, default=False) 
@@ -41,8 +42,8 @@ parser.add_argument('--data_augmentation_extra_cols', type=int, default=3)
 
 # training
 parser.add_argument('--batch_size', type=int, default=32) 
-parser.add_argument('--iterations', type=int, default=40000)  
-parser.add_argument('--lr_decay_step', type=int, default=4000) 
+parser.add_argument('--iterations', type=int, default=20000)  
+parser.add_argument('--lr_decay_step', type=int, default=2000) 
 parser.add_argument('--learning_rate', type=float, default=0.001)
 parser.add_argument('--lr_decay_factor', type=float, default=0.5) 
 
@@ -57,6 +58,7 @@ parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/')
 parser.add_argument('--log_disp_step', type=int, default=200) 
 parser.add_argument('--log_save_step', type=int, default=200) 
 parser.add_argument('--validation_step', type=int, default=200) 
+parser.add_argument('--test_step', type=int, default=1000) 
 parser.add_argument('--ckpt_save_step', type=int, default=1000)
 
 # model
@@ -103,11 +105,12 @@ def calc_ghm_weights(logits, labels):
         
     return weights.reshape(shape)
 
-def save_ckpt(sess, path, save_prefix, network, num_words, num_classes, iter):
+def save_ckpt(sess, path, save_prefix, data_loader, network, num_words, num_classes, iter):
     ckpt_path = os.path.join(path, save_prefix)
     if not os.path.exists(ckpt_path):
         os.makedirs(ckpt_path)
-    filename = os.path.join(ckpt_path, network.name + '_{:d}x{:d}_iter_{:d}'.format(num_words, num_classes, iter+1) + '.ckpt')
+    filename = os.path.join(ckpt_path, network.name + '_d{:d}c{:d}(r{:d}c{:d})_iter_{:d}'.
+                            format(num_words, num_classes, data_loader.rows, data_loader.cols, iter) + '.ckpt')
     ckpt_saver.save(sess, filename)
     print('Checkpoint saved to: {:s}'.format(filename))
     
@@ -151,8 +154,10 @@ if __name__ == '__main__':
     # training
     training_recall = []
     validation_recall = []
+    test_recall = []
     training_acc_strict = []
     validation_acc_strict = []
+    test_acc_strict = []
     
     ckpt_saver = tf.train.Saver(max_to_keep=200)
     summary_path = os.path.join(params.log_path, params.save_prefix, network.name)
@@ -239,7 +244,7 @@ if __name__ == '__main__':
                 print('TRAINING ACC (Recall/Acc): %.3f / %.3f | highest %.3f / %.3f'%(recall, acc_strict, max(training_recall), max(training_acc_strict)))
                 
             # calculate validation accuracy and display results
-            if (iter)%params.validation_step == 0:
+            if iter%params.validation_step == 0:
                 
                 recalls, accs_strict = [], []
                 for _ in range(params.batch_size):
@@ -265,32 +270,68 @@ if __name__ == '__main__':
                 print('VALIDATION ACC (Recall/Acc): %.3f / %.3f | highest %.3f / %.3f \n'
                       %(recall, acc_strict, max(validation_recall), max(validation_acc_strict)))
 
-                print('TRAINING ACC CURVE: ' 
-                      + ' >'.join(['{:d}:{:.3f}'.
+                print('TRAINING ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                   format(i*params.log_disp_step,w) for i,w in enumerate(training_acc_strict)]))
-                print('VALIDATION ACC CURVE: ' 
-                      + ' >'.join(['{:d}:{:.3f}'.
+                print('VALIDATION ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                   format(i*params.validation_step,w) for i,w in enumerate(validation_acc_strict)]))
-                print('TRAINING RECALL CURVE: ' 
-                      + ' >'.join(['{:d}:{:.2f}'.
+                print('TRAINING RECALL CURVE: ' + ' >'.join(['{:d}:{:.2f}'.
                                   format(i*params.log_disp_step,w) for i,w in enumerate(training_recall)]))
-                print('VALIDATION RECALL CURVE: ' 
-                      + ' >'.join(['{:d}:{:.2f}'.
+                print('VALIDATION RECALL CURVE: ' + ' >'.join(['{:d}:{:.2f}'.
                                   format(i*params.validation_step,w) for i,w in enumerate(validation_recall)]))            
                 
                 # save best performance checkpoint
-                if validation_acc_strict[-1] > max(validation_acc_strict[:-1]):
-                    save_ckpt(sess, params.ckpt_path, params.save_prefix, network, num_words, num_classes, iter)
-                    print('\nBest up-to-date performance checkpoint saved.\n')
+                if iter>=params.ckpt_save_step and validation_acc_strict[-1] > max(validation_acc_strict[:-1]):
+                    # save as iter+1 to indicate best validation
+                    save_ckpt(sess, params.ckpt_path, params.save_prefix, data_loader, network, num_words, num_classes, iter+1)
+                    print('\nBest up-to-date performance validation checkpoint saved.\n')
                 
+            # calculate validation accuracy and display results
+            if iter>=params.test_step and iter%params.test_step == 0:
+                
+                recalls, accs_strict = [], []
+                while True:
+                    data = data_loader.fetch_test_data()
+                    if data == None:
+                        break
+                    grid_tables = data['grid_table']
+                    gt_classes = data['gt_classes']
+                    
+                    feed_dict = {
+                        network.data: grid_tables
+                    }
+                    fetches = [model_output]                    
+                    [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
+                    recall, acc_strict, res = cal_accuracy(data_loader, np.array(grid_tables), 
+                                                           np.array(gt_classes), model_output_val)
+                    recalls += [recall]
+                    accs_strict += [acc_strict] 
+
+                recall = sum(recalls) / len(recalls)
+                acc_strict = sum(accs_strict) / len(accs_strict)
+                test_recall += [recall]
+                test_acc_strict += [acc_strict]   
+                print('\n TEST ACC (Recall/Acc): %.3f / %.3f | highest %.3f / %.3f \n'
+                      %(recall, acc_strict, max(test_recall), max(test_acc_strict)))
+                print('TEST ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
+                                format(i*params.test_step,w) for i,w in enumerate(test_acc_strict)]))
+                print('TEST RECALL CURVE: ' + ' >'.join(['{:d}:{:.2f}'.
+                                format(i*params.test_step,w) for i,w in enumerate(test_recall)]))            
+                
+                # save best performance checkpoint
+                if iter>=params.ckpt_save_step and test_acc_strict[-1] > max(test_acc_strict[:-1]):
+                    # save as iter+1 to indicate best test
+                    save_ckpt(sess, params.ckpt_path, params.save_prefix, data_loader, network, num_words, num_classes, iter+2)
+                    print('\nBest up-to-date performance test checkpoint saved.\n')
+                    
             # save checkpoints
-            if (iter+1)%params.ckpt_save_step == 0:
-                save_ckpt(sess, params.ckpt_path, params.save_prefix, network, num_words, num_classes, iter)
+            if iter>=params.log_save_step and iter%params.ckpt_save_step == 0:
+                save_ckpt(sess, params.ckpt_path, params.save_prefix, data_loader, network, num_words, num_classes, iter)
                 
             # save logs
-            if (iter+1)%params.log_save_step == 0:
+            if iter>=params.log_save_step and iter%params.log_save_step == 0:
                 summary_writer.add_summary(summary_str, iter+1)    
     
     from pprint import pprint
     pprint(params)
+    pprint('Data rows/cols:{},{}'.format(data_loader.rows, data_loader.cols))
     summary_writer.close()

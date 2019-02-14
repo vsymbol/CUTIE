@@ -9,7 +9,7 @@ import os, csv
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 from model_cutie import CUTIE
-from model_cutie_res import CUTIERes
+from model_cutie_res_att import CUTIERes
 from model_cutie_unet8 import CUTIEUNet
 from model_cutie_sep import CUTIESep
 from data_loader_json import DataLoader
@@ -21,7 +21,7 @@ parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 
 parser.add_argument('--e_ckpt_path', type=str, default='../graph/CUTIE/graph/') # modify this
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_10566x9_iter_10000.ckpt')  
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_attention_8x_d40000c9(r64c64)_iter_12001.ckpt')  
 
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
 parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') # 40000 or 119547  
@@ -43,6 +43,7 @@ if __name__ == '__main__':
 
     # model
     network = CUTIERes(num_words, num_classes, params, False)   
+    model_output = network.get_output('softmax')
     
     # evaluation
     ckpt_saver = tf.train.Saver()
@@ -62,7 +63,7 @@ if __name__ == '__main__':
         recalls, accs_strict = [], []
         num_test = len(data_loader.validation_docs)
         for i in range(num_test):
-            data = data_loader.fetch_test_data()
+            data = data_loader.fetch_validation_data()
             print('{:d} samples left to be tested'.format(num_test-i))
             
             grid_table = data['grid_table']
@@ -72,24 +73,26 @@ if __name__ == '__main__':
             }
             fetches = [model_output]
             
-            [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
-            recall, acc_strict, res = cal_save_results(data_loader, params.save_prefix,
-                                                       np.array(docs), 
-                                                       np.array(grid_table), 
-                                                       np.array(gt_classes), 
-                                                       model_output_val)
+            [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                     
+            recall, acc_strict, res = cal_accuracy(data_loader, np.array(grid_table), 
+                                                   np.array(gt_classes), model_output_val)                   
+#             recall, acc_strict, res = cal_save_results(data_loader, params.save_prefix,
+#                                                        np.array(docs), 
+#                                                        np.array(grid_table), 
+#                                                        np.array(gt_classes), 
+#                                                        model_output_val)
             recalls += [recall]
             accs_strict += [acc_strict] 
             #print(res) # show res for current batch  
             
-            # visualize result
-            shape = data['shape']
-            file_name = data['file_name'][0] # use one single file_name
-            bboxes = data['bboxes'][file_name]
-            vis_bbox(data_loader, params.doc_path, np.array(grid_table)[0], 
-                     np.array(gt_classes)[0], np.array(model_output_val)[0], file_name, 
-                     np.array(bboxes), shape)
+#             # visualize result
+#             shape = data['shape']
+#             file_name = data['file_name'][0] # use one single file_name
+#             bboxes = data['bboxes'][file_name]
+#             vis_bbox(data_loader, params.doc_path, np.array(grid_table)[0], 
+#                      np.array(gt_classes)[0], np.array(model_output_val)[0], file_name, 
+#                      np.array(bboxes), shape)
 
         recall = sum(recalls) / len(recalls)
         acc_strict = sum(accs_strict) / len(accs_strict)
-        print('VALIDATION ACC (Recall/Acc): %.3f / %.3f\n'%(recall, acc_strict))
+        print('EVALUATION ACC (Recall/Acc): %.3f / %.3f\n'%(recall, acc_strict))

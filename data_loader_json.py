@@ -65,10 +65,10 @@ class DataLoader():
         self.special_dict = {'0': '[unused10]', '1': '[unused1]', '2': '[unused2]', '3': '[unused3]', '4': '[unused4]', '5': '[unused5]', 
                              '6': '[unused6]', '7': '[unused7]', '8': '[unused8]', '9': '[unused9]'} # map texts to specific tokens        
         
-        ## 1> load words and their location/class as docs and labels 
+        ## 1.1> load words and their location/class as training/validation docs and labels 
         self.training_doc_files = self._get_filenames(params.doc_path)
         self.training_docs, self.training_labels = self.load_data(self.training_doc_files, update_dict=update_dict) # TBD: optimize the update dict flag
-        self._update_training_rows_cols() # adapt grid table size to all dataset docs 
+        self._update_training_rows_cols() # adapt grid table size to all training dataset docs 
         
         # polish and load dictionary/word_to_index/index_to_word as file
         self.num_words = len(self.dictionary)              
@@ -90,15 +90,21 @@ class DataLoader():
         self.validation_docs = [self.training_docs[x] for x in selected_validation_index]
         self.training_docs = [self.training_docs[x] for x in selected_training_index]
         self.validation_labels = self.training_labels
-        print('\nDATASET: %d vocabularies, %d target classes'%(len(self.dictionary), len(self.classes)))
+        print('\n\nDATASET: %d vocabularies, %d target classes'%(len(self.dictionary), len(self.classes)))
         print('DATASET: %d for training, %d for validation'%(len(self.training_docs), len(self.validation_docs)))
-                 
+        
+        ## 1.2> load test files
+        self.test_doc_files = self._get_filenames(params.test_path) if hasattr(params, 'test_path') else []
+        self.test_docs, self.test_labels = self.load_data(self.test_doc_files, update_dict=update_dict) # TBD: optimize the update dict flag
+        print('DATASET: %d for test from %s \n'%(len(self.test_docs), params.test_path if hasattr(params, 'test_path') else ''))
+        
         # TBD: adjust bbox in @training_docs to eliminate overlaps
         #self.training_docs = self.eliminate_overlap(self.training_docs)
                 
-        ## 3> call self.next_batch() outside to generate a batch of grid tables data and labels
+        ## 2> call self.next_batch() outside to generate a batch of grid tables data and labels
         self.training_data_tobe_fetched = [i for i in range(len(self.training_docs))]
         self.validation_data_tobe_fetched = [i for i in range(len(self.validation_docs))]        
+        self.test_data_tobe_fetched = [i for i in range(len(self.test_docs))]       
     
     def _updae_word_to_index(self):
         if self.load_dictionary:
@@ -152,7 +158,7 @@ class DataLoader():
     def fetch_validation_data(self):
         batch_size = 1
         
-        if len(self.validation_data_tobe_fetched) < 1:
+        if len(self.validation_data_tobe_fetched) == 0:
             self.validation_data_tobe_fetched = [i for i in range(len(self.validation_docs))]            
         selected_index = random.sample(self.validation_data_tobe_fetched, 1)
         self.validation_data_tobe_fetched = list(set(self.validation_data_tobe_fetched).difference(set(selected_index)))
@@ -161,9 +167,10 @@ class DataLoader():
         
         rows = self.rows
         cols = self.cols
-        if self.data_augmentation: # calculate rows/cols for current grid table
-            rows, cols = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
-            print('Validation grid table real size: ({},{})'.format(rows, cols))
+        ## fixed validation shape leads to better result
+        #if self.data_augmentation: # calculate rows/cols for current grid table
+        #    rows, cols = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
+        #    print('Validation grid table real size: ({},{})'.format(rows, cols))
         
         grid_table, gt_classes, bboxes, file_name = self._positional_mapping(validation_docs, self.validation_labels, rows, cols)        
         batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 'file_name': file_name, 'shape': [rows,cols]}
@@ -172,20 +179,26 @@ class DataLoader():
     def fetch_test_data(self): 
         batch_size = 1
         
-        if len(self.validation_data_tobe_fetched) == 0:
-            return None, 0                   
-        
-        selected_index = self.validation_data_tobe_fetched[0]
-        self.validation_data_tobe_fetched = list(set(self.validation_data_tobe_fetched).difference(set(selected_index)))
+        if len(self.test_data_tobe_fetched) == 0:
+            self.test_data_tobe_fetched = [i for i in range(len(self.test_docs))]
+            return None
+                    
+        selected_index = self.test_data_tobe_fetched[0]
+        self.test_data_tobe_fetched = list(set(self.test_data_tobe_fetched).difference(set(selected_index)))
 
-        validation_docs = [self.validation_docs[x] for x in selected_index]
+        test_docs = [self.test_docs[x] for x in selected_index]
         
-        rows, cols = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
-        print('Test grid table real size: ({},{})'.format(rows, cols))
-        
-        grid_table, gt_classes, bboxes, file_name = self._positional_mapping(validation_docs, self.validation_labels, rows, cols)        
+        rows = self.rows
+        cols = self.cols
+        #if self.data_augmentation:
+        #    rows, cols = self._cal_rows_cols(test_docs, extra_augmentation=False)            
+        #    print('Test grid table real size: ({},{})'.format(rows, cols))
+        if len(self.test_docs) % 100: # show static every 100        
+            print('Test grid table size: ({},{}), {} left to be tested'.format(rows, cols, len(self.test_docs)))
+            
+        grid_table, gt_classes, bboxes, file_name = self._positional_mapping(test_docs, self.test_labels, rows, cols)        
         batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 'file_name': file_name, 'shape': [rows,cols]}
-        return batch, len(self.validation_data_tobe_fetched)
+        return batch
     
     def _positional_mapping(self, docs, labels, rows, cols):
         """
@@ -265,7 +278,7 @@ class DataLoader():
         label_dressed = {}
         doc_dressed = []
         if not data_files:
-            raise Exception("no data file found.")        
+            print("no data file found.")        
         for file in data_files:
             with open(file, encoding='utf-8') as f:
                 data = json.load(f)
@@ -300,7 +313,7 @@ class DataLoader():
             pad_col = abs(int(random.gauss(0, self.da_extra_cols*self.encoding_factor))) #random.randint(0, u)
         rows = ((max_row+pad_row)//self.encoding_factor+1) * self.encoding_factor
         cols = ((max_col+pad_col)//self.encoding_factor+1) * self.encoding_factor  
-        return min(rows, 12*self.encoding_factor), min(cols, 12*self.encoding_factor) # 22x upper boundary
+        return min(rows, 12*self.encoding_factor), min(cols, 12*self.encoding_factor) # 12x upper boundary to avoid OOM
     
     def _collect_data(self, file_name, content, update_dict):
         """
