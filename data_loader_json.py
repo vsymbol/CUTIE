@@ -5,9 +5,11 @@
 from os import walk
 from os.path import isfile, join
 import csv, re, random, json
+from collections import defaultdict
 
 import numpy as np
 import tensorflow as tf
+from email.policy import default
 
 DEBUG = False
 
@@ -98,13 +100,16 @@ class DataLoader():
         self.test_docs, self.test_labels = self.load_data(self.test_doc_files, update_dict=update_dict) # TBD: optimize the update dict flag
         print('DATASET: %d for test from %s \n'%(len(self.test_docs), params.test_path if hasattr(params, 'test_path') else '_'))
         
+        self.data_shape_static() # show data shape static
+        
         # TBD: adjust bbox in @training_docs to eliminate overlaps
         #self.training_docs = self.eliminate_overlap(self.training_docs)
                 
         ## 2> call self.next_batch() outside to generate a batch of grid tables data and labels
         self.training_data_tobe_fetched = [i for i in range(len(self.training_docs))]
         self.validation_data_tobe_fetched = [i for i in range(len(self.validation_docs))]        
-        self.test_data_tobe_fetched = [i for i in range(len(self.test_docs))]       
+        self.test_data_tobe_fetched = [i for i in range(len(self.test_docs))]
+        
     
     def _updae_word_to_index(self):
         if self.load_dictionary:
@@ -148,8 +153,9 @@ class DataLoader():
         rows = self.rows
         cols = self.cols
         if self.data_augmentation:
-            rows, cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra)            
-            print('Training grid table augment size: ({},{})'.format(rows, cols))
+            rows, cols, pre_rows, pre_cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra)            
+            print('Training grid table augment size: ({},{}) from ({},{})'\
+                  .format(rows, cols, pre_rows, pre_cols))
             
         grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
             self._positional_mapping(training_docs, self.training_labels, rows, cols)    
@@ -172,7 +178,7 @@ class DataLoader():
         cols = self.cols
         ## fixed validation shape leads to better result
         #if self.data_augmentation: # calculate rows/cols for current grid table
-        #    rows, cols = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
+        #    rows, cols, _, _ = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
         #    print('Validation grid table real size: ({},{})'.format(rows, cols))
         
         grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
@@ -197,7 +203,7 @@ class DataLoader():
         rows = self.rows
         cols = self.cols
         #if self.data_augmentation:
-        #    rows, cols = self._cal_rows_cols(test_docs, extra_augmentation=False)            
+        #    rows, cols, _, _ = self._cal_rows_cols(test_docs, extra_augmentation=False)            
         #    print('Test grid table real size: ({},{})'.format(rows, cols))
         if len(self.test_docs) % 100: # show static every 100        
             print('Test grid table size: ({},{}), {} left to be tested'.format(rows, cols, len(self.test_docs)))
@@ -208,6 +214,23 @@ class DataLoader():
                  'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
                  'file_name': file_name, 'shape': [rows,cols]}
         return batch
+    
+    def data_shape_static(self):        
+        def shape_static(docs):
+            res = defaultdict(int)
+            for doc in docs:
+                rows, cols, _, _ = self._cal_rows_cols([doc])
+                res[rows] += 1
+                res[cols] += 1
+            sorted(res.items(), key=lambda x:x[1], reverse=True)
+            return res
+    
+        training_shape_static = shape_static(self.training_docs)
+        validation_shape_static = shape_static(self.validation_docs)
+        test_shape_static = shape_static(self.test_docs)
+        print("Training shape static: ", training_shape_static)
+        print("Validation shape static: ", validation_shape_static)
+        print("Test shape static: ", test_shape_static)
     
     def _positional_mapping(self, docs, labels, rows, cols):
         """
@@ -281,17 +304,6 @@ class DataLoader():
             file_names.append(file_name)
             
         return grid_tables, gird_labels, bboxes, label_mapids, bbox_mapids, file_names
-            
-    def grid_visualization(self, data):
-        import pandas as pd
-        import matplotlib.pyplot as plt
-        plt.switch_backend('agg')
-        fig, ax = plt.subplots()
-        ax.xaxis.set_visible(False) 
-        ax.yaxis.set_visible(False)
-        colLabels = [i for i in range(data.shape[1])]
-        ax.table(cellText=data,colLabels=colLabels,loc='center',colLoc='left')#,fontsize=80)
-        plt.show()
     
     def load_data(self, data_files, update_dict=False):
         """
@@ -319,7 +331,7 @@ class DataLoader():
         return doc_dressed, label_dressed       
         
     def _update_training_rows_cols(self):
-        self.rows, self.cols = self._cal_rows_cols(self.training_docs)  
+        self.rows, self.cols, _, _ = self._cal_rows_cols(self.training_docs)  
         print('\nDATASHAPE: data set with maximum grid table of ({},{}), updated in DataLoader._update_training_rows_cols()'.format(self.rows, self.cols))      
         
     def _cal_rows_cols(self, docs, extra_augmentation=False):
@@ -336,9 +348,11 @@ class DataLoader():
         if extra_augmentation:
             pad_row = abs(int(random.gauss(0, self.da_extra_rows*self.encoding_factor))) #abs(random.gauss(0, u))
             pad_col = abs(int(random.gauss(0, self.da_extra_cols*self.encoding_factor))) #random.randint(0, u)
-        rows = ((max_row+pad_row)//self.encoding_factor+1) * self.encoding_factor
-        cols = ((max_col+pad_col)//self.encoding_factor+1) * self.encoding_factor  
-        return min(rows, 12*self.encoding_factor), min(cols, 12*self.encoding_factor) # 12x upper boundary to avoid OOM
+        pre_rows = (max_row//self.encoding_factor+1) * self.encoding_factor
+        pre_cols = (max_col//self.encoding_factor+1) * self.encoding_factor
+        rows = min(((max_row+pad_row)//self.encoding_factor+1) * self.encoding_factor, 5*self.encoding_factor) # 5x upper boundary to avoid OOM
+        cols = min(((max_col+pad_col)//self.encoding_factor+1) * self.encoding_factor, 5*self.encoding_factor) # 5x upper boundary to avoid OOM
+        return rows, cols, pre_rows, pre_cols # 5x upper boundary to avoid OOM
     
     def _collect_data(self, file_name, content, update_dict):
         """
@@ -483,5 +497,15 @@ class DataLoader():
                 file = join(dirpath,filename)
                 if file.endswith('csv') or file.endswith('json'):
                     files.append(file)
-        return files   
-    
+        return files       
+            
+    def grid_visualization(self, data):
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        plt.switch_backend('agg')
+        fig, ax = plt.subplots()
+        ax.xaxis.set_visible(False) 
+        ax.yaxis.set_visible(False)
+        colLabels = [i for i in range(data.shape[1])]
+        ax.table(cellText=data,colLabels=colLabels,loc='center',colLoc='left')#,fontsize=80)
+        plt.show()

@@ -8,15 +8,15 @@ import timeit
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from model_cutie import CUTIE
-from model_cutie_res_att import CUTIERes
+from model_cutie_res import CUTIERes
 from model_cutie_unet8 import CUTIEUNet
 from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/taxi_small')
-parser.add_argument('--save_prefix', type=str, default='taxi_small', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/hotel')
+parser.add_argument('--save_prefix', type=str, default='hotel', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty is no test data provided
 
 # ckpt
@@ -33,12 +33,12 @@ parser.add_argument('--update_dict', type=bool, default=False)
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
 # data manipulation
-parser.add_argument('--fill_bbox', type=bool, default=False) # fill bbox with dict_id / label_id
+parser.add_argument('--fill_bbox', type=bool, default=True) # fill bbox with dict_id / label_id
 
 parser.add_argument('--data_augmentation', type=bool, default=False) # augment data row/col in each batch
 parser.add_argument('--data_augmentation_extra', type=bool, default=True) # randomly expand rows/cols
 parser.add_argument('--data_augmentation_extra_rows', type=int, default=2) 
-parser.add_argument('--data_augmentation_extra_cols', type=int, default=3) 
+parser.add_argument('--data_augmentation_extra_cols', type=int, default=2) 
 
 # training
 parser.add_argument('--batch_size', type=int, default=32) 
@@ -55,9 +55,9 @@ parser.add_argument('--ghm_momentum', type=int, default=0) # 0 / 0.75
 
 # log
 parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/') 
-parser.add_argument('--log_disp_step', type=int, default=200) 
+parser.add_argument('--log_disp_step', type=int, default=2) 
 parser.add_argument('--log_save_step', type=int, default=200) 
-parser.add_argument('--validation_step', type=int, default=200) 
+parser.add_argument('--validation_step', type=int, default=2) 
 parser.add_argument('--test_step', type=int, default=1000) 
 parser.add_argument('--ckpt_save_step', type=int, default=1000)
 
@@ -229,7 +229,7 @@ if __name__ == '__main__':
                 sess.partial_run(h, fetches=fetches, feed_dict=feed_dict)
                 
             # calculate training accuracy and display results
-            if True or iter%params.log_disp_step == 0: 
+            if iter%params.log_disp_step == 0: 
                 timer_stop = timeit.default_timer()
                 print('\t >>time per step: %.2fs <<'%(timer_stop - timer_start))
                 
@@ -246,7 +246,7 @@ if __name__ == '__main__':
                       %(recall, acc_strict, acc_soft, max(training_recall), max(training_acc_strict), max(training_acc_soft)))
                 
             # calculate validation accuracy and display results
-            if True or iter%params.validation_step == 0:
+            if iter%params.validation_step == 0:
                 
                 recalls, accs_strict, accs_soft = [], [], []
                 for _ in range(params.batch_size):
