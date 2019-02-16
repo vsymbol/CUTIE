@@ -15,8 +15,8 @@ from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/hotel')
-parser.add_argument('--save_prefix', type=str, default='hotel', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/taxi')
+parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty is no test data provided
 
 # ckpt
@@ -272,9 +272,7 @@ if __name__ == '__main__':
                 validation_recall += [recall]
                 validation_acc_strict += [acc_strict]  
                 validation_acc_soft += [acc_soft]
-                print(res) # show res from the last execution of the while loop    
-                print('VALIDATION ACC (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f) \n'
-                      %(recall, acc_strict, acc_soft, max(validation_recall), max(validation_acc_strict), max(validation_acc_soft)))
+                print(res) # show res from the last execution of the while loop 
 
                 print('TRAINING ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                   format(i*params.log_disp_step,w) for i,w in enumerate(training_acc_strict)]))
@@ -285,7 +283,11 @@ if __name__ == '__main__':
                 print('TRAINING RECALL CURVE: ' + ' >'.join(['{:d}:{:.2f}'.
                                   format(i*params.log_disp_step,w) for i,w in enumerate(training_recall)]))
                 print('VALIDATION RECALL CURVE: ' + ' >'.join(['{:d}:{:.2f}'.
-                                  format(i*params.validation_step,w) for i,w in enumerate(validation_recall)]))            
+                                  format(i*params.validation_step,w) for i,w in enumerate(validation_recall)]))   
+                
+                print('VALIDATION Statistic %d (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f) \n'
+                      %(iter, recall, acc_strict, acc_soft, 
+                        max(validation_recall), max(validation_acc_strict), max(validation_acc_soft)))            
                 
                 # save best performance checkpoint
                 if iter>=params.ckpt_save_step and validation_acc_strict[-1] > max(validation_acc_strict[:-1]+[0]):

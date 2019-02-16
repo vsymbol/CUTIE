@@ -30,10 +30,12 @@ def is_number(s):
 
 class DataLoader():
     """
-    training_grid_tables
+    grid tables producer
     """
     def __init__(self, params, update_dict=True, load_dictionary=False, data_split=0.75):
-        self.encoding_factor = 16 # ensures the size (rows/cols) of grid table compat with the network
+        self.encoding_factor = 8 # ensures the size (rows/cols) of grid table compat with the network
+        self.rows_limit = 80 # handle OOM, must be multiple of self.encoding_factor
+        self.cols_limit = 96 # handle OOM, must be multiple of self.encoding_factor
         self.fill_bbox = params.fill_bbox  # fill bbox with labels or use one single lable for the entire bbox
         
         ## 0> parameters to be tuned
@@ -70,7 +72,6 @@ class DataLoader():
         ## 1.1> load words and their location/class as training/validation docs and labels 
         self.training_doc_files = self._get_filenames(params.doc_path)
         self.training_docs, self.training_labels = self.load_data(self.training_doc_files, update_dict=update_dict) # TBD: optimize the update dict flag
-        self._update_training_rows_cols() # adapt grid table size to all training dataset docs 
         
         # polish and load dictionary/word_to_index/index_to_word as file
         self.num_words = len(self.dictionary)              
@@ -100,7 +101,8 @@ class DataLoader():
         self.test_docs, self.test_labels = self.load_data(self.test_doc_files, update_dict=update_dict) # TBD: optimize the update dict flag
         print('DATASET: %d for test from %s \n'%(len(self.test_docs), params.test_path if hasattr(params, 'test_path') else '_'))
         
-        self.data_shape_static() # show data shape static
+        self.data_shape_statistic() # show data shape static
+        self._update_training_rows_cols() # adapt grid table size to all training dataset docs 
         
         # TBD: adjust bbox in @training_docs to eliminate overlaps
         #self.training_docs = self.eliminate_overlap(self.training_docs)
@@ -215,8 +217,8 @@ class DataLoader():
                  'file_name': file_name, 'shape': [rows,cols]}
         return batch
     
-    def data_shape_static(self):        
-        def shape_static(docs):
+    def data_shape_statistic(self):        
+        def shape_statistic(docs):
             res = defaultdict(int)
             for doc in docs:
                 rows, cols, _, _ = self._cal_rows_cols([doc])
@@ -225,12 +227,33 @@ class DataLoader():
             sorted(res.items(), key=lambda x:x[1], reverse=True)
             return res
     
-        training_shape_static = shape_static(self.training_docs)
-        validation_shape_static = shape_static(self.validation_docs)
-        test_shape_static = shape_static(self.test_docs)
+        training_shape_static = shape_statistic(self.training_docs)
+        validation_shape_static = shape_statistic(self.validation_docs)
+        test_shape_static = shape_statistic(self.test_docs)
         print("Training shape static: ", training_shape_static)
         print("Validation shape static: ", validation_shape_static)
         print("Test shape static: ", test_shape_static)
+        
+        ## remove data samples not matching the training principle
+        def data_laundry(docs):
+            idx = 0
+            while idx < len(docs):
+                rows, cols, _, _ = self._cal_rows_cols([docs[idx]])
+                if rows > self.rows_limit or cols > self.cols_limit:
+                    del docs[idx]
+                else:
+                    idx += 1
+        data_laundry(self.training_docs)
+        data_laundry(self.validation_docs)
+        data_laundry(self.training_docs)
+        print("Grids larger than ({},{}) removed".format(self.rows_limit, self.cols_limit))
+        
+        training_shape_static = shape_statistic(self.training_docs)
+        validation_shape_static = shape_statistic(self.validation_docs)
+        test_shape_static = shape_statistic(self.test_docs)
+        print("Training shape static after laundary: ", training_shape_static)
+        print("Validation shape static after laundary: ", validation_shape_static)
+        print("Test shape static after laundary: ", test_shape_static)
     
     def _positional_mapping(self, docs, labels, rows, cols):
         """
@@ -332,7 +355,7 @@ class DataLoader():
         
     def _update_training_rows_cols(self):
         self.rows, self.cols, _, _ = self._cal_rows_cols(self.training_docs)  
-        print('\nDATASHAPE: data set with maximum grid table of ({},{}), updated in DataLoader._update_training_rows_cols()'.format(self.rows, self.cols))      
+        print('\nDATASHAPE: data set with maximum grid table of ({},{}), updated in DataLoader._update_training_rows_cols()\n'.format(self.rows, self.cols))      
         
     def _cal_rows_cols(self, docs, extra_augmentation=False):
         max_row = 0
@@ -343,15 +366,19 @@ class DataLoader():
                 if max_row_words > max_row:
                     max_row = max_row_words
                 if max_col_words > max_col:
-                    max_col = max_col_words
+                    max_col = max_col_words                    
+        pre_rows = (max_row//self.encoding_factor+1) * self.encoding_factor
+        pre_cols = (max_col//self.encoding_factor+1) * self.encoding_factor
+        
         pad_row, pad_col = 0, 0
         if extra_augmentation:
             pad_row = abs(int(random.gauss(0, self.da_extra_rows*self.encoding_factor))) #abs(random.gauss(0, u))
             pad_col = abs(int(random.gauss(0, self.da_extra_cols*self.encoding_factor))) #random.randint(0, u)
-        pre_rows = (max_row//self.encoding_factor+1) * self.encoding_factor
-        pre_cols = (max_col//self.encoding_factor+1) * self.encoding_factor
-        rows = min(((max_row+pad_row)//self.encoding_factor+1) * self.encoding_factor, 5*self.encoding_factor) # 5x upper boundary to avoid OOM
-        cols = min(((max_col+pad_col)//self.encoding_factor+1) * self.encoding_factor, 5*self.encoding_factor) # 5x upper boundary to avoid OOM
+            rows = min(((max_row+pad_row)//self.encoding_factor+1) * self.encoding_factor, self.rows_limit) # apply upper boundary to avoid OOM
+            cols = min(((max_col+pad_col)//self.encoding_factor+1) * self.encoding_factor, self.cols_limit) # apply upper boundary to avoid OOM
+        else:
+            rows = pre_rows
+            cols = pre_cols
         return rows, cols, pre_rows, pre_cols # 5x upper boundary to avoid OOM
     
     def _collect_data(self, file_name, content, update_dict):
