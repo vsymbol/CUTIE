@@ -5,18 +5,18 @@ import tensorflow as tf
 import numpy as np
 import argparse, os
 import timeit
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 from model_cutie import CUTIE
-from model_cutie_res import CUTIERes
+from model_cutie_res_att import CUTIERes
 from model_cutie_unet8 import CUTIEUNet
 from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/taxi')
-parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/meals')
+parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty is no test data provided
 
 # ckpt
@@ -28,24 +28,26 @@ parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_8x_40000x9_
 
 # dict
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') # 40000 or 119547  
+parser.add_argument('--load_dict_from_path', type=str, default='dict/20000TC') # 40000 or 20000TC  
+parser.add_argument('--tokenize', type=bool, default=True) # tokenize input text
+parser.add_argument('--text_case', type=bool, default=True) # case sensitive
 parser.add_argument('--update_dict', type=bool, default=False) 
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
 # data manipulation
-parser.add_argument('--fill_bbox', type=bool, default=True) # fill bbox with dict_id / label_id
+parser.add_argument('--fill_bbox', type=bool, default=False) # fill bbox with dict_id / label_id
 
-parser.add_argument('--data_augmentation', type=bool, default=False) # augment data row/col in each batch
+parser.add_argument('--data_augmentation', type=bool, default=True) # augment data row/col in each batch
 parser.add_argument('--data_augmentation_extra', type=bool, default=True) # randomly expand rows/cols
 parser.add_argument('--data_augmentation_extra_rows', type=int, default=2) 
 parser.add_argument('--data_augmentation_extra_cols', type=int, default=2) 
 
 # training
 parser.add_argument('--batch_size', type=int, default=32) 
-parser.add_argument('--iterations', type=int, default=20000)  
-parser.add_argument('--lr_decay_step', type=int, default=2000) 
-parser.add_argument('--learning_rate', type=float, default=0.001)
-parser.add_argument('--lr_decay_factor', type=float, default=0.5) 
+parser.add_argument('--iterations', type=int, default=40000)  
+parser.add_argument('--lr_decay_step', type=int, default=15000) 
+parser.add_argument('--learning_rate', type=float, default=0.0001)
+parser.add_argument('--lr_decay_factor', type=float, default=0.1) 
 
 # loss optimization
 parser.add_argument('--hard_negative_ratio', type=int, help='the ratio between negative and positive losses', default=3) 
@@ -55,14 +57,14 @@ parser.add_argument('--ghm_momentum', type=int, default=0) # 0 / 0.75
 
 # log
 parser.add_argument('--log_path', type=str, default='../graph/CUTIE/log/') 
-parser.add_argument('--log_disp_step', type=int, default=2) 
+parser.add_argument('--log_disp_step', type=int, default=200) 
 parser.add_argument('--log_save_step', type=int, default=200) 
-parser.add_argument('--validation_step', type=int, default=2) 
+parser.add_argument('--validation_step', type=int, default=200) 
 parser.add_argument('--test_step', type=int, default=1000) 
 parser.add_argument('--ckpt_save_step', type=int, default=1000)
 
 # model
-parser.add_argument('--embedding_size', type=int, default=120) # not used for bert embedding with default 768
+parser.add_argument('--embedding_size', type=int, default=768) # not used for bert embedding with default 768
 parser.add_argument('--weight_decay', type=float, default=0.0005) 
 parser.add_argument('--eps', type=float, default=1e-6) 
 
@@ -117,10 +119,11 @@ def save_ckpt(sess, path, save_prefix, data_loader, network, num_words, num_clas
 if __name__ == '__main__':
     # data
     data_loader = DataLoader(params, update_dict=params.update_dict, load_dictionary=params.load_dict, data_split=0.75)
-    num_words = max(40000, data_loader.num_words)
+    num_words = max(20000, data_loader.num_words)
     num_classes = data_loader.num_classes
     #a = data_loader.next_batch()
     #b = data_loader.fetch_validation_data()
+    c = data_loader.fetch_test_data()
     
     # model
     network = CUTIERes(num_words, num_classes, params)
@@ -249,7 +252,7 @@ if __name__ == '__main__':
             if iter%params.validation_step == 0:
                 
                 recalls, accs_strict, accs_soft = [], [], []
-                for _ in range(params.batch_size):
+                for _ in range(len(data_loader.validation_docs)):
                     data = data_loader.fetch_validation_data()
                     grid_tables = data['grid_table']
                     gt_classes = data['gt_classes']
@@ -285,9 +288,10 @@ if __name__ == '__main__':
                 print('VALIDATION RECALL CURVE: ' + ' >'.join(['{:d}:{:.2f}'.
                                   format(i*params.validation_step,w) for i,w in enumerate(validation_recall)]))   
                 
-                print('VALIDATION Statistic %d (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f) \n'
-                      %(iter, recall, acc_strict, acc_soft, 
-                        max(validation_recall), max(validation_acc_strict), max(validation_acc_soft)))            
+                idx = np.argmax(validation_acc_strict)
+                print('VALIDATION Statistic %d(%d) (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f) \n'
+                      %(iter, idx, recall, acc_strict, acc_soft, 
+                        validation_recall[idx], validation_acc_strict[idx], validation_acc_soft[idx]))       
                 
                 # save best performance checkpoint
                 if iter>=params.ckpt_save_step and validation_acc_strict[-1] > max(validation_acc_strict[:-1]+[0]):
@@ -296,7 +300,7 @@ if __name__ == '__main__':
                     print('\nBest up-to-date performance validation checkpoint saved.\n')
                 
             # calculate validation accuracy and display results
-            if params.test_path!='' and iter>=params.test_step and iter%params.test_step == 0:
+            if params.test_path!='' and iter%params.test_step == 0:
                 
                 recalls, accs_strict, accs_soft = [], [], []
                 while True:
@@ -324,8 +328,9 @@ if __name__ == '__main__':
                 test_recall += [recall]
                 test_acc_strict += [acc_strict]   
                 test_acc_soft += [acc_soft]
+                idx = np.argmax(test_acc_strict)
                 print('\n TEST ACC (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f) \n'
-                      %(recall, acc_strict, acc_soft, max(test_recall), max(test_acc_strict), max(test_acc_soft)))
+                      %(recall, acc_strict, acc_soft, test_recall[idx], test_acc_strict[idx], test_acc_soft[idx]))
                 print('TEST ACC (STRICT) CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                 format(i*params.test_step,w) for i,w in enumerate(test_acc_strict)]))
                 print('TEST ACC (SOFT) CURVE: ' + ' >'.join(['{:d}:{:.3f}'.

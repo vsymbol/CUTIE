@@ -16,12 +16,14 @@ from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
-parser.add_argument('--doc_path', type=str, default='data/meals_1215') # modify this
+parser.add_argument('--doc_path', type=str, default='data/meals_1108/') # modify this
 parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for ckpt and results') # modify this
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 
 parser.add_argument('--e_ckpt_path', type=str, default='../graph/CUTIE/graph/') # modify this
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_attention_8x_d40000c9(r64c64)_iter_12001.ckpt')  
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_attention_8x_d40000c9(r64c64)_iter_12001.ckpt')
+parser.add_argument('--target_rows', type=int, default=64) 
+parser.add_argument('--target_cols', type=int, default=64) 
 
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
 parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') # 40000 or 119547  
@@ -85,15 +87,15 @@ if __name__ == '__main__':
             recalls += [recall]
             accs_strict += [acc_strict] 
             accs_soft += [acc_soft]
-            #print(res) # show res for current batch  
+            print(res) # show res for current batch  
             
-#             # visualize result
-#             shape = data['shape']
-#             file_name = data['file_name'][0] # use one single file_name
-#             bboxes = data['bboxes'][file_name]
-#             vis_bbox(data_loader, params.doc_path, np.array(grid_table)[0], 
-#                      np.array(gt_classes)[0], np.array(model_output_val)[0], file_name, 
-#                      np.array(bboxes), shape)
+            # visualize result
+            shape = data['shape']
+            file_name = data['file_name'][0] # use one single file_name
+            bboxes = data['bboxes'][file_name]
+            vis_bbox(data_loader, params.doc_path, np.array(grid_table)[0], 
+                     np.array(gt_classes)[0], np.array(model_output_val)[0], file_name, 
+                     np.array(bboxes), shape)
 
         recall = sum(recalls) / len(recalls)
         acc_strict = sum(accs_strict) / len(accs_strict)

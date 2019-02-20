@@ -9,7 +9,7 @@ from collections import defaultdict
 
 import numpy as np
 import tensorflow as tf
-from email.policy import default
+import tokenization
 
 DEBUG = False
 
@@ -34,9 +34,13 @@ class DataLoader():
     """
     def __init__(self, params, update_dict=True, load_dictionary=False, data_split=0.75):
         self.encoding_factor = 8 # ensures the size (rows/cols) of grid table compat with the network
-        self.rows_limit = 80 # handle OOM, must be multiple of self.encoding_factor
-        self.cols_limit = 96 # handle OOM, must be multiple of self.encoding_factor
-        self.fill_bbox = params.fill_bbox  # fill bbox with labels or use one single lable for the entire bbox
+        self.rows_limit = params.target_rows if hasattr(params, 'target_rows') else 64 # handle OOM, must be multiple of self.encoding_factor
+        self.cols_limit = params.target_cols if hasattr(params, 'target_cols') else 64 # handle OOM, must be multiple of self.encoding_factor
+        self.fill_bbox = params.fill_bbox if hasattr(params, 'fill_bbox') else False # fill bbox with labels or use one single lable for the entire bbox
+        self.text_case = params.text_case 
+        self.tokenize = params.tokenize
+        if self.tokenize:
+            self.tokenizer = tokenization.FullTokenizer('dict/vocab.txt', do_lower_case=not self.text_case)
         
         ## 0> parameters to be tuned
         self.load_dictionary = load_dictionary # load dictionary from file rather than start from empty 
@@ -102,7 +106,10 @@ class DataLoader():
         print('DATASET: %d for test from %s \n'%(len(self.test_docs), params.test_path if hasattr(params, 'test_path') else '_'))
         
         self.data_shape_statistic() # show data shape static
-        self._update_training_rows_cols() # adapt grid table size to all training dataset docs 
+        if len(self.training_docs) > 0:# adapt grid table size to all training dataset docs 
+            self._update_training_rows_cols() 
+        else:
+            self.rows, self.cols = self.rows_limit, self.cols_limit
         
         # TBD: adjust bbox in @training_docs to eliminate overlaps
         #self.training_docs = self.eliminate_overlap(self.training_docs)
@@ -198,17 +205,17 @@ class DataLoader():
             return None
                     
         selected_index = self.test_data_tobe_fetched[0]
-        self.test_data_tobe_fetched = list(set(self.test_data_tobe_fetched).difference(set(selected_index)))
+        self.test_data_tobe_fetched = list(set(self.test_data_tobe_fetched).difference(set([selected_index])))
 
-        test_docs = [self.test_docs[x] for x in selected_index]
+        test_docs = [self.test_docs[selected_index]]
         
         rows = self.rows
         cols = self.cols
         #if self.data_augmentation:
         #    rows, cols, _, _ = self._cal_rows_cols(test_docs, extra_augmentation=False)            
         #    print('Test grid table real size: ({},{})'.format(rows, cols))
-        if len(self.test_docs) % 100: # show static every 100        
-            print('Test grid table size: ({},{}), {} left to be tested'.format(rows, cols, len(self.test_docs)))
+        #if len(self.test_docs) % 100: # show static every 100        
+        #    print('Test grid table size: ({},{}), {} left to be tested'.format(rows, cols, len(self.test_data_tobe_fetched)))
             
         grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
             self._positional_mapping(test_docs, self.test_labels, rows, cols)        
@@ -219,20 +226,32 @@ class DataLoader():
     
     def data_shape_statistic(self):        
         def shape_statistic(docs):
-            res = defaultdict(int)
+            res_all = defaultdict(int)
+            res_row = defaultdict(int)
+            res_col = defaultdict(int)
             for doc in docs:
                 rows, cols, _, _ = self._cal_rows_cols([doc])
-                res[rows] += 1
-                res[cols] += 1
-            sorted(res.items(), key=lambda x:x[1], reverse=True)
-            return res
+                res_all[rows] += 1
+                res_all[cols] += 1
+                res_row[rows] += 1
+                res_col[cols] += 1
+            sorted(res_all.items(), key=lambda x:x[1], reverse=True)
+            sorted(res_row.items(), key=lambda x:x[1], reverse=True)
+            sorted(res_col.items(), key=lambda x:x[1], reverse=True)
+            return res_all, res_row, res_col
     
-        training_shape_static = shape_statistic(self.training_docs)
-        validation_shape_static = shape_statistic(self.validation_docs)
-        test_shape_static = shape_statistic(self.test_docs)
-        print("Training shape static: ", training_shape_static)
-        print("Validation shape static: ", validation_shape_static)
-        print("Test shape static: ", test_shape_static)
+        tss, tss_r, tss_c = shape_statistic(self.training_docs) # training shape static
+        vss, vss_r, vss_c = shape_statistic(self.validation_docs)
+        tess, tess_r, tess_c = shape_statistic(self.test_docs)
+        print("Training shape statistic: ", tss)
+        print("\t rows statistic: ", tss_r)
+        print("\t cols statistic: ", tss_c)
+        print("Validation shape statistic: ", vss)
+        print("\t rows statistic: ", vss_r)
+        print("\t cols statistic: ", vss_c)
+        print("Test shape statistic: ", tess)
+        print("\t rows statistic: ", tess_r)
+        print("\t cols statistic: ", tess_c)
         
         ## remove data samples not matching the training principle
         def data_laundry(docs):
@@ -248,12 +267,18 @@ class DataLoader():
         data_laundry(self.training_docs)
         print("Grids larger than ({},{}) removed".format(self.rows_limit, self.cols_limit))
         
-        training_shape_static = shape_statistic(self.training_docs)
-        validation_shape_static = shape_statistic(self.validation_docs)
-        test_shape_static = shape_statistic(self.test_docs)
-        print("Training shape static after laundary: ", training_shape_static)
-        print("Validation shape static after laundary: ", validation_shape_static)
-        print("Test shape static after laundary: ", test_shape_static)
+        tss, tss_r, tss_c = shape_statistic(self.training_docs) # training shape static
+        vss, vss_r, vss_c = shape_statistic(self.validation_docs)
+        tess, tess_r, tess_c = shape_statistic(self.test_docs)
+        print("Training shape statistic after laundary: ", tss)
+        print("\t rows statistic: ", tss_r)
+        print("\t cols statistic: ", tss_c)
+        print("Validation shape statistic after laundary: ", vss)
+        print("\t rows statistic: ", vss_r)
+        print("\t cols statistic: ", vss_c)
+        print("Test shape statistic after laundary: ", tess)
+        print("\t rows statistic: ", tess_r)
+        print("\t cols statistic: ", tess_c)
     
     def _positional_mapping(self, docs, labels, rows, cols):
         """
@@ -283,7 +308,7 @@ class DataLoader():
                 
                 dict_id = self.word_to_index[text]                
                 class_id = self._dress_class(file_name, word_id, labels)
-                  
+                
                 bbox_id += 1
                 if self.fill_bbox: # TBD: overlap avoidance
                     top = int(rows * y_top / image_h)
@@ -298,10 +323,9 @@ class DataLoader():
                         for col in range(left, right):
                             bbox_mapid[row*cols+col] = bbox_id
                     
-                    box = [x_left, y_top, x_right-x_left, y_bottom-y_top]
                     for y in range(top, bottom):
                         for x in range(left, right):
-                            bbox[y][x] = box
+                            bbox[y][x] = [x_left, y_top, x_right-x_left, y_bottom-y_top]
                 else:
                     col = int(cols * (x_left + (x_right-x_left)/2) / image_w) 
                     row = int(rows * (y_top + (y_bottom-y_top)/2) / image_h)  
@@ -400,10 +424,14 @@ class DataLoader():
                 image_h = y_bottom + buffer
                 
             word_id = line['id']
-            dressed_text, parts = self._dress_text(line['text'], update_dict)
+            dressed_texts = self._dress_text(line['text'], update_dict)
             
             # TBD: seperate bbox according to @dressed_text and @parts
-            content_dressed.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom]])
+            num_block = len(dressed_texts)
+            for i, dressed_text in enumerate(dressed_texts): # for loop is used for handling tokenized text
+                x_left = int(x_left + (x_right-x_left) / num_block * (i))
+                x_right = int(x_left + (x_right-x_left) / num_block * (i+1))
+                content_dressed.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom]])
             
         num_words_row = [0 for _ in range(image_h)] # number of words in each row
         num_words_col = [0 for _ in range(image_w)] # number of words in each column
@@ -480,32 +508,40 @@ class DataLoader():
         three cases covered: 
         alphabetic string, numeric string, special character
         """
-        string = text.lower()
+        string = text if self.text_case else text.lower()
         for i, c in enumerate(string):
             if is_number(c):
                 string = string[:i] + '0' + string[i+1:]
                 
-        if string.isalpha():
-            if string in self.special_dict:
-                string = self.special_dict[string]
-            # TBD: convert a word to its most similar word in a known vocabulary
-        elif is_number(string):
-            pass
-        elif len(string)==1: # special character
-            pass
-        else:
-            # TBD: seperate string as parts for alpha and number combinated strings
-            #string = re.findall('[a-z]+', string)
-            pass            
-        
-        if string not in self.dictionary.keys():
-            if update_dict:
-                self.dictionary[string] = 0
+        strings = [string]
+        if self.tokenize:
+            strings = self.tokenizer.tokenize(strings[0])
+            #print(string, '-->', strings)
+            
+        for idx, string in enumerate(strings):            
+            if string.isalpha():
+                if string in self.special_dict:
+                    string = self.special_dict[string]
+                # TBD: convert a word to its most similar word in a known vocabulary
+            elif is_number(string):
+                pass
+            elif len(string)==1: # special character
+                pass
             else:
-                print('unknown text: ' + string)
-                string = '[UNK]' # TBD: take special care to unmet words\
-        self.dictionary[string] += 1
-        return string, len(string) # len(string) not used
+                # TBD: seperate string as parts for alpha and number combinated strings
+                #string = re.findall('[a-z]+', string)
+                pass            
+            
+            if string not in self.dictionary.keys():
+                if update_dict:
+                    self.dictionary[string] = 0
+                else:
+                    print('unknown text: ' + string)
+                    string = '[UNK]' # TBD: take special care to unmet words\
+            self.dictionary[string] += 1
+            
+            strings[idx] = string
+        return strings
             
     def _dress_bbox(self, bbox):
         positions = np.array(bbox).reshape([-1])
