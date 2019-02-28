@@ -71,7 +71,7 @@ def cal_accuracy(data_loader, grid_table, gt_classes, model_output_val, label_ma
                 
                 # wrong inferences results
                 if not np.array_equal(labels_indexes, logits_indexes): 
-                    res += '"\n \t FALSES =>>'
+                    res += '\n \t FALSES =>>'
                     logits_flat = logits_array_selected[:,c]
                     fault_logits_indexes = np.setdiff1d(logits_indexes, labels_indexes)
                     for i in range(len(data_selected)):
@@ -145,7 +145,7 @@ def cal_save_results(data_loader, save_prefix, docs, grid_table, gt_classes, mod
             
             # wrong inferences results
             if not np.array_equal(labels_indexes, logits_indexes): 
-                res += '"\n \t FALSES =>>'
+                res += '\n \t FALSES =>>'
                 logits_flat = logits_array_selected[:,c]
                 fault_logits_indexes = np.setdiff1d(logits_indexes, labels_indexes)
                 for i in range(len(data_selected)):

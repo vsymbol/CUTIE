@@ -33,14 +33,27 @@ class DataLoader():
     grid tables producer
     """
     def __init__(self, params, update_dict=True, load_dictionary=False, data_split=0.75):
+        self.random = False
         self.encoding_factor = 8 # ensures the size (rows/cols) of grid table compat with the network
-        self.rows_limit = params.target_rows if hasattr(params, 'target_rows') else 64 # handle OOM, must be multiple of self.encoding_factor
-        self.cols_limit = params.target_cols if hasattr(params, 'target_cols') else 64 # handle OOM, must be multiple of self.encoding_factor
-        self.fill_bbox = params.fill_bbox if hasattr(params, 'fill_bbox') else False # fill bbox with labels or use one single lable for the entire bbox
         self.text_case = params.text_case 
         self.tokenize = params.tokenize
         if self.tokenize:
             self.tokenizer = tokenization.FullTokenizer('dict/vocab.txt', do_lower_case=not self.text_case)
+        
+        self.rows = self.encoding_factor # to be updated 
+        self.cols = self.encoding_factor # to be updated 
+        self.rows_ulimit = params.rows_ulimit if hasattr(params, 'rows_ulimit') else 80 # handle OOM, must be multiple of self.encoding_factor
+        self.cols_ulimit = params.cols_ulimit if hasattr(params, 'cols_ulimit') else 80 # handle OOM, must be multiple of self.encoding_factor
+        self.rows_blimit = params.rows_blimit if hasattr(params, 'rows_blimit') else 64 # performance
+        self.cols_blimit = params.cols_blimit if hasattr(params, 'cols_blimit') else 64 # performance
+        
+        self.fill_bbox = params.fill_bbox if hasattr(params, 'fill_bbox') else False # fill bbox with labels or use one single lable for the entire bbox
+        
+        self.data_augmentation = params.data_augmentation if hasattr(params, 'data_augmentation') else False # cal rows/cols for each batch of data
+        self.data_augmentation_dropout = params.data_augmentation_dropout if hasattr(params, 'data_augmentation_dropout') else False # randomly dropout rows/cols
+        self.data_augmentation_extra = params.data_augmentation_extra if hasattr(params, 'data_augmentation_extra') else False # randomly expand rows/cols
+        self.da_extra_rows = params.data_augmentation_extra_rows if hasattr(params, 'data_augmentation_extra_rows') else 0 # randomly expand rows/cols
+        self.da_extra_cols = params.data_augmentation_extra_cols if hasattr(params, 'data_augmentation_extra_cols') else 0 # randomly expand rows/cols
         
         ## 0> parameters to be tuned
         self.load_dictionary = load_dictionary # load dictionary from file rather than start from empty 
@@ -59,19 +72,11 @@ class DataLoader():
         self.data_mode = 2 # 0 to consider key and value as two different class, 1 the same class, 2 only value considered
         self.remove_lowfreq_words = False # remove low frequency words when set as True
         
-        self.data_augmentation = params.data_augmentation if hasattr(params, 'data_augmentation') else False # cal rows/cols for each batch of data
-        self.data_augmentation_extra = params.data_augmentation_extra if hasattr(params, 'data_augmentation_extra') else False # randomly expand rows/cols
-        self.da_extra_rows = params.data_augmentation_extra_rows if hasattr(params, 'data_augmentation_extra_rows') else 0 # randomly expand rows/cols
-        self.da_extra_cols = params.data_augmentation_extra_cols if hasattr(params, 'data_augmentation_extra_cols') else 0 # randomly expand rows/cols
-        self.rows = 0#32 # to be updated in self._update_training_rows_cols()
-        self.cols = 0#32 # to be updated in self._update_training_rows_cols()
-        
         self.num_classes = len(self.classes) 
         self.batch_size = params.batch_size if hasattr(params, 'batch_size') else 1        
         
         # TBD: build a special cared dictionary
-        self.special_dict = {'0': '[unused10]', '1': '[unused1]', '2': '[unused2]', '3': '[unused3]', '4': '[unused4]', '5': '[unused5]', 
-                             '6': '[unused6]', '7': '[unused7]', '8': '[unused8]', '9': '[unused9]'} # map texts to specific tokens        
+        self.special_dict = {'*', '='} # map texts to specific tokens        
         
         ## 1.1> load words and their location/class as training/validation docs and labels 
         self.training_doc_files = self._get_filenames(params.doc_path)
@@ -92,7 +97,9 @@ class DataLoader():
         # split training / validation docs and show statistics
         num_training = int(len(self.training_docs)*self.data_split)
         data_to_be_fetched = [i for i in range(len(self.training_docs))]
-        selected_training_index = data_to_be_fetched[:num_training] #random.sample(data_to_be_fetched, num_training)
+        selected_training_index = data_to_be_fetched[:num_training] 
+        if self.random:
+            selected_training_index = random.sample(data_to_be_fetched, num_training)
         selected_validation_index = list(set(data_to_be_fetched).difference(set(selected_training_index)))
         self.validation_docs = [self.training_docs[x] for x in selected_validation_index]
         self.training_docs = [self.training_docs[x] for x in selected_training_index]
@@ -107,12 +114,10 @@ class DataLoader():
         
         self.data_shape_statistic() # show data shape static
         if len(self.training_docs) > 0:# adapt grid table size to all training dataset docs 
-            self._update_training_rows_cols() 
+            self.rows, self.cols, _, _ = self._cal_rows_cols(self.training_docs)  
+            print('\nDATASHAPE: data set with maximum grid table of ({},{}), updated.\n'.format(self.rows, self.cols))    
         else:
-            self.rows, self.cols = self.rows_limit, self.cols_limit
-        
-        # TBD: adjust bbox in @training_docs to eliminate overlaps
-        #self.training_docs = self.eliminate_overlap(self.training_docs)
+            self.rows, self.cols = self.rows_ulimit, self.cols_ulimit
                 
         ## 2> call self.next_batch() outside to generate a batch of grid tables data and labels
         self.training_data_tobe_fetched = [i for i in range(len(self.training_docs))]
@@ -162,9 +167,11 @@ class DataLoader():
         rows = self.rows
         cols = self.cols
         if self.data_augmentation:
-            rows, cols, pre_rows, pre_cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra)            
+            rows, cols, pre_rows, pre_cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra, dropout=self.data_augmentation_dropout)            
             print('Training grid table augment size: ({},{}) from ({},{})'\
                   .format(rows, cols, pre_rows, pre_cols))
+        else:
+            rows, cols, pre_rows, pre_cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra, dropout=self.data_augmentation_dropout)
             
         grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
             self._positional_mapping(training_docs, self.training_labels, rows, cols)    
@@ -183,12 +190,12 @@ class DataLoader():
 
         validation_docs = [self.validation_docs[x] for x in selected_index]
         
-        rows = self.rows
-        cols = self.cols
-        ## fixed validation shape leads to better result
-        #if self.data_augmentation: # calculate rows/cols for current grid table
-        #    rows, cols, _, _ = self._cal_rows_cols(validation_docs, extra_augmentation=False)            
-        #    print('Validation grid table real size: ({},{})'.format(rows, cols))
+        ## fixed validation shape leads to better result (to be verified)
+        real_rows, real_cols, _, _ = self._cal_rows_cols(validation_docs, extra_augmentation=False)
+#         rows = max(self.rows, real_rows)
+#         cols = max(self.cols, real_cols)
+        rows = max(self.rows_blimit, real_rows)
+        cols = max(self.cols_blimit, real_cols)
         
         grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
             self._positional_mapping(validation_docs, self.validation_labels, rows, cols)       
@@ -209,13 +216,9 @@ class DataLoader():
 
         test_docs = [self.test_docs[selected_index]]
         
-        rows = self.rows
-        cols = self.cols
-        #if self.data_augmentation:
-        #    rows, cols, _, _ = self._cal_rows_cols(test_docs, extra_augmentation=False)            
-        #    print('Test grid table real size: ({},{})'.format(rows, cols))
-        #if len(self.test_docs) % 100: # show static every 100        
-        #    print('Test grid table size: ({},{}), {} left to be tested'.format(rows, cols, len(self.test_data_tobe_fetched)))
+        real_rows, real_cols, _, _ = self._cal_rows_cols(test_docs, extra_augmentation=False)
+        rows = max(self.rows_blimit, real_rows)
+        cols = max(self.cols_blimit, real_cols)
             
         grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
             self._positional_mapping(test_docs, self.test_labels, rows, cols)        
@@ -235,21 +238,24 @@ class DataLoader():
                 res_all[cols] += 1
                 res_row[rows] += 1
                 res_col[cols] += 1
-            sorted(res_all.items(), key=lambda x:x[1], reverse=True)
-            sorted(res_row.items(), key=lambda x:x[1], reverse=True)
-            sorted(res_col.items(), key=lambda x:x[1], reverse=True)
+            res_all = sorted(res_all.items(), key=lambda x:x[1], reverse=True)
+            res_row = sorted(res_row.items(), key=lambda x:x[1], reverse=True)
+            res_col = sorted(res_col.items(), key=lambda x:x[1], reverse=True)
             return res_all, res_row, res_col
     
         tss, tss_r, tss_c = shape_statistic(self.training_docs) # training shape static
         vss, vss_r, vss_c = shape_statistic(self.validation_docs)
         tess, tess_r, tess_c = shape_statistic(self.test_docs)
-        print("Training shape statistic: ", tss)
+        print("Training statistic: ", tss)
+        print("\t num: ", len(self.training_docs))
         print("\t rows statistic: ", tss_r)
         print("\t cols statistic: ", tss_c)
-        print("Validation shape statistic: ", vss)
+        print("Validation statistic: ", vss)
+        print("\t num: ", len(self.validation_docs))
         print("\t rows statistic: ", vss_r)
         print("\t cols statistic: ", vss_c)
-        print("Test shape statistic: ", tess)
+        print("Test statistic: ", tess)
+        print("\t num: ", len(self.test_docs))
         print("\t rows statistic: ", tess_r)
         print("\t cols statistic: ", tess_c)
         
@@ -258,32 +264,35 @@ class DataLoader():
             idx = 0
             while idx < len(docs):
                 rows, cols, _, _ = self._cal_rows_cols([docs[idx]])
-                if rows > self.rows_limit or cols > self.cols_limit:
+                if rows > self.rows_ulimit or cols > self.cols_ulimit:
                     del docs[idx]
                 else:
                     idx += 1
         data_laundry(self.training_docs)
         data_laundry(self.validation_docs)
         data_laundry(self.training_docs)
-        print("Grids larger than ({},{}) removed".format(self.rows_limit, self.cols_limit))
+        print("\nRemoving grids with shape larger than ({},{}).".format(self.rows_ulimit, self.cols_ulimit))
         
         tss, tss_r, tss_c = shape_statistic(self.training_docs) # training shape static
         vss, vss_r, vss_c = shape_statistic(self.validation_docs)
         tess, tess_r, tess_c = shape_statistic(self.test_docs)
-        print("Training shape statistic after laundary: ", tss)
+        print("Training statistic after laundary: ", tss)
+        print("\t num: ", len(self.training_docs))
         print("\t rows statistic: ", tss_r)
         print("\t cols statistic: ", tss_c)
-        print("Validation shape statistic after laundary: ", vss)
+        print("Validation statistic after laundary: ", vss)
+        print("\t num: ", len(self.validation_docs))
         print("\t rows statistic: ", vss_r)
         print("\t cols statistic: ", vss_c)
-        print("Test shape statistic after laundary: ", tess)
+        print("Test statistic after laundary: ", tess)
+        print("\t num: ", len(self.test_docs))
         print("\t rows statistic: ", tess_r)
         print("\t cols statistic: ", tess_c)
     
     def _positional_mapping(self, docs, labels, rows, cols):
         """
         docs in format:
-        [[file_name, text, word_id, [x_left, y_top, x_right, y_bottom], [image_w, image_h]], max_row_words, max_col_words ]
+        [[file_name, text, word_id, [x_left, y_top, x_right, y_bottom], [left, top, right, bottom], max_row_words, max_col_words] ]
         return grid_tables, gird_labels, dict bboxes {file_name:[]}, file_names
         """
         grid_tables = []
@@ -293,6 +302,7 @@ class DataLoader():
         bbox_mapids = [] # [{}, ] bbox identifier, each id with one or multiple bbox/bboxes
         file_names = []
         for doc in docs:
+            items = []
             grid_table = np.zeros([rows, cols], dtype=np.int32)
             grid_label = np.zeros([rows, cols], dtype=np.int8)
             bbox = [[[] for c in range(cols)] for r in range(rows)]
@@ -304,45 +314,87 @@ class DataLoader():
                 text = item[1]
                 word_id = item[2]
                 x_left, y_top, x_right, y_bottom = item[3][:]
-                image_w, image_h = item[4][:]
+                left, top, right, bottom = item[4][:]
                 
                 dict_id = self.word_to_index[text]                
                 class_id = self._dress_class(file_name, word_id, labels)
                 
                 bbox_id += 1
-                if self.fill_bbox: # TBD: overlap avoidance
-                    top = int(rows * y_top / image_h)
-                    bottom = int(rows * y_bottom / image_h)
-                    left = int(cols * x_left / image_w)
-                    right = int(cols * x_right / image_w)
-                    grid_table[top:bottom, left:right] = dict_id  
-                    grid_label[top:bottom, left:right] = class_id  
+#                 if self.fill_bbox: # TBD: overlap avoidance
+#                     top = int(rows * y_top / image_h)
+#                     bottom = int(rows * y_bottom / image_h)
+#                     left = int(cols * x_left / image_w)
+#                     right = int(cols * x_right / image_w)
+#                     grid_table[top:bottom, left:right] = dict_id  
+#                     grid_label[top:bottom, left:right] = class_id  
+#                      
+#                     label_mapid[class_id].append(bbox_id)
+#                     for row in range(top, bottom):
+#                         for col in range(left, right):
+#                             bbox_mapid[row*cols+col] = bbox_id
+#                      
+#                     for y in range(top, bottom):
+#                         for x in range(left, right):
+#                             bbox[y][x] = [x_left, y_top, x_right-x_left, y_bottom-y_top]
+#                 else:
+#                 col = int(cols * (x_left + (x_right-x_left)/2) / image_w) 
+#                 row = int(rows * (y_top + (y_bottom-y_top)/2) / image_h)  
+#                 if grid_label[row, col] == 0:
+#                     grid_table[row, col] = dict_id
+#                     grid_label[row, col] = class_id
+#                      
+#                     label_mapid[class_id].append(bbox_id)
+#                     bbox_mapid[row*cols+col] = bbox_id
+#                      
+#                     bbox[row][col] = [x_left, y_top, x_right-x_left, y_bottom-y_top]
+#                 else:
+#                     print('overlap!')
+                label_mapid[class_id].append(bbox_id)    
+                
+                v_c = (y_top - top + (y_bottom-y_top)/2) / (bottom-top)
+                h_c = (x_left - left + (x_right-x_left)/2) / (right-left)
+                #v_c = (y_top + (y_bottom-y_top)/2) / bottom
+                #h_c = (x_left + (x_right-x_left)/2) / right 
+                #v_c = (y_top-top) / (bottom-top)
+                #h_c = (x_left-left) / (right-left)
+                #v_c = (y_top) / (bottom)
+                #h_c = (x_left) / (right)
+                #v_c = (y_top + (y_bottom-y_top)/2) / bottom  
+                #h_c = (x_left + (x_right-x_left)/2) / right 
+                row = int(rows * v_c)
+                col = int(cols * h_c)
+                items.append([row, col, v_c, h_c, file_name, dict_id, class_id, bbox_id, [x_left, y_top, x_right-x_left, y_bottom-y_top]])                       
                     
-                    label_mapid[class_id].append(bbox_id)
-                    for row in range(top, bottom):
-                        for col in range(left, right):
-                            bbox_mapid[row*cols+col] = bbox_id
+#             cnt = defaultdict(int)
+#             for item in items:
+#                 row, col, v_c, h_c, file_name, _, _, _, _ = item
+#                 cnt[row] += 1
+            
+            items.sort(key=lambda x: (x[0], x[3], x[6])) # sort according to row > h_c > bbox_id
+            for item in items:
+                row, col, v_c, h_c, file_name, dict_id, class_id, bbox_id, box = item                
+                while col < cols and grid_table[row, col] != 0:
+                    col += 1
                     
-                    for y in range(top, bottom):
-                        for x in range(left, right):
-                            bbox[y][x] = [x_left, y_top, x_right-x_left, y_bottom-y_top]
-                else:
-                    col = int(cols * (x_left + (x_right-x_left)/2) / image_w) 
-                    row = int(rows * (y_top + (y_bottom-y_top)/2) / image_h)  
-                    if grid_label[row, col] == 0:
-                        grid_table[row, col] = dict_id
-                        grid_label[row, col] = class_id
-                        
-                        label_mapid[class_id].append(bbox_id)
-                        bbox_mapid[row*cols+col] = bbox_id
-                        
-                        bbox[row][col] = [x_left, y_top, x_right-x_left, y_bottom-y_top]
-                        
-                if DEBUG:
-                    filler = text if class_id == 0 else str(class_id)+text+'>>' 
-                    drawing_board[row, col] = filler
-            if DEBUG:
-                self.grid_visualization(drawing_board)
+                ptr = 0
+                if col == cols: # shift to find slot to drop the current item
+                    col -= 1
+                    while ptr<cols and grid_table[row, ptr] != 0:
+                        ptr += 1
+                    if ptr == cols:
+                        print(grid_table[row,:])
+                        print('overlap in {} row {} r/c:{}/{}!'.
+                              format(file_name, row, rows, cols))
+                    else:
+                        #print('shift in {} for row {}'.format(file_name, row))
+                        grid_table[row, ptr:-1] = grid_table[row, ptr+1:]
+                
+                if ptr != cols:
+                    grid_table[row, col] = dict_id
+                    grid_label[row, col] = class_id
+                    bbox_mapid[row*cols+col] = bbox_id     
+                    bbox[row][col] = box
+                
             grid_tables.append(np.expand_dims(grid_table, -1)) 
             gird_labels.append(grid_label) 
             bboxes[file_name] = bbox
@@ -357,7 +409,7 @@ class DataLoader():
         label_dressed in format:
         {file_id: {class: {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} } }
         load doc words with location and class returned in format: 
-        [[file_name, text, word_id, [x_left, y_top, x_right, y_bottom], [image_w, image_h], max_row_words, max_col_words] ]
+        [[file_name, text, word_id, [x_left, y_top, x_right, y_bottom], [left, top, right, bottom], max_row_words, max_col_words] ]
         """
         label_dressed = {}
         doc_dressed = []
@@ -376,79 +428,131 @@ class DataLoader():
                 label_dressed.update(label) 
                 doc_dressed.append(self._collect_data(file_id, data['text_boxes'], update_dict))
         return doc_dressed, label_dressed       
-        
-    def _update_training_rows_cols(self):
-        self.rows, self.cols, _, _ = self._cal_rows_cols(self.training_docs)  
-        print('\nDATASHAPE: data set with maximum grid table of ({},{}), updated in DataLoader._update_training_rows_cols()\n'.format(self.rows, self.cols))      
-        
-    def _cal_rows_cols(self, docs, extra_augmentation=False):
-        max_row = 0
-        max_col = 0
+    
+    def _cal_rows_cols(self, docs, extra_augmentation=False, dropout=False):                  
+        max_row = self.encoding_factor
+        max_col = self.encoding_factor
         for doc in docs:
             for line in doc: 
                 _, _, _, _, _, max_row_words, max_col_words = line
                 if max_row_words > max_row:
                     max_row = max_row_words
                 if max_col_words > max_col:
-                    max_col = max_col_words                    
-        pre_rows = (max_row//self.encoding_factor+1) * self.encoding_factor
-        pre_cols = (max_col//self.encoding_factor+1) * self.encoding_factor
+                    max_col = max_col_words
         
-        pad_row, pad_col = 0, 0
+        pre_rows = self._fit_shape(max_row) #(max_row//self.encoding_factor+1) * self.encoding_factor
+        pre_cols = self._fit_shape(max_col) #(max_col//self.encoding_factor+1) * self.encoding_factor
+        
+        rows, cols = 0, 0
         if extra_augmentation:
-            pad_row = abs(int(random.gauss(0, self.da_extra_rows*self.encoding_factor))) #abs(random.gauss(0, u))
-            pad_col = abs(int(random.gauss(0, self.da_extra_cols*self.encoding_factor))) #random.randint(0, u)
-            rows = min(((max_row+pad_row)//self.encoding_factor+1) * self.encoding_factor, self.rows_limit) # apply upper boundary to avoid OOM
-            cols = min(((max_col+pad_col)//self.encoding_factor+1) * self.encoding_factor, self.cols_limit) # apply upper boundary to avoid OOM
+            pad_row = int(random.gauss(0, self.da_extra_rows*self.encoding_factor)) #abs(random.gauss(0, u))
+            pad_col = int(random.gauss(0, self.da_extra_cols*self.encoding_factor)) #random.randint(0, u)
+            if not dropout:
+                pad_row = abs(pad_row)
+                pad_col = abs(pad_col)
+            rows = min(self._fit_shape(max_row+pad_row), self.rows_ulimit) # apply upper boundary to avoid OOM
+            cols = min(self._fit_shape(max_col+pad_col), self.cols_ulimit) # apply upper boundary to avoid OOM
         else:
             rows = pre_rows
             cols = pre_cols
-        return rows, cols, pre_rows, pre_cols # 5x upper boundary to avoid OOM
+        return rows, cols, pre_rows, pre_cols 
     
+    def _fit_shape(self, shape): # modify shape size to fit the encoding factor
+        while shape % self.encoding_factor:
+            shape += 1
+        return shape
+    
+    def _expand_shape(self, shape): # expand shape size with step 2
+        return self._fit_shape(shape+1)
+        
     def _collect_data(self, file_name, content, update_dict):
         """
         dress and preserve only interested data.
-        """
+        """          
         content_dressed = []
-        image_w, image_h, buffer = 0, 0, 2
+        left, top, right, bottom, buffer = 9999, 9999, 0, 0, 2
         for line in content:
             bbox = line['bbox'] # handle data corrupt
             if len(bbox) == 0:
                 continue
+            if line['text'] in self.special_dict: # ignore potential overlap causing characters
+                continue
             
             x_left, y_top, x_right, y_bottom = self._dress_bbox(bbox)        
             # TBD: the real image size is better for calculating the relative x/y/w/h
-            if x_right > image_w:
-                image_w = x_right + buffer
-            if y_bottom > image_h:
-                image_h = y_bottom + buffer
+            if x_left < left: left = x_left - buffer
+            if y_top < top: top = y_top - buffer
+            if x_right > right: right = x_right + buffer
+            if y_bottom > bottom: bottom = y_bottom + buffer
                 
             word_id = line['id']
             dressed_texts = self._dress_text(line['text'], update_dict)
             
-            # TBD: seperate bbox according to @dressed_text and @parts
             num_block = len(dressed_texts)
-            for i, dressed_text in enumerate(dressed_texts): # for loop is used for handling tokenized text
+            for i, dressed_text in enumerate(dressed_texts): # handling tokenized text, separate bbox
                 x_left = int(x_left + (x_right-x_left) / num_block * (i))
                 x_right = int(x_left + (x_right-x_left) / num_block * (i+1))
                 content_dressed.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom]])
             
-        num_words_row = [0 for _ in range(image_h)] # number of words in each row
-        num_words_col = [0 for _ in range(image_w)] # number of words in each column
+        # initial calculation of maximum number of words in rows/cols in terms of image size
+        num_words_row = [0 for _ in range(bottom)] # number of words in each row
+        num_words_col = [0 for _ in range(right)] # number of words in each column
         for line in content_dressed:
             _, _, _, [x_left, y_top, x_right, y_bottom] = line
             for y in range(y_top, y_bottom):
                 num_words_row[y] += 1
             for x in range(x_left, x_right):
                 num_words_col[x] += 1
-        max_row_words = max(num_words_row)
-        max_col_words = max(num_words_col)
-        #print(max_row_words, max_col_words)
-            
+        max_row_words = self._fit_shape(max(num_words_row))
+        max_col_words = 0#self._fit_shape(max(num_words_col))
+        #print(max_rows, max_cols)
+                
+        # further expansion of maximum number of words in rows/cols in terms of grid shape
+        max_rows = max(self.encoding_factor, max_row_words)
+        max_cols = max(self.encoding_factor, max_col_words)
+        DONE = False
+        while not DONE:
+            DONE = True
+            grid_table = np.zeros([max_rows, max_cols], dtype=np.int32)
+            for line in content_dressed:
+                _, _, _, [x_left, y_top, x_right, y_bottom] = line
+                row = int(max_rows * (y_top - top + (y_bottom-y_top)/2) / (bottom-top))
+                col = int(max_cols * (x_left - left + (x_right-x_left)/2) / (right-left))
+                #row = int(max_rows * (y_top + (y_bottom-y_top)/2) / (bottom))
+                #col = int(max_cols * (x_left + (x_right-x_left)/2) / (right))
+                #row = int(max_rows * (y_top-top) / (bottom-top))
+                #col = int(max_cols * (x_left-left) / (right-left))
+                #row = int(max_rows * (y_top) / (bottom))
+                #col = int(max_cols * (x_left) / (right))
+                #row = int(max_rows * (y_top + (y_bottom-y_top)/2) / bottom)  
+                #col = int(max_cols * (x_left + (x_right-x_left)/2) / right) 
+                
+                while col < max_cols and grid_table[row, col] != 0: # shift to find slot to drop the current item
+                    col += 1
+                if col == max_cols: # shift to find slot to drop the current item
+                    col -= 1
+                    ptr = 0
+                    while ptr<max_cols and grid_table[row, ptr] != 0:
+                        ptr += 1
+                    if ptr == max_cols: # overlap cannot be solved in current row, then expand the grid
+                        max_cols = self._expand_shape(max_cols)
+                        DONE = False
+                        break
+                    
+                    grid_table[row, ptr:-1] = grid_table[row, ptr+1:]
+                
+                if DONE:
+                    if row > max_rows or col>max_cols:
+                        print('wrong')
+                    grid_table[row, col] = 1
+        
+        max_rows = self._fit_shape(max_rows)
+        max_cols = self._fit_shape(max_cols)
+        #print('{} collected in shape: {},{}'.format(file_name, max_rows, max_cols))
         for i, line in enumerate(content_dressed): # append height/width/numofwords to the list
             file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom] = line
             content_dressed[i] = [file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
-                                  [image_w, image_h], max_row_words, max_col_words]
+                                  [left, top, right, bottom], max_rows, max_cols ]
         return content_dressed  
     
     def _collect_label(self, file_id, content):

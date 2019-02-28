@@ -151,6 +151,7 @@ class Model(object):
     @layer
     def conv(self, layer_input, k_h, k_w, c_o, s_h, s_w, name, activation='relu', trainable=True):
         convolve = lambda input, filter: tf.nn.conv2d(input, filter, [1,s_h,s_w,1], 'SAME')
+        #convolve = lambda input, filter: tf.nn.atrous_conv2d(input, filter, 2, 'SAME', 'DILATE')
         
         activate = lambda z: tf.nn.relu(z, 'relu') #if activation == 'relu':
         if activation == 'sigmoid':
@@ -170,6 +171,8 @@ class Model(object):
     @layer
     def up_conv(self, layer_input, k_h, k_w, c_o, s_h, s_w, name, activation='relu', trainable=True):
         convolve = lambda input, filter: tf.nn.conv2d(input, filter, [1,s_h,s_w,1], 'SAME')
+        #convolve = lambda input, filter: tf.nn.atrous_conv2d(input, filter, 2, 'SAME', 'DILATE')
+        
         activate = lambda z: tf.nn.relu(z, 'relu')        
         with tf.variable_scope(name) as scope:
             shape = tf.shape(layer_input)
@@ -346,6 +349,7 @@ class Model(object):
         biases = self.make_var('biases'+name, [c_o], init_biases, None, trainable)
         tf.summary.histogram('w', kernel)
         tf.summary.histogram('b', biases)
+        # test with different orders: convolve/activate/normalize; normalize/convolve/activate; convolve/normalize/activate
         wx = convolve(input, kernel)
         a = activate(tf.nn.bias_add(wx, biases))
         a = tf.contrib.layers.instance_norm(a, center=False, scale=False)
