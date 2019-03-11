@@ -7,9 +7,7 @@ import argparse, os
 import timeit
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-from model_cutie import CUTIE
 from model_cutie_res import CUTIERes
-from model_cutie_unet8 import CUTIEUNet
 from data_loader_json import DataLoader
 from utils import *
 
@@ -35,24 +33,25 @@ parser.add_argument('--update_dict', type=bool, default=False)
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
 # data manipulation
-parser.add_argument('--rows_ulimit', type=int, default=128) 
-parser.add_argument('--cols_ulimit', type=int, default=128) 
-parser.add_argument('--rows_blimit', type=int, default=64) 
-parser.add_argument('--cols_blimit', type=int, default=64) 
+parser.add_argument('--segment_grid', type=bool, default=True) # segment grid into two parts if grid is larger than cols_target
+parser.add_argument('--rows_target', type=int, default=48) 
+parser.add_argument('--cols_target', type=int, default=48) 
+parser.add_argument('--augment_strategy', type=int, default=2) # 1 for increasing grid shape size, 2 for gaussian around target shape
+parser.add_argument('--rows_ulimit', type=int, default=96) 
+parser.add_argument('--cols_ulimit', type=int, default=96) 
 parser.add_argument('--fill_bbox', type=bool, default=False) # fill bbox with dict_id / label_id
 
-parser.add_argument('--data_augmentation', type=bool, default=True) # augment data row/col in each batch
 parser.add_argument('--data_augmentation_extra', type=bool, default=True) # randomly expand rows/cols
 parser.add_argument('--data_augmentation_dropout', type=bool, default=False) # randomly shrink rows/cols
-parser.add_argument('--data_augmentation_extra_rows', type=int, default=2) 
-parser.add_argument('--data_augmentation_extra_cols', type=int, default=2) 
+parser.add_argument('--data_augmentation_extra_rows', type=int, default=1) 
+parser.add_argument('--data_augmentation_extra_cols', type=int, default=1) 
 
 # training
 parser.add_argument('--batch_size', type=int, default=32) 
 parser.add_argument('--iterations', type=int, default=40000)  
-parser.add_argument('--lr_decay_step', type=int, default=4000) 
-parser.add_argument('--learning_rate', type=float, default=0.001)
-parser.add_argument('--lr_decay_factor', type=float, default=0.5) 
+parser.add_argument('--lr_decay_step', type=int, default=15000) 
+parser.add_argument('--learning_rate', type=float, default=0.0001)
+parser.add_argument('--lr_decay_factor', type=float, default=0.1) 
 
 # loss optimization
 parser.add_argument('--hard_negative_ratio', type=int, help='the ratio between negative and positive losses', default=3) 
@@ -170,7 +169,7 @@ if __name__ == '__main__':
     summary_writer = tf.summary.FileWriter(summary_path, tf.get_default_graph(), flush_secs=10)
     
     config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.allow_growth = True
+    config.gpu_options.allow_growth = False
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         
@@ -250,7 +249,7 @@ if __name__ == '__main__':
                 training_acc_soft += [acc_soft]       
                 print('\nIter: %d/%d, total loss: %.4f, model loss: %.4f, regularization loss: %.4f'%\
                       (iter, params.iterations, total_loss_val, model_loss_val, regularization_loss_val))
-                print(res)
+                #print(res)
                 print('TRAINING ACC (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f)'\
                       %(recall, acc_strict, acc_soft, max(training_recall), max(training_acc_strict), max(training_acc_soft)))
                 

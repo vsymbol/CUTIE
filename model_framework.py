@@ -166,10 +166,48 @@ class Model(object):
             a = self.convolution(convolve, activate, layer_input, k_h, k_w, c_i, c_o, 
                                  init_weights, init_biases, regularizer, trainable)
             return a  
+     
+     
+    @layer
+    def dilate_conv(self, layer_input, k_h, k_w, c_o, s_h, s_w, rate, name, activation='relu', trainable=True):
+        convolve = lambda input, filter: tf.nn.atrous_conv2d(input, filter, rate, 'SAME', 'DILATE')
+        
+        activate = lambda z: tf.nn.relu(z, 'relu') #if activation == 'relu':
+        if activation == 'sigmoid':
+            activate = lambda z: tf.nn.sigmoid(z, 'sigmoid')
+            
+        with tf.variable_scope(name) as scope:
+            init_weights = tf.truncated_normal_initializer(0.0, 0.01)
+            init_biases = tf.constant_initializer(0.0)
+            regularizer = self.l2_regularizer(self.weight_decay)
+            c_i = layer_input.get_shape()[-1]
+            
+            a = self.convolution(convolve, activate, layer_input, k_h, k_w, c_i, c_o, 
+                                 init_weights, init_biases, regularizer, trainable)
+            return a  
     
     
     @layer
-    def up_conv(self, layer_input, k_h, k_w, c_o, s_h, s_w, name, activation='relu', trainable=True):
+    def dilate_module(self, layer_input, k_h, k_w, c_o, s_h, s_w, rate, name, activation='relu', trainable=True):
+        convolve = lambda input, filter: tf.nn.atrous_conv2d(input, filter, rate, 'SAME', 'DILATE')
+        
+        activate = lambda z: tf.nn.relu(z, 'relu') #if activation == 'relu':
+        if activation == 'sigmoid':
+            activate = lambda z: tf.nn.sigmoid(z, 'sigmoid')
+            
+        with tf.variable_scope(name) as scope:
+            init_weights = tf.truncated_normal_initializer(0.0, 0.01)
+            init_biases = tf.constant_initializer(0.0)
+            regularizer = self.l2_regularizer(self.weight_decay)
+            c_i = layer_input.get_shape()[-1]
+            
+            a = self.convolution(convolve, activate, layer_input, k_h, k_w, c_i, c_o, 
+                                 init_weights, init_biases, regularizer, trainable)
+            return a  
+        
+    
+    @layer
+    def up_conv(self, layer_input, k_h, k_w, c_o, s_h, s_w, name, factor=2, activation='relu', trainable=True):
         convolve = lambda input, filter: tf.nn.conv2d(input, filter, [1,s_h,s_w,1], 'SAME')
         #convolve = lambda input, filter: tf.nn.atrous_conv2d(input, filter, 2, 'SAME', 'DILATE')
         
@@ -178,7 +216,7 @@ class Model(object):
             shape = tf.shape(layer_input)
             h = shape[1]
             w = shape[2]
-            layer_input = tf.image.resize_nearest_neighbor(layer_input, [2*h, 2*w])
+            layer_input = tf.image.resize_nearest_neighbor(layer_input, [factor*h, factor*w])
             init_weights = tf.truncated_normal_initializer(0.0, 0.01)
             init_biases = tf.constant_initializer(0.0)
             regularizer = self.l2_regularizer(self.weight_decay)
@@ -205,8 +243,7 @@ class Model(object):
             shape = tf.shape(f)
             c_i = f.get_shape()[-1]
             c_o = f.get_shape()[-1]
-            c_a = c_o // 8 # attention kernel depth
-            size_per_head = c_o // num_heads
+            c_a = c_o // num_heads # attention kernel depth, size per head
             
             query = self.make_var('weights_query', [1, 1, c_i, c_a], init_weights, regularizer, trainable)
             query_layer = convolve(f, query) # [B, H, W, c_a]
@@ -221,7 +258,7 @@ class Model(object):
             value_layer = tf.reshape(value_layer, [shape[0], -1, c_o])# [B, H*W, c_o]
             
             attention_scores = tf.matmul(query_layer, key_layer, transpose_b=True) # [B, H*W, H*W]
-            attention_scores = tf.multiply(attention_scores, 1.0 / math.sqrt(float(size_per_head.value)))
+            attention_scores = tf.multiply(attention_scores, 1.0 / math.sqrt(float(c_a.value)))
             
             attention_probs = tf.nn.softmax(attention_scores)
             #attention_probs = dropout(attention_probs, att_dropout)
@@ -243,8 +280,22 @@ class Model(object):
     
     
     @layer
+    def add(self, layer_input, name):
+        return tf.math.add_n(layer_input)
+        
+    
+    @layer
     def max_pool(self, layer_input, k_h, k_w, s_h, s_w, name, padding='VALID'):
         return tf.nn.max_pool(layer_input, [1,k_h,k_w,1], [1,s_h,s_w,1], name=name, padding=padding)
+    
+    
+    @layer
+    def global_pool(self, layer_input, name):
+        shape = tf.shape(layer_input)
+        h = shape[1]
+        w = shape[2]
+        output = tf.reduce_mean(layer_input, [1,2], keepdims=True, name=name)
+        return tf.image.resize_nearest_neighbor(output, [h, w])
     
     
     @layer

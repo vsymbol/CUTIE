@@ -9,7 +9,7 @@ import os, csv
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from model_cutie import CUTIE
-from model_cutie_res import CUTIERes
+from model_cutie_hr import CUTIERes
 from model_cutie_unet8 import CUTIEUNet
 from model_cutie_sep import CUTIESep
 from data_loader_json import DataLoader
@@ -22,14 +22,14 @@ parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 
 parser.add_argument('--e_ckpt_path', type=str, default='../graph/CUTIE/graph/') # modify this
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_8x_d29939c9(r80c80)_iter_45401.ckpt')
-parser.add_argument('--rows_ulimit', type=int, default=80) 
-parser.add_argument('--cols_ulimit', type=int, default=80) 
-parser.add_argument('--rows_blimit', type=int, default=64) 
-parser.add_argument('--cols_blimit', type=int, default=64) 
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_residual_highresolution_8x_d20000c9(r128c128)_iter_38802.ckpt')
+parser.add_argument('--rows_ulimit', type=int, default=128) 
+parser.add_argument('--cols_ulimit', type=int, default=128) 
+parser.add_argument('--rows_blimit', type=int, default=80) 
+parser.add_argument('--cols_blimit', type=int, default=80) 
 
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/40000') # 40000 or 119547 or 20000TC
+parser.add_argument('--load_dict_from_path', type=str, default='dict/20000TC') # 40000 or 119547 or 20000TC
 parser.add_argument('--tokenize', type=bool, default=True) # tokenize input text
 parser.add_argument('--text_case', type=bool, default=True) # case sensitive
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
@@ -92,7 +92,7 @@ if __name__ == '__main__':
             recalls += [recall]
             accs_strict += [acc_strict] 
             accs_soft += [acc_soft]
-            #print(res) # show res for current batch  
+            print(res) # show res for current batch  
             
             # visualize result
             shape = data['shape']
