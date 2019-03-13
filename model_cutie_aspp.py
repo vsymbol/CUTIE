@@ -1,12 +1,12 @@
 # written by Xiaohui Zhao
-# 2018-12 
+# 2019-03
 # xiaohui.zhao@accenture.com
 import tensorflow as tf
 from model_cutie import CUTIE    
     
 class CUTIERes(CUTIE):
     def __init__(self, num_vocabs, num_classes, params, trainable=True):
-        self.name = "CUTIE_dilate" # 
+        self.name = "CUTIE_atrousSPP" # 
         
         self.data = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='grid_table')
         self.gt_classes = tf.placeholder(tf.int32, shape=[None, None, None], name='gt_classes')

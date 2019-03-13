@@ -1,0 +1,52 @@
+This is BibTeX, Version 0.99d (TeX Live 2018)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: ms.aux
+The style file: ieee.bst
+Database file #1: biblio.bib
+Warning--entry type for "bertgit" isn't style-file defined
+--line 1 of file biblio.bib
+Warning--I didn't find a database entry for "Alpher02"
+Warning--I didn't find a database entry for "Alpher03"
+Warning--I didn't find a database entry for "Alpher04"
+You've used 1 entry,
+            2120 wiz_defined-function locations,
+            507 strings with 3799 characters,
+and the built_in function-call counts, 214 in all, are:
+= -- 16
+> -- 7
+< -- 0
++ -- 3
+- -- 2
+* -- 8
+:= -- 40
+add.period$ -- 2
+call.type$ -- 1
+change.case$ -- 4
+chr.to.int$ -- 0
+cite$ -- 1
+duplicate$ -- 7
+empty$ -- 23
+format.name$ -- 2
+if$ -- 43
+int.to.chr$ -- 0
+int.to.str$ -- 1
+missing$ -- 0
+newline$ -- 7
+num.names$ -- 2
+pop$ -- 8
+preamble$ -- 1
+purify$ -- 3
+quote$ -- 0
+skip$ -- 10
+stack$ -- 0
+substring$ -- 5
+swap$ -- 1
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 4
+warning$ -- 0
+while$ -- 2
+width$ -- 2
+write$ -- 9
+(There were 4 warnings)

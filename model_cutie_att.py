@@ -1,5 +1,5 @@
 # written by Xiaohui Zhao
-# 2018-12 
+# 2019-03
 # xiaohui.zhao@accenture.com
 import tensorflow as tf
 from model_cutie import CUTIE    
