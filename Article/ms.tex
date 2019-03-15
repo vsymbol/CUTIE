@@ -73,38 +73,45 @@ Attempting to involve the spatial information into the key information extractio
 
 \section{Methods}
 \subsection{Grid Positional Mapping}
-To generate input grid data for the convolutional network, the scanned document image are processed by an OCR engine to acquire the texts and their absolute / relative positions. Let the scanned document image is of shape $(w, h)$, the minimum bounding box around the $i$-th interested text $s_i$ be $b_i$ that is restricted by two corner coordinates, where the upper-left corner coordinate in the scanned document be $(x^i_{left}, y^i_{top})$ and the bottom right of the bounding box be $(x^i_{right}, y^i_{bottom})$. To avoid the affects from overlapped bounding boxes and reveal the actual relative position among texts, we calculate the center point $(c^i_x, c^i_y)$ of the bounding boxes as the reference position. It is not hard to find that involving pre-processes that combine texts into meaningful entities here will benefit the following grid positional mapping process. However, this is not the major purpose of this paper and we leave it to future researches. In this paper, we tokenize the text words with a greedy longest-match-first algorithm using a pre-defined dictionary \cite{bertgit}. 
+To generate input grid data for the convolutional network, the scanned document image are processed by an OCR engine to acquire the texts and their absolute / relative positions. Let the scanned document image be of shape $(w, h)$, the minimum bounding box around the $i$-th interested text $s_i$ be $b_i$ that is restricted by two corner coordinates, where the upper-left corner coordinate in the scanned document be $(x^i_{left}, y^i_{top})$ and the bottom right of the bounding box be $(x^i_{right}, y^i_{bottom})$. To avoid the affects from overlapped bounding boxes and reveal the actual relative position among texts, we calculate the center point $(c^i_x, c^i_y)$ of the bounding boxes as the reference position. It is not hard to find that involving pre-processes that combine texts into meaningful entities here will benefit the following grid positional mapping process. However, this is not the major purpose of this paper and we leave it to future researches. In this paper, we tokenize the text words with a greedy longest-match-first algorithm using a pre-defined dictionary \cite{bertgit}. 
 
-Let the grid positional mapping process be $G$ and the target grid size be $(c_{g_0}, r_{g_0})$. To generate the grid data, the goal of $G$ is to map the texts from the original scanned document image to the target grid, such that the mapped grid preserves the original spatial relationship among texts yet more suitable to be used as the input for the convolutional network. 
+Let the grid positional mapping process be $G$ and the target grid size be $(c_{g_m}, r_{g_m})$. To generate the grid data, the goal of $G$ is to map the texts from the original scanned document image to the target grid, such that the mapped grid preserves the original spatial relationship among texts yet more suitable to be used as the input for the convolutional network. 
 
 \begin{equation}
 \label{cx}
-c^i_x = c_{g_0} \frac{x_l + \frac{(x_r - x_l)}{2}}{w}
+c^i_x = c_{g_m} \frac{x_{left} + \frac{(x_{right} - x_{left})}{2}}{w}
 \end{equation}
-
 \begin{equation}
 \label{cy}
-r^i_y = r_{g_0} \frac{y_t + \frac{(y_b - y_t)}{2}}{h}
+r^i_y = r_{g_m} \frac{y_{top} + \frac{(y_{bottom} - y_{top})}{2}}{h}
 \end{equation}
 
-For tokenized texts, the bounding box is horizontally divided into multiple boxes and their reference positions are calculated using the same criteria as Equ. \ref{cx} and Equ. \ref{cy}, separately.
+For tokenized texts, the bounding box is horizontally divided into multiple boxes and their row and col reference positions are calculated using the same criteria as Equ. \ref{cx} and Equ. \ref{cy}, separately. Furthermore, to enhance the capability of CUTIE to better handle documents with different layouts, we augment the grid data to shapes with different rows and columns by random sampling a Gaussian distribution for with probability
+
+\begin{equation}
+\label{augmentc}
+p_c(k) = \frac{1}{\sqrt{2 \pi \sigma^2}} e^{- \frac{(k - c_{g_t})^2}{2 \sigma^2}}
+\end{equation}
+\begin{equation}
+\label{augmentr}
+p_r(k) = \frac{1}{\sqrt{2 \pi \sigma^2}} e^{- \frac{(k - r_{g_t})^2}{2 \sigma^2}}
+\end{equation}
+where $c_{g_t}$ is the mean center of the target augment gird size, $r_{g_t}$ is the mean center of the target augment grid size, and $\sigma$ is the standard deviation.
+
 
 \subsection{Model}
 Through matching the output of CUTIE with the labelled grid data, the model learns to generate the label for each text in the grid input via exploring both the spatial and semantic features. For that reason, the task of CUTIE bears resemblance to the semantic segmentation task in the computer vision field but with more sparse data distributions. Specifically, the mapped grid contains scattered data points (texts) in contrast to the images bespread with pixels. The grid positional mapped key texts are either close to or distant to each other due to different types of document layouts. 
 
-In fact, several methods have been proposed in the semantic segmentation field to capture multi-scale context in the input data. The methods of image pyramid and the encoder-decoder structure both aim at exploiting multi-scale information. The interested objects from different scales become prominent in the former networks by using multiple scaled input data to gather multi-scale features. The later networks shrink feature maps to enlarge receptive fields and reduce computation burdens, and then capture finer details by gradually recovering the spatial information from lower layer features. However, spatial resolution is reduced in the encoding process and the decoding process exploits only high resolution but low level features to recover the spatial resolution, the consecutive striding encoding process decimates detail information which is detrimental to the sparse grid. Instead, the field of view of filters can also be effectively enlarged by applying atrous convolution \cite{deeplab, deeplabv1, deeplabv3, deeplabv3p}. 
+In fact, several methods have been proposed in the semantic segmentation field to capture multi-scale context in the input data. The methods of image pyramid and the encoder-decoder structure both aim at exploiting multi-scale information. The interested objects from different scales become prominent in the former networks by using multiple scaled input data to gather multi-scale features. The later networks shrink feature maps to enlarge receptive fields and reduce computation burdens, and then capture finer details by gradually recovering the spatial information from lower layer features. However, spatial resolution is reduced in the encoding process and the decoding process exploits only high resolution but low level features to recover the spatial resolution, the consecutive striding encoding process decimates detail information which is detrimental to the sparse grid. Moreover, the encoding and decoding process applies shape restricts to the grid shape augment process. 
 
-To capture long distance connection and avoid potential loss in the encoding process, we propose to employ the convolutional network with atrous convolution and without the encoder-decoder structure. Let the input feature map be $m$, filter be $w$ and output be $n$, for each position $i$, atrous convolution is applied over the input feature map $m$ as 
+Instead, the field of view of filters can also be effectively enlarged by applying atrous convolution \cite{deeplab, deeplabv1, deeplabv3, deeplabv3p}. To capture long distance connection and avoid potential information loss in the encoding process, we propose to employ the convolutional network with atrous convolution and without the encoder-decoder structure. Let the input feature map be $m$, filter be $w$ and output be $n$, for each position $i$, atrous convolution is applied over the input feature map $m$ as 
 
 \begin{equation}
 n[i] = \sum_k m[i+r\cdot k]w[k]
 \end{equation}
 where $r$ is the atrous rate that indicates the sampling stride of the input signal, which is implemented as convolving the input feature with upsampled filters by inserting $r-1$ zeros between two consecutive filter values along each spatial dimension. Standard convolution is a special case of atrous convolution with $r=1$.
 
-Two types of architectures are developed for CUITE. 
-
-\subsection{Grid Augmentation}
-\label{gridaugmentation}
+The proposed network avoids information loss in the encoding process while taking advantage of encoders by combining encoding results to the maintained high-resolution representations through the entire convolutional process. Similar to HRNet proposed in \cite{hrnet}, a high-resolution network without striding is employed as the backbone major network, then several high-to-low resolution sub networks are gradually added and connected to the backbone major network. During the connecting process of the major network and sub networks, multi-scale features are fused to generate rich representations.
 
 \section{Experiments}
 

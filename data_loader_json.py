@@ -364,7 +364,7 @@ class DataLoader():
             
             items.sort(key=lambda x: (x[0], x[3], x[5])) # sort according to row > h_c > bbox_id
             for item in items:
-                row, col, v_c, h_c, file_name, dict_id, class_id, bbox_id, box = item                
+                row, col, v_c, h_c, file_name, dict_id, class_id, bbox_id, box = item
                 while col < cols and grid_table[row, col] != 0:
                     col += 1
                     
@@ -374,9 +374,10 @@ class DataLoader():
                     while ptr<cols and grid_table[row, ptr] != 0:
                         ptr += 1
                     if ptr == cols:
-                        print(grid_table[row,:])
-                        print('overlap in {} <{}> row {} r{}c{}!'.
-                              format(file_name, self.index_to_word[dict_id], row, rows, cols))
+                        pass
+                        #print(grid_table[row,:])
+                        #print('overlap in {} <{}> row {} r{}c{}!'.
+                        #      format(file_name, self.index_to_word[dict_id], row, rows, cols))
                     else:
                         #print('shift in {} for row {}'.format(file_name, row))
                         grid_table[row, ptr:-1] = grid_table[row, ptr+1:]
@@ -581,24 +582,32 @@ class DataLoader():
             content_dressed_left = []
             content_dressed_right = []
             cnt = defaultdict(int) # counter for number of words in a specific row
+            #cnt_l, cnt_r = defaultdict(int), defaultdict(int)
             left_boundary = max_cols - self.cols_target
             right_boundary = self.cols_target
             for i, line in enumerate(content_dressed):
                 file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom] = line
                 
-                row = y_top + (y_bottom-y_top)/2
+                row = int(max_rows * (y_top + (y_bottom-y_top)/2) / bottom)
                 cnt[row] += 1                
                 if cnt[row] <= left_boundary:
+                    #cnt_l[row] += 1
                     content_dressed_left.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
                                       [left, top, right, bottom], max_rows, self.cols_target])
-                elif left_boundary < cnt[row] < right_boundary:
+                elif left_boundary < cnt[row] <= right_boundary:
+                    #cnt_l[row] += 1
+                    #cnt_r[row] += 1
                     content_dressed_left.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
                                       [left, top, right, bottom], max_rows, self.cols_target])
                     content_dressed_right.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
                                       [left, top, right, bottom], max_rows, self.cols_target])
                 else:
+                    #cnt_r[row] += 1
                     content_dressed_right.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
                                       [left, top, right, bottom], max_rows, self.cols_target])
+            #print(sorted(cnt.items(), key=lambda x:x[1], reverse=True))
+            #print(sorted(cnt_l.items(), key=lambda x:x[1], reverse=True))
+            #print(sorted(cnt_r.items(), key=lambda x:x[1], reverse=True))
             data.append(content_dressed_left)
             data.append(content_dressed_right)
         else:

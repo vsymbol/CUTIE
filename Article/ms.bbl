@@ -27,4 +27,9 @@ L.~Chen, Y.~Zhu, G.~Papandreou, F.~Schroff, and H.~Adam.
 B.~Github.
 \newblock https://github.com/google-research/bert.
 
+\bibitem{hrnet}
+K.~Sun, B.~Xiao, D.~Liu, and J.~Wang.
+\newblock Deep high-resolution representation learning for human pose
+  estimation, 2019.
+
 \end{thebibliography}

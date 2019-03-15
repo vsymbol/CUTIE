@@ -5,45 +5,45 @@ The style file: ieee.bst
 Database file #1: biblio.bib
 Warning--entry type for "bertgit" isn't style-file defined
 --line 1 of file biblio.bib
-You've used 5 entries,
+You've used 6 entries,
             2120 wiz_defined-function locations,
-            521 strings with 4477 characters,
-and the built_in function-call counts, 1531 in all, are:
-= -- 134
-> -- 114
+            525 strings with 4606 characters,
+and the built_in function-call counts, 1826 in all, are:
+= -- 158
+> -- 137
 < -- 0
-+ -- 45
-- -- 40
-* -- 108
-:= -- 290
-add.period$ -- 14
-call.type$ -- 5
-change.case$ -- 35
++ -- 54
+- -- 48
+* -- 127
+:= -- 340
+add.period$ -- 16
+call.type$ -- 6
+change.case$ -- 42
 chr.to.int$ -- 0
-cite$ -- 5
-duplicate$ -- 47
-empty$ -- 91
-format.name$ -- 40
-if$ -- 294
+cite$ -- 6
+duplicate$ -- 54
+empty$ -- 113
+format.name$ -- 48
+if$ -- 354
 int.to.chr$ -- 0
-int.to.str$ -- 5
+int.to.str$ -- 6
 missing$ -- 4
-newline$ -- 27
-num.names$ -- 10
-pop$ -- 31
+newline$ -- 31
+num.names$ -- 12
+pop$ -- 43
 preamble$ -- 1
-purify$ -- 30
+purify$ -- 36
 quote$ -- 0
-skip$ -- 42
+skip$ -- 50
 stack$ -- 0
-substring$ -- 25
-swap$ -- 5
+substring$ -- 30
+swap$ -- 6
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 20
+type$ -- 24
 warning$ -- 0
-while$ -- 10
-width$ -- 6
-write$ -- 53
+while$ -- 12
+width$ -- 7
+write$ -- 61
 (There was 1 warning)

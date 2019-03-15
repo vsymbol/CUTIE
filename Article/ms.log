@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  13 MAR 2019 17:12
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  15 MAR 2019 11:58
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -382,25 +382,27 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
 ]
-Underfull \vbox (badness 1910) has occurred while \output is active []
+Underfull \vbox (badness 1845) has occurred while \output is active []
 
  [2]
-(./ms.bbl)
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 120.
- [3
+(./ms.bbl
+Underfull \vbox (badness 2237) has occurred while \output is active []
 
-]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 120.
- (./ms.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 120.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 120.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 120.
+)
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 127.
+ [3]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 127.
+
+(./ms.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 127.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 127.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 127.
  ) 
 Here is how much of TeX's memory you used:
- 6647 strings out of 492649
- 94525 string characters out of 6129622
- 196415 words of memory out of 5000000
- 10406 multiletter control sequences out of 15000+600000
+ 6651 strings out of 492649
+ 94554 string characters out of 6129622
+ 196500 words of memory out of 5000000
+ 10408 multiletter control sequences out of 15000+600000
  26447 words of font info for 67 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  37i,9n,39p,1236b,332s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -415,15 +417,16 @@ ve/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive
 exmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2018/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2018/texmf-d
 ist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2018/texmf-di
-st/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2018/texmf-dist
-/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/t
-ype1/urw/times/utmb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/t
-imes/utmr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/times/utmri
-8a.pfb>
-Output written on ms.pdf (3 pages, 153786 bytes).
+st/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2018/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2018/texmf-dist/f
+onts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/typ
+e1/urw/times/utmb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/tim
+es/utmr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/times/utmri8a
+.pfb>
+Output written on ms.pdf (3 pages, 167039 bytes).
 PDF statistics:
- 114 PDF objects out of 1000 (max. 8388607)
- 93 compressed objects within 1 object stream
- 23 named destinations out of 1000 (max. 500000)
+ 122 PDF objects out of 1000 (max. 8388607)
+ 100 compressed objects within 1 object stream
+ 25 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
