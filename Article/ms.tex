@@ -19,9 +19,6 @@
 \def\cvprPaperID{****} % *** Enter the CVPR Paper ID here
 \def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
 
-% Pages are numbered in submission mode, and unnumbered in camera-ready
-%\ifcvprfinal\pagestyle{empty}\fi
-\setcounter{page}{4321}
 \begin{document}
 
 %%%%%%%%% TITLE
@@ -52,40 +49,6 @@ The majority of the published learning based works are based on the named entity
 
 Attempting to involve the spatial information into the key information extraction process, we propose to tackle this problem by using the CNN based network structure and involve the semantic features in a properly designed fashion. In particular, our proposed model, called Convolutional Universal Text Information Extractor (CUTIE), tackles the key information extraction problem by applying convolutional deep learning model on the gridded texts, as illustrated in Fig. \ref{fig:onecol}. The gridded texts is the formatted input of the entire network, which is arranged in close correspondance with their real spatial relationship of the original scanned document image. Furthermore, the rich semantic information is encoded from the gridded texts in the very beginning of the convolutional network. 
 
-\section{Related Work}
-
-\section{Method}
-\subsection{Grid Positional Mapping}
-To generate input grid data for the convolutional network, the scanned document image are processed by an OCR engine to acquire the texts and their absolute / relative positions. Let the minimum bounding box around an interested text $s$ be $b_s$ that is restricted by four corner coordinates, where the upper-left corner coordinate in the scanned document be $(x_{left}, y_{top})$ and the bottom right of the bounding box be $(x_{right}, y_{bottom})$. To avoid the affects from overlapped bounding boxes and reveal the actual relative position among texts, we calculate the center point $(c_x, c_y)$ of the bounding boxes as the reference position. It is not hard to find that involving pre-processes that combine texts into meaningful entities here will benefit the following grid positional mapping process. However, this is not the major purpose of this paper and we leave it to future researches. In this paper, we tokenize the text words with a greedy longest-match-first algorithm using a pre-defined dictionary \cite{bertgit}. 
-
-Let the grid positional mapping process be $G$ and the target grid size be $(c_{g_0}, r_{g_0})$. To generate the grid data, the goal of $G$ is to map the texts from the original scanned document image to the target grid, such that the mapped grid preserves the original spatial relationship among texts yet more suitable to be used as the input for the convolutional network. 
-
-\subsection{Model}
-Through matching the output of CUTIE with the labelled grid data, the model learns to generate the label for each text in the grid input via exploring both the spatial and semantic features. For that reason, the task of CUTIE holds resemblance to the semantic segmentation task in the computer vision field. Several methods have been proposed to capture multi-scale context in the input data. The encoder-decoder structure. 
-We propose a convolutional network
-
-
-\begin{equation}
-\label{cx}
-c_h = x_l + \frac{(x_r - x_l)}{2}
-\end{equation}
-
-\begin{equation}
-\label{cy}
-c_v = y_t + \frac{(y_b - y_t)}{2}
-\end{equation}
-
-For tokenized texts, the bounding box is horizontally divided into multiple boxes and their reference positions are calculated using the same criteria as Equ. \ref{cx} and Equ. \ref{cy}, separately.
-
-\subsection{Grid Augmentation}
-
-\section{Experiments}
-
-
-\section{Discussion}
-Automatically extracting interested words / information from the scanned document images is of great interest to various services and applications. The performance gain is mainly achieved by exploring three key factors: the spatial relationship among texts, the semantic information of texts, and the text gridding mechanism.
-
-
 \begin{figure}[t]
 \begin{center}
 \fbox{\rule{0pt}{2in} \rule{0.9\linewidth}{0pt}}
@@ -98,34 +61,6 @@ Automatically extracting interested words / information from the scanned documen
 \label{fig:onecol}
 \end{figure}
 
-\subsection{Miscellaneous}
-
-\noindent
-Compare the following:\\
-\begin{tabular}{ll}
- \verb'$conf_a$' &  $conf_a$ \\
- \verb'$\mathit{conf}_a$' & $\mathit{conf}_a$
-\end{tabular}\\
-See The \TeX book, p165.
-
-The space after \eg, meaning ``for example'', should not be a
-sentence-ending space. So \eg is correct, {\em e.g.} is not.  The provided
-\verb'\eg' macro takes care of this.
-
-When citing a multi-author paper, you may save space by using ``et alia'',
-shortened to ``\etal'' (not ``{\em et.\ al.}'' as ``{\em et}'' is a complete word.)
-However, use it only when there are three or more authors.  Thus, the
-following is correct: ``
-   Frobnication has been trendy lately.
-   It was introduced by Alpher~\cite{Alpher02}, and subsequently developed by
-   Alpher and Fotheringham-Smythe~\cite{Alpher03}, and Alpher \etal~\cite{Alpher04}.''
-
-This is incorrect: ``... subsequently developed by Alpher \etal~\cite{Alpher03} ...''
-because reference~\cite{Alpher03} has just two authors.  If you use the
-\verb'\etal' macro provided, then you need not worry about double periods
-when used at the end of a sentence as in Alpher \etal.
-
-
 \begin{figure*}
 \begin{center}
 \fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
@@ -134,7 +69,48 @@ when used at the end of a sentence as in Alpher \etal.
 \label{fig:short}
 \end{figure*}
 
+\section{Related Work}
 
+\section{Methods}
+\subsection{Grid Positional Mapping}
+To generate input grid data for the convolutional network, the scanned document image are processed by an OCR engine to acquire the texts and their absolute / relative positions. Let the scanned document image is of shape $(w, h)$, the minimum bounding box around the $i$-th interested text $s_i$ be $b_i$ that is restricted by two corner coordinates, where the upper-left corner coordinate in the scanned document be $(x^i_{left}, y^i_{top})$ and the bottom right of the bounding box be $(x^i_{right}, y^i_{bottom})$. To avoid the affects from overlapped bounding boxes and reveal the actual relative position among texts, we calculate the center point $(c^i_x, c^i_y)$ of the bounding boxes as the reference position. It is not hard to find that involving pre-processes that combine texts into meaningful entities here will benefit the following grid positional mapping process. However, this is not the major purpose of this paper and we leave it to future researches. In this paper, we tokenize the text words with a greedy longest-match-first algorithm using a pre-defined dictionary \cite{bertgit}. 
+
+Let the grid positional mapping process be $G$ and the target grid size be $(c_{g_0}, r_{g_0})$. To generate the grid data, the goal of $G$ is to map the texts from the original scanned document image to the target grid, such that the mapped grid preserves the original spatial relationship among texts yet more suitable to be used as the input for the convolutional network. 
+
+\begin{equation}
+\label{cx}
+c^i_x = c_{g_0} \frac{x_l + \frac{(x_r - x_l)}{2}}{w}
+\end{equation}
+
+\begin{equation}
+\label{cy}
+r^i_y = r_{g_0} \frac{y_t + \frac{(y_b - y_t)}{2}}{h}
+\end{equation}
+
+For tokenized texts, the bounding box is horizontally divided into multiple boxes and their reference positions are calculated using the same criteria as Equ. \ref{cx} and Equ. \ref{cy}, separately.
+
+\subsection{Model}
+Through matching the output of CUTIE with the labelled grid data, the model learns to generate the label for each text in the grid input via exploring both the spatial and semantic features. For that reason, the task of CUTIE bears resemblance to the semantic segmentation task in the computer vision field but with more sparse data distributions. Specifically, the mapped grid contains scattered data points (texts) in contrast to the images bespread with pixels. The grid positional mapped key texts are either close to or distant to each other due to different types of document layouts. 
+
+In fact, several methods have been proposed in the semantic segmentation field to capture multi-scale context in the input data. The methods of image pyramid and the encoder-decoder structure both aim at exploiting multi-scale information. The interested objects from different scales become prominent in the former networks by using multiple scaled input data to gather multi-scale features. The later networks shrink feature maps to enlarge receptive fields and reduce computation burdens, and then capture finer details by gradually recovering the spatial information from lower layer features. However, spatial resolution is reduced in the encoding process and the decoding process exploits only high resolution but low level features to recover the spatial resolution, the consecutive striding encoding process decimates detail information which is detrimental to the sparse grid. Instead, the field of view of filters can also be effectively enlarged by applying atrous convolution \cite{deeplab, deeplabv1, deeplabv3, deeplabv3p}. 
+
+To capture long distance connection and avoid potential loss in the encoding process, we propose to employ the convolutional network with atrous convolution and without the encoder-decoder structure. Let the input feature map be $m$, filter be $w$ and output be $n$, for each position $i$, atrous convolution is applied over the input feature map $m$ as 
+
+\begin{equation}
+n[i] = \sum_k m[i+r\cdot k]w[k]
+\end{equation}
+where $r$ is the atrous rate that indicates the sampling stride of the input signal, which is implemented as convolving the input feature with upsampled filters by inserting $r-1$ zeros between two consecutive filter values along each spatial dimension. Standard convolution is a special case of atrous convolution with $r=1$.
+
+Two types of architectures are developed for CUITE. 
+
+\subsection{Grid Augmentation}
+\label{gridaugmentation}
+
+\section{Experiments}
+
+
+\section{Discussion}
+Automatically extracting interested words / information from the scanned document images is of great interest to various services and applications. The performance gain is mainly achieved by exploring three key factors: the spatial relationship among texts, the semantic information of texts, and the text gridding mechanism.
 
 {\small
 \bibliographystyle{ieee}

@@ -375,8 +375,8 @@ class DataLoader():
                         ptr += 1
                     if ptr == cols:
                         print(grid_table[row,:])
-                        print('overlap in {} <{}> row {} r{}c{}!'.
-                              format(file_name, self.index_to_word[dict_id], row, rows, cols))
+                        #print('overlap in {} <{}> row {} r{}c{}!'.
+                        #      format(file_name, self.index_to_word[dict_id], row, rows, cols))
                     else:
                         #print('shift in {} for row {}'.format(file_name, row))
                         grid_table[row, ptr:-1] = grid_table[row, ptr+1:]

@@ -5,48 +5,45 @@ The style file: ieee.bst
 Database file #1: biblio.bib
 Warning--entry type for "bertgit" isn't style-file defined
 --line 1 of file biblio.bib
-Warning--I didn't find a database entry for "Alpher02"
-Warning--I didn't find a database entry for "Alpher03"
-Warning--I didn't find a database entry for "Alpher04"
-You've used 1 entry,
+You've used 5 entries,
             2120 wiz_defined-function locations,
-            507 strings with 3799 characters,
-and the built_in function-call counts, 214 in all, are:
-= -- 16
-> -- 7
+            521 strings with 4477 characters,
+and the built_in function-call counts, 1531 in all, are:
+= -- 134
+> -- 114
 < -- 0
-+ -- 3
-- -- 2
-* -- 8
-:= -- 40
-add.period$ -- 2
-call.type$ -- 1
-change.case$ -- 4
++ -- 45
+- -- 40
+* -- 108
+:= -- 290
+add.period$ -- 14
+call.type$ -- 5
+change.case$ -- 35
 chr.to.int$ -- 0
-cite$ -- 1
-duplicate$ -- 7
-empty$ -- 23
-format.name$ -- 2
-if$ -- 43
+cite$ -- 5
+duplicate$ -- 47
+empty$ -- 91
+format.name$ -- 40
+if$ -- 294
 int.to.chr$ -- 0
-int.to.str$ -- 1
-missing$ -- 0
-newline$ -- 7
-num.names$ -- 2
-pop$ -- 8
+int.to.str$ -- 5
+missing$ -- 4
+newline$ -- 27
+num.names$ -- 10
+pop$ -- 31
 preamble$ -- 1
-purify$ -- 3
+purify$ -- 30
 quote$ -- 0
-skip$ -- 10
+skip$ -- 42
 stack$ -- 0
-substring$ -- 5
-swap$ -- 1
+substring$ -- 25
+swap$ -- 5
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 4
+type$ -- 20
 warning$ -- 0
-while$ -- 2
-width$ -- 2
-write$ -- 9
-(There were 4 warnings)
+while$ -- 10
+width$ -- 6
+write$ -- 53
+(There was 1 warning)

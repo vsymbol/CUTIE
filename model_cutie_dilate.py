@@ -46,9 +46,6 @@ class CUTIERes(CUTIE):
              .dilate_conv(3, 5, 128, 1, 1, 2, name='encoder1_9')
              .dilate_conv(3, 5, 128, 1, 1, 2, name='encoder1_10'))
         
-        # Atrous Spatial Pyramid Pooling module
-        
-        
         # classification
         (self.feed('encoder1_10') 
              .conv(1, 1, self.num_classes, 1, 1, activation=self.activation, name='cls_logits') # sigmoid for ghm

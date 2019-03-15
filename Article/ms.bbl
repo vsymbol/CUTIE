@@ -1,7 +1,30 @@
 \begin{thebibliography}{1}\itemsep=-1pt
 
+\bibitem{deeplab}
+L.~Chen, G.~Papandreou, I.~Kokkinos, K.~Murphy, and A.~L. Yuille.
+\newblock Semantic image segmentation with deep convolutional nets and fully
+  connected crfs.
+\newblock {\em CoRR}, abs/1412.7062, 2014.
+
+\bibitem{deeplabv1}
+L.~Chen, G.~Papandreou, I.~Kokkinos, K.~Murphy, and A.~L. Yuille.
+\newblock Deeplab: Semantic image segmentation with deep convolutional nets,
+  atrous convolution, and fully connected crfs.
+\newblock {\em CoRR}, abs/1606.00915, 2016.
+
+\bibitem{deeplabv3}
+L.~Chen, G.~Papandreou, F.~Schroff, and H.~Adam.
+\newblock Rethinking atrous convolution for semantic image segmentation.
+\newblock {\em CoRR}, abs/1706.05587, 2017.
+
+\bibitem{deeplabv3p}
+L.~Chen, Y.~Zhu, G.~Papandreou, F.~Schroff, and H.~Adam.
+\newblock Encoder-decoder with atrous separable convolution for semantic image
+  segmentation.
+\newblock {\em CoRR}, abs/1802.02611, 2018.
+
 \bibitem{bertgit}
-Google.
-\newblock pre-trained models for bert.
+B.~Github.
+\newblock https://github.com/google-research/bert.
 
 \end{thebibliography}
