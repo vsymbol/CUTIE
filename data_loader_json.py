@@ -234,9 +234,9 @@ class DataLoader():
                 res_all[cols] += 1
                 res_row[rows] += 1
                 res_col[cols] += 1
-            res_all = sorted(res_all.items(), key=lambda x:x[1], reverse=True)
-            res_row = sorted(res_row.items(), key=lambda x:x[1], reverse=True)
-            res_col = sorted(res_col.items(), key=lambda x:x[1], reverse=True)
+            res_all = sorted(res_all.items(), key=lambda x:x[0], reverse=True)
+            res_row = sorted(res_row.items(), key=lambda x:x[0], reverse=True)
+            res_col = sorted(res_col.items(), key=lambda x:x[0], reverse=True)
             return res_all, res_row, res_col
     
         tss, tss_r, tss_c = shape_statistic(self.training_docs) # training shape static
@@ -375,8 +375,8 @@ class DataLoader():
                         ptr += 1
                     if ptr == cols:
                         print(grid_table[row,:])
-                        #print('overlap in {} <{}> row {} r{}c{}!'.
-                        #      format(file_name, self.index_to_word[dict_id], row, rows, cols))
+                        print('overlap in {} <{}> row {} r{}c{}!'.
+                              format(file_name, self.index_to_word[dict_id], row, rows, cols))
                     else:
                         #print('shift in {} for row {}'.format(file_name, row))
                         grid_table[row, ptr:-1] = grid_table[row, ptr+1:]
@@ -599,6 +599,8 @@ class DataLoader():
                 else:
                     content_dressed_right.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
                                       [left, top, right, bottom], max_rows, self.cols_target])
+            data.append(content_dressed_left)
+            data.append(content_dressed_right)
         else:
             for i, line in enumerate(content_dressed): # append height/width/numofwords to the list
                 file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom] = line

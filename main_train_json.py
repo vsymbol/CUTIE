@@ -5,6 +5,7 @@ import tensorflow as tf
 import numpy as np
 import argparse, os
 import timeit
+from pprint import pprint
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from model_cutie_res import CUTIERes
@@ -15,7 +16,7 @@ parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
 parser.add_argument('--doc_path', type=str, default='data/meals')
 parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for ckpt') # TBD: save log/models with prefix
-parser.add_argument('--test_path', type=str, default='data/meals_1215') # leave empty if no test data provided
+parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
 # ckpt
 parser.add_argument('--restore_ckpt', type=bool, default=False) 
@@ -33,7 +34,7 @@ parser.add_argument('--update_dict', type=bool, default=False)
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
 # data manipulation
-parser.add_argument('--segment_grid', type=bool, default=False) # segment grid into two parts if grid is larger than cols_target
+parser.add_argument('--segment_grid', type=bool, default=True) # segment grid into two parts if grid is larger than cols_target
 parser.add_argument('--rows_target', type=int, default=72) 
 parser.add_argument('--cols_target', type=int, default=72) 
 parser.add_argument('--augment_strategy', type=int, default=2) # 1 for increasing grid shape size, 2 for gaussian around target shape
@@ -121,7 +122,9 @@ def save_ckpt(sess, path, save_prefix, data_loader, network, num_words, num_clas
     print('\nCheckpoint saved to: {:s}\n'.format(filename))
     
 if __name__ == '__main__':
+    pprint(params)
     # data
+    
     data_loader = DataLoader(params, update_dict=params.update_dict, load_dictionary=params.load_dict, data_split=0.75)
     num_words = max(20000, data_loader.num_words)
     num_classes = data_loader.num_classes
@@ -357,7 +360,6 @@ if __name__ == '__main__':
             if iter>=params.log_save_step and iter%params.log_save_step == 0:
                 summary_writer.add_summary(summary_str, iter+1)    
     
-    from pprint import pprint
     pprint(params)
     pprint('Data rows/cols:{},{}'.format(data_loader.rows, data_loader.cols))
     summary_writer.close()
