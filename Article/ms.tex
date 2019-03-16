@@ -71,7 +71,10 @@ Attempting to involve the spatial information into the key information extractio
 
 \section{Related Work}
 
+
 \section{Methods}
+In this section, we introduce the method proposed for creating grid data for training the convolutional network. We then present the network architectures that capture long distance information and avoid information loss in the previous works with striding or pooling processes.
+
 \subsection{Grid Positional Mapping}
 To generate input grid data for the convolutional network, the scanned document image are processed by an OCR engine to acquire the texts and their absolute / relative positions. Let the scanned document image be of shape $(w, h)$, the minimum bounding box around the $i$-th interested text $s_i$ be $b_i$ that is restricted by two corner coordinates, where the upper-left corner coordinate in the scanned document be $(x^i_{left}, y^i_{top})$ and the bottom right of the bounding box be $(x^i_{right}, y^i_{bottom})$. To avoid the affects from overlapped bounding boxes and reveal the actual relative position among texts, we calculate the center point $(c^i_x, c^i_y)$ of the bounding boxes as the reference position. It is not hard to find that involving pre-processes that combine texts into meaningful entities here will benefit the following grid positional mapping process. However, this is not the major purpose of this paper and we leave it to future researches. In this paper, we tokenize the text words with a greedy longest-match-first algorithm using a pre-defined dictionary \cite{bertgit}. 
 
@@ -104,16 +107,37 @@ Through matching the output of CUTIE with the labelled grid data, the model lear
 
 In fact, several methods have been proposed in the semantic segmentation field to capture multi-scale context in the input data. The methods of image pyramid and the encoder-decoder structure both aim at exploiting multi-scale information. The interested objects from different scales become prominent in the former networks by using multiple scaled input data to gather multi-scale features. The later networks shrink feature maps to enlarge receptive fields and reduce computation burdens, and then capture finer details by gradually recovering the spatial information from lower layer features. However, spatial resolution is reduced in the encoding process and the decoding process exploits only high resolution but low level features to recover the spatial resolution, the consecutive striding encoding process decimates detail information which is detrimental to the sparse grid. Moreover, the encoding and decoding process applies shape restricts to the grid shape augment process. 
 
-Instead, the field of view of filters can also be effectively enlarged by applying atrous convolution \cite{deeplab, deeplabv1, deeplabv3, deeplabv3p}. To capture long distance connection and avoid potential information loss in the encoding process, we propose to employ the convolutional network with atrous convolution and without the encoder-decoder structure. Let the input feature map be $m$, filter be $w$ and output be $n$, for each position $i$, atrous convolution is applied over the input feature map $m$ as 
+Instead, the field of view of filters can also be effectively enlarged by combining multi-resolution features \cite{hrnet} or by applying atrous convolution \cite{deeplab, deeplabv1, deeplabv3, deeplabv3p}. To capture long distance connection and avoid potential information loss in the encoding process, we propose CUTIE-A to employ convolutional multi-resolution fusion network without losing high-resolution features and CUTIE-B network with atrous convolution. 
+
+CUTIE-A avoids information loss in the encoding process while taking advantage of encoders by combining encoding results to the maintained high-resolution representations through the entire convolutional process. Similar to HRNet proposed in \cite{hrnet}, a high-resolution network without striding is employed as the backbone major network and several high-to-low resolution sub networks are gradually added and connected to the backbone major network. During the connecting process of the major network and sub networks, multi-scale features are fused to generate rich representations.
+
+CUTIE-B is constructed with a single backbone network but employs atrous convolution to capture long distance connections. For atrous convolution, let the input feature map be $m$, filter be $w$ and output be $n$, for each position $i$, atrous convolution is applied over the input feature map $m$ as 
 
 \begin{equation}
 n[i] = \sum_k m[i+r\cdot k]w[k]
 \end{equation}
 where $r$ is the atrous rate that indicates the sampling stride of the input signal, which is implemented as convolving the input feature with upsampled filters by inserting $r-1$ zeros between two consecutive filter values along each spatial dimension. Standard convolution is a special case of atrous convolution with $r=1$.
 
-The proposed network avoids information loss in the encoding process while taking advantage of encoders by combining encoding results to the maintained high-resolution representations through the entire convolutional process. Similar to HRNet proposed in \cite{hrnet}, a high-resolution network without striding is employed as the backbone major network, then several high-to-low resolution sub networks are gradually added and connected to the backbone major network. During the connecting process of the major network and sub networks, multi-scale features are fused to generate rich representations.
+Both CUTIE-A and CUITE-B conducts word embedding in the very beginning stage. The cross entropy loss function is applied to compare the predicted token class grid and the ground truth grid.
 
 \section{Experiments}
+The proposed method is evaluated on a dataset with with 3 types of documents which contain 9 key information classes and 1 don't care class. The dataset contains 4000 per-token annotated documents. We generate the text and bounding box features with Google's OCR API. The performance is measured in terms of per-token accuracy across the 10 classes. 
+
+We use a learning rate of 1e-3 for training with Adam optimizer with step decay learning strategy, and the learning rate is dropped to 1e-4 and 1e-5 on the 15000-th and 30000-th steps, respectively. The training is terminated within 40000 steps with batch size of 32. Our model is trained end-to-end without piecewise pretraining of each component. The embedding size is 128, target augmentation shape is 64 for both row and column. 
+
+\begin{table}
+	\caption{Performance comparison on 3 types of documents}
+\begin{center}
+\begin{tabular}{l | c | c | c | c}
+	Method & \#Params & Meals & Taxi & hotel \\
+	\hline
+	CloudScan & - & & & \\
+	BERT & 110M & 80.31 & 87.02 & 79.42 \\
+	CUTIE-A & 66M & 82.5 & & \\
+	CUTIE-B & 16M & & \\
+\end{tabular}
+\end{center}
+\end{table}
 
 
 \section{Discussion}

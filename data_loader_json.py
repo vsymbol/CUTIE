@@ -44,6 +44,7 @@ class DataLoader():
         self.cols = self.encoding_factor # to be updated 
         self.segment_grid = params.segment_grid if hasattr(params, 'segment_grid') else False # segment grid into two parts if grid is larger than cols_target
         self.augment_strategy = params.augment_strategy if hasattr(params, 'augment_strategy') else 1 
+        self.pm_strategy = params.positional_mapping_strategy if hasattr(params, 'positional_mapping_strategy') else 2 
         self.rows_target = params.rows_target if hasattr(params, 'rows_target') else 64 
         self.cols_target = params.cols_target if hasattr(params, 'cols_target') else 64 
         self.rows_ulimit = params.rows_ulimit if hasattr(params, 'rows_ulimit') else 80 # handle OOM, must be multiple of self.encoding_factor
@@ -164,11 +165,16 @@ class DataLoader():
         # data augmentation in each batch if self.data_augmentation==True
         rows, cols, pre_rows, pre_cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra, dropout=self.data_augmentation_dropout)
         if self.data_augmentation_extra:
-            print('Training grid table augment size: ({},{}) from ({},{})'\
+            print('Training grid AUGMENT size: ({},{}) from ({},{})'\
                   .format(rows, cols, pre_rows, pre_cols))
         
-        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
+        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, updated_cols = \
             self._positional_mapping(training_docs, self.training_labels, rows, cols)   
+        if updated_cols > cols:
+            print('Training grid EXPAND size: ({},{}) from ({},{})'\
+                  .format(rows, updated_cols, rows, cols))
+            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, _ = \
+                self._positional_mapping(training_docs, self.training_labels, rows, updated_cols)  
             
         #grid_table = np.ones([self.batch_size, self.rows, self.cols, 1])
         #gt_classes = np.ones([self.batch_size, self.rows, self.cols])
@@ -193,8 +199,13 @@ class DataLoader():
         rows = max(self.rows_target, real_rows)
         cols = max(self.cols_target, real_cols)
         
-        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
-            self._positional_mapping(validation_docs, self.validation_labels, rows, cols)       
+        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, updated_cols = \
+            self._positional_mapping(validation_docs, self.validation_labels, rows, cols)   
+        if updated_cols > cols:
+            print('Validation grid EXPAND size: ({},{}) from ({},{})'\
+                  .format(rows, updated_cols, rows, cols))
+            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, _ = \
+                self._positional_mapping(validation_docs, self.validation_labels, rows, updated_cols)      
         batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 
                  'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
                  'file_name': file_name, 'shape': [rows,cols]}
@@ -216,8 +227,13 @@ class DataLoader():
         rows = max(self.rows_target, real_rows)
         cols = max(self.cols_target, real_cols)
             
-        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name = \
-            self._positional_mapping(test_docs, self.test_labels, rows, cols)        
+        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, updated_cols = \
+            self._positional_mapping(testn_docs, self.test_labels, rows, cols)   
+        if updated_cols > cols:
+            print('Test grid EXPAND size: ({},{}) from ({},{})'\
+                  .format(rows, updated_cols, rows, cols))
+            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, _ = \
+                self._positional_mapping(testn_docs, self.test_labels, rows, updated_cols)         
         batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 
                  'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
                  'file_name': file_name, 'shape': [rows,cols]}
@@ -299,12 +315,13 @@ class DataLoader():
         file_names = []
         for doc in docs:
             items = []
-            grid_table = np.zeros([rows, cols], dtype=np.int32)
-            grid_label = np.zeros([rows, cols], dtype=np.int8)
-            bbox = [[[] for c in range(cols)] for r in range(rows)]
+            cols_e = 3 * cols
+            grid_table = np.zeros([rows, cols_e], dtype=np.int32)
+            grid_label = np.zeros([rows, cols_e], dtype=np.int8)
+            bbox = [[[] for c in range(cols_e)] for r in range(rows)]
             bbox_id, bbox_mapid = 0, {} # one word in one or many positions in a bbox is mapped in bbox_mapid
             label_mapid = [[] for _ in range(self.num_classes)] # each class is connected to several bboxes (words)
-            drawing_board = np.zeros([rows, cols], dtype=str)
+            drawing_board = np.zeros([rows, cols_e], dtype=str)
             for item in doc:
                 file_name = item[0]
                 text = item[1]
@@ -365,29 +382,60 @@ class DataLoader():
             items.sort(key=lambda x: (x[0], x[3], x[5])) # sort according to row > h_c > bbox_id
             for item in items:
                 row, col, v_c, h_c, file_name, dict_id, class_id, bbox_id, box = item
+                
                 while col < cols and grid_table[row, col] != 0:
-                    col += 1
-                    
-                ptr = 0
-                if col == cols: # shift to find slot to drop the current item
-                    col -= 1
-                    while ptr<cols and grid_table[row, ptr] != 0:
-                        ptr += 1
-                    if ptr == cols:
-                        pass
+                    col += 1            
+                
+                # self.pm_strategy 0: skip if overlap
+                # self.pm_strategy 1: shift to find slot if overlap
+                # self.pm_strategy 2: expand grid table if overlap
+                if self.pm_strategy == 0:
+                    if col == cols:                     
+                        print('overlap in {} row {} r{}c{}!'.
+                              format(file_name, row, rows, cols))
                         #print(grid_table[row,:])
                         #print('overlap in {} <{}> row {} r{}c{}!'.
                         #      format(file_name, self.index_to_word[dict_id], row, rows, cols))
                     else:
-                        #print('shift in {} for row {}'.format(file_name, row))
-                        grid_table[row, ptr:-1] = grid_table[row, ptr+1:]
-                
-                if ptr != cols:
+                        grid_table[row, col] = dict_id
+                        grid_label[row, col] = class_id                       
+                        bbox_mapid[row*cols+col] = bbox_id                       
+                        bbox[row][col] = box                        
+                elif self.pm_strategy == 1:
+                    ptr = 0
+                    if col == cols: # shift to find slot to drop the current item
+                        col -= 1
+                        while ptr<cols and grid_table[row, ptr] != 0:
+                            ptr += 1
+                        if ptr == cols:
+                            grid_table[row, :-1] = grid_table[row, 1:]
+                        else:
+                            grid_table[row, ptr:-1] = grid_table[row, ptr+1:]
+                     
                     grid_table[row, col] = dict_id
                     grid_label[row, col] = class_id
                     bbox_mapid[row*cols+col] = bbox_id     
                     bbox[row][col] = box
+                elif self.pm_strategy == 2:
+                    while col < cols_e and grid_table[row, col] != 0:
+                        col += 1
+                    if col > cols: # update maximum cols in current grid
+                        cols = col
+                    if col == cols_e:      
+                        print('overlap in {} row {} r{}c{}!'.
+                              format(file_name, row, rows, cols))
+                    else:
+                        grid_table[row, col] = dict_id
+                        grid_label[row, col] = class_id                       
+                        bbox_mapid[row*cols+col] = bbox_id                       
+                        bbox[row][col] = box   
+                else:
+                    raise Exception("unknown positional mapping strategy")
                 
+            cols = self._fit_shape(cols)
+            grid_table = grid_table[..., :cols]
+            grid_label = grid_label[..., :cols]
+            
             grid_tables.append(np.expand_dims(grid_table, -1)) 
             gird_labels.append(grid_label) 
             bboxes[file_name] = bbox
@@ -395,7 +443,7 @@ class DataLoader():
             bbox_mapids.append(bbox_mapid)
             file_names.append(file_name)
             
-        return grid_tables, gird_labels, bboxes, label_mapids, bbox_mapids, file_names
+        return grid_tables, gird_labels, bboxes, label_mapids, bbox_mapids, file_names, cols
     
     def load_data(self, data_files, update_dict=False):
         """
@@ -582,7 +630,7 @@ class DataLoader():
             content_dressed_left = []
             content_dressed_right = []
             cnt = defaultdict(int) # counter for number of words in a specific row
-            #cnt_l, cnt_r = defaultdict(int), defaultdict(int)
+            cnt_l, cnt_r = defaultdict(int), defaultdict(int) # update max_cols if larger than self.cols_target
             left_boundary = max_cols - self.cols_target
             right_boundary = self.cols_target
             for i, line in enumerate(content_dressed):
@@ -591,25 +639,27 @@ class DataLoader():
                 row = int(max_rows * (y_top + (y_bottom-y_top)/2) / bottom)
                 cnt[row] += 1                
                 if cnt[row] <= left_boundary:
-                    #cnt_l[row] += 1
+                    cnt_l[row] += 1
                     content_dressed_left.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
                                       [left, top, right, bottom], max_rows, self.cols_target])
                 elif left_boundary < cnt[row] <= right_boundary:
-                    #cnt_l[row] += 1
-                    #cnt_r[row] += 1
+                    cnt_l[row] += 1
+                    cnt_r[row] += 1
                     content_dressed_left.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
                                       [left, top, right, bottom], max_rows, self.cols_target])
                     content_dressed_right.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
-                                      [left, top, right, bottom], max_rows, self.cols_target])
+                                      [left, top, right, bottom], max_rows, max(max(cnt_r.values()), self.cols_target)])
                 else:
-                    #cnt_r[row] += 1
+                    cnt_r[row] += 1
                     content_dressed_right.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
-                                      [left, top, right, bottom], max_rows, self.cols_target])
+                                      [left, top, right, bottom], max_rows, max(max(cnt_r.values()), self.cols_target)])
             #print(sorted(cnt.items(), key=lambda x:x[1], reverse=True))
             #print(sorted(cnt_l.items(), key=lambda x:x[1], reverse=True))
             #print(sorted(cnt_r.items(), key=lambda x:x[1], reverse=True))
-            data.append(content_dressed_left)
-            data.append(content_dressed_right)
+            if max(cnt_l.values()) < 2*self.cols_target:
+                data.append(content_dressed_left)
+            if max(cnt_r.values()) < 2*self.cols_target: # avoid OOM, which tends to happen in the right side
+                data.append(content_dressed_right)
         else:
             for i, line in enumerate(content_dressed): # append height/width/numofwords to the list
                 file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom] = line

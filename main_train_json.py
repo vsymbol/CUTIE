@@ -14,8 +14,8 @@ from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/hotel')
-parser.add_argument('--save_prefix', type=str, default='hotel', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/hotel_small')
+parser.add_argument('--save_prefix', type=str, default='hotel_small', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
 # ckpt
@@ -35,9 +35,10 @@ parser.add_argument('--dict_path', type=str, default='dict/---') # not used if l
 
 # data manipulation
 parser.add_argument('--segment_grid', type=bool, default=True) # segment grid into two parts if grid is larger than cols_target
-parser.add_argument('--rows_target', type=int, default=72) 
-parser.add_argument('--cols_target', type=int, default=72) 
+parser.add_argument('--rows_target', type=int, default=64) 
+parser.add_argument('--cols_target', type=int, default=64) 
 parser.add_argument('--augment_strategy', type=int, default=2) # 1 for increasing grid shape size, 2 for gaussian around target shape
+parser.add_argument('--positional_mapping_strategy', type=int, default=2)
 parser.add_argument('--rows_ulimit', type=int, default=88) 
 parser.add_argument('--cols_ulimit', type=int, default=88) 
 parser.add_argument('--fill_bbox', type=bool, default=False) # fill bbox with dict_id / label_id
