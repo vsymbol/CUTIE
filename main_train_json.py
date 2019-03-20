@@ -8,14 +8,14 @@ import timeit
 from pprint import pprint
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-from model_cutie_res import CUTIERes
+from model_cutie_aspp import CUTIERes
 from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/hotel_small')
-parser.add_argument('--save_prefix', type=str, default='hotel_small', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/hotel_1108')
+parser.add_argument('--save_prefix', type=str, default='hotel_1108', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
 # ckpt
@@ -35,18 +35,20 @@ parser.add_argument('--dict_path', type=str, default='dict/---') # not used if l
 
 # data manipulation
 parser.add_argument('--segment_grid', type=bool, default=True) # segment grid into two parts if grid is larger than cols_target
+parser.add_argument('--rows_segment', type=int, default=72) 
+parser.add_argument('--cols_segment', type=int, default=72) 
+parser.add_argument('--augment_strategy', type=int, default=1) # 1 for increasing grid shape size, 2 for gaussian around target shape
+parser.add_argument('--positional_mapping_strategy', type=int, default=2)
 parser.add_argument('--rows_target', type=int, default=64) 
 parser.add_argument('--cols_target', type=int, default=64) 
-parser.add_argument('--augment_strategy', type=int, default=2) # 1 for increasing grid shape size, 2 for gaussian around target shape
-parser.add_argument('--positional_mapping_strategy', type=int, default=2)
-parser.add_argument('--rows_ulimit', type=int, default=88) 
-parser.add_argument('--cols_ulimit', type=int, default=88) 
+parser.add_argument('--rows_ulimit', type=int, default=80) 
+parser.add_argument('--cols_ulimit', type=int, default=80) 
 parser.add_argument('--fill_bbox', type=bool, default=False) # fill bbox with dict_id / label_id
 
 parser.add_argument('--data_augmentation_extra', type=bool, default=True) # randomly expand rows/cols
 parser.add_argument('--data_augmentation_dropout', type=bool, default=False) # randomly shrink rows/cols
-parser.add_argument('--data_augmentation_extra_rows', type=int, default=1) 
-parser.add_argument('--data_augmentation_extra_cols', type=int, default=1) 
+parser.add_argument('--data_augmentation_extra_rows', type=int, default=16) 
+parser.add_argument('--data_augmentation_extra_cols', type=int, default=16) 
 
 # training
 parser.add_argument('--batch_size', type=int, default=32) 
@@ -129,7 +131,7 @@ if __name__ == '__main__':
     data_loader = DataLoader(params, update_dict=params.update_dict, load_dictionary=params.load_dict, data_split=0.75)
     num_words = max(20000, data_loader.num_words)
     num_classes = data_loader.num_classes
-    for _ in range(20):
+    for _ in range(2):
         a = data_loader.next_batch()
         b = data_loader.fetch_validation_data()
         c = data_loader.fetch_test_data()
@@ -173,7 +175,7 @@ if __name__ == '__main__':
     summary_writer = tf.summary.FileWriter(summary_path, tf.get_default_graph(), flush_secs=10)
     
     config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.allow_growth = False
+    config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         
@@ -253,7 +255,7 @@ if __name__ == '__main__':
                 training_acc_soft += [acc_soft]       
                 print('\nIter: %d/%d, total loss: %.4f, model loss: %.4f, regularization loss: %.4f'%\
                       (iter, params.iterations, total_loss_val, model_loss_val, regularization_loss_val))
-                #print(res)
+                #print(res.decode())
                 print('TRAINING ACC (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f)'\
                       %(recall, acc_strict, acc_soft, max(training_recall), max(training_acc_strict), max(training_acc_soft)))
                 
@@ -284,7 +286,7 @@ if __name__ == '__main__':
                 validation_recall += [recall]
                 validation_acc_strict += [acc_strict]  
                 validation_acc_soft += [acc_soft]
-                print(res) # show res from the last execution of the while loop 
+                print(res.decode()) # show res from the last execution of the while loop 
 
                 print('TRAINING ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                   format(i*params.log_disp_step,w) for i,w in enumerate(training_acc_strict)]))

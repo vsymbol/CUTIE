@@ -31,26 +31,27 @@ class CUTIERes(CUTIE):
     def setup(self):        
         # input
         (self.feed('data')
-             .embed(self.num_vocabs, self.embedding_size, name='embedding'))  
+             .embed(self.num_vocabs, self.embedding_size, name='embedding')
+             .conv(3, 5, 128, 1, 1, name='encoder0_1'))  
         
         # encoder
-        (self.feed('embedding')
-             .conv(3, 5, 256, 1, 1, name='encoder1_1')
-             .conv(3, 5, 256, 1, 1, name='encoder1_2')
-             .conv(3, 5, 256, 1, 1, name='encoder1_3')
-             .conv(3, 5, 256, 1, 1, name='encoder1_4'))
+        (self.feed('encoder0_1')
+             .conv(3, 5, 128, 1, 1, name='encoder1_1')
+             .conv(3, 5, 128, 1, 1, name='encoder1_2')
+             .conv(3, 5, 128, 1, 1, name='encoder1_3')
+             .conv(3, 5, 128, 1, 1, name='encoder1_4'))
         
-        (self.feed('embedding', 'encoder1_4')
+        (self.feed('encoder0_1', 'encoder1_4')
              .attention(1, name='attention2')
-             .conv(3, 5, 256, 1, 1, name='encoder1_5')
-             .conv(3, 5, 256, 1, 1, name='encoder1_6')
-             .conv(3, 5, 256, 1, 1, name='encoder1_7')
-             .conv(3, 5, 256, 1, 1, name='encoder1_8')) 
+             .conv(3, 5, 128, 1, 1, name='encoder1_5')
+             .conv(3, 5, 128, 1, 1, name='encoder1_6')
+             .conv(3, 5, 128, 1, 1, name='encoder1_7')
+             .conv(3, 5, 128, 1, 1, name='encoder1_8')) 
         
-        (self.feed('embedding', 'encoder1_8')
+        (self.feed('encoder0_1', 'encoder1_8')
              .attention(1, name='attention5')
-             .conv(3, 5, 256, 1, 1, name='encoder1_9')
-             .conv(3, 5, 256, 1, 1, name='encoder1_10')) 
+             .conv(3, 5, 128, 1, 1, name='encoder1_9')
+             .conv(3, 5, 128, 1, 1, name='encoder1_10')) 
          
         # classification
         (self.feed('encoder1_10') 

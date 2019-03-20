@@ -16,35 +16,69 @@
 \gdef\HyperFirstAtBeginDocument#1{#1}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{bert}
+\citation{transformer}
 \@writefile{toc}{\contentsline {section}{\numberline {1}\hskip -1em.\nobreakspace  {}Introduction}{1}{section.1}}
 \citation{bertgit}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Framework of the proposed method, (a) positional map the scanned document image to a grid with text's relative spatial relationship preserved, (b) feed the generated grid into the CNN for extracting key information, (c) reverse map the extracted key information for visual reference.}}{2}{figure.1}}
+\newlabel{fig:cutie}{{1}{2}{Framework of the proposed method, (a) positional map the scanned document image to a grid with text's relative spatial relationship preserved, (b) feed the generated grid into the CNN for extracting key information, (c) reverse map the extracted key information for visual reference}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}\hskip -1em.\nobreakspace  {}Related Work}{2}{section.2}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}\hskip -1em.\nobreakspace  {}Methods}{2}{section.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}\hskip -1em.\nobreakspace  {}Grid Positional Mapping}{2}{subsection.3.1}}
+\newlabel{pm}{{3.1}{2}{\hskip -1em.~Grid Positional Mapping}{subsection.3.1}{}}
+\newlabel{cx}{{1}{2}{\hskip -1em.~Grid Positional Mapping}{equation.3.1}{}}
+\newlabel{cy}{{2}{2}{\hskip -1em.~Grid Positional Mapping}{equation.3.2}{}}
+\newlabel{augmentc}{{3}{2}{\hskip -1em.~Grid Positional Mapping}{equation.3.3}{}}
+\newlabel{augmentr}{{4}{2}{\hskip -1em.~Grid Positional Mapping}{equation.3.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}\hskip -1em.\nobreakspace  {}CUTIE Model}{2}{subsection.3.2}}
+\citation{hrnet}
 \citation{hrnet}
 \citation{deeplab}
 \citation{deeplabv1}
 \citation{deeplabv3}
 \citation{deeplabv3p}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Example of caption. It is set in Roman so that mathematics (always set in Roman: $B \qopname  \relax o{sin}A = A \qopname  \relax o{sin}B$) may be included without an ugly clash.}}{2}{figure.1}}
-\newlabel{fig:long}{{1}{2}{Example of caption. It is set in Roman so that mathematics (always set in Roman: $B \sin A = A \sin B$) may be included without an ugly clash}{figure.1}{}}
-\newlabel{fig:onecol}{{1}{2}{Example of caption. It is set in Roman so that mathematics (always set in Roman: $B \sin A = A \sin B$) may be included without an ugly clash}{figure.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}\hskip -1em.\nobreakspace  {}Related Work}{2}{section.2}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}\hskip -1em.\nobreakspace  {}Methods}{2}{section.3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}\hskip -1em.\nobreakspace  {}Grid Positional Mapping}{2}{subsection.3.1}}
-\newlabel{cx}{{1}{2}{\hskip -1em.~Grid Positional Mapping}{equation.3.1}{}}
-\newlabel{cy}{{2}{2}{\hskip -1em.~Grid Positional Mapping}{equation.3.2}{}}
-\newlabel{augmentc}{{3}{2}{\hskip -1em.~Grid Positional Mapping}{equation.3.3}{}}
-\newlabel{augmentr}{{4}{2}{\hskip -1em.~Grid Positional Mapping}{equation.3.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}\hskip -1em.\nobreakspace  {}Model}{2}{subsection.3.2}}
 \citation{hrnet}
+\citation{deeplabv1}
+\citation{cloudscan}
+\citation{bert}
+\citation{cloudscan}
+\citation{bert}
+\citation{bertgit}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.1}CUTIE-A}{3}{subsubsection.3.2.1}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.2}CUTIE-B}{3}{subsubsection.3.2.2}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}\hskip -1em.\nobreakspace  {}Experiments}{3}{section.4}}
+\newlabel{experiment}{{4}{3}{\hskip -1em.~Experiments}{section.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Example of scanned taxi receipt images. We provide two colored rectangles to help readers find the key information about distance of travel and total amount with blue and red, respectively. Note the different types of spatial layouts and key information texts in these receipt images.}}{4}{figure.2}}
+\newlabel{fig:receipts}{{2}{4}{Example of scanned taxi receipt images. We provide two colored rectangles to help readers find the key information about distance of travel and total amount with blue and red, respectively. Note the different types of spatial layouts and key information texts in these receipt images}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}\hskip -1em.\nobreakspace  {}Dataset}{4}{subsection.4.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}\hskip -1em.\nobreakspace  {}Results on Validation Set}{4}{subsection.4.2}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Number of labelled receipt document images and key information classes of different types of documents in the labelled dataset.}}{4}{table.1}}
+\newlabel{tab:dataset}{{1}{4}{Number of labelled receipt document images and key information classes of different types of documents in the labelled dataset}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Performance comparison on 3 types of documents. (AP/softAP)}}{4}{table.2}}
+\newlabel{tab:comparison}{{2}{4}{Performance comparison on 3 types of documents. (AP/softAP)}{table.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Example of inference results of CUITE. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The result is perfectly correct as if the filled rectangles overlap with the boundary-only rectangles.}}{5}{figure.3}}
+\newlabel{fig:result}{{3}{5}{Example of inference results of CUITE. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The result is perfectly correct as if the filled rectangles overlap with the boundary-only rectangles}{figure.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}\hskip -1em.\nobreakspace  {}Ablation Studies}{5}{subsection.4.3}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Effect of Grid Augmentation on Understanding Spatial Information}{5}{subsubsection.4.3.1}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Performance evaluation of CUTIE with or without the grid augmentation process. (AP/softAP)}}{5}{table.3}}
+\newlabel{tab:augmentation}{{3}{5}{Performance evaluation of CUTIE with or without the grid augmentation process. (AP/softAP)}{table.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.2}Impact of Semantical Information Capacity}{5}{subsubsection.4.3.2}}
 \bibstyle{ieee}
 \bibdata{biblio}
 \bibcite{deeplab}{1}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Example of a short caption, which should be centered.}}{3}{figure.2}}
-\newlabel{fig:short}{{2}{3}{Example of a short caption, which should be centered}{figure.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Performance comparison on 3 types of documents}}{3}{table.1}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}\hskip -1em.\nobreakspace  {}Experiments}{3}{section.4}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}\hskip -1em.\nobreakspace  {}Discussion}{3}{section.5}}
 \bibcite{deeplabv1}{2}
 \bibcite{deeplabv3}{3}
 \bibcite{deeplabv3p}{4}
-\bibcite{bertgit}{5}
-\bibcite{hrnet}{6}
+\bibcite{bert}{5}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Example of prediction results of CUITE with false positive inference results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The false positive are results with the boundary-only rectangles not overlap with the filled rectangles.}}{6}{figure.4}}
+\newlabel{fig:falsepositive}{{4}{6}{Example of prediction results of CUITE with false positive inference results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The false positive are results with the boundary-only rectangles not overlap with the filled rectangles}{figure.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Performance evaluation of CUTIE with different embedding size. (AP/softAP)}}{6}{table.4}}
+\newlabel{tab:embedding}{{4}{6}{Performance evaluation of CUTIE with different embedding size. (AP/softAP)}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}\hskip -1em.\nobreakspace  {}Discussion}{6}{section.5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Example of prediction results of CUITE with false positive inference results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results.}}{6}{figure.5}}
+\newlabel{fig:falselabel}{{5}{6}{Example of prediction results of CUITE with false positive inference results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results}{figure.5}{}}
+\bibcite{bertgit}{6}
+\bibcite{cloudscan}{7}
+\bibcite{hrnet}{8}
+\bibcite{transformer}{9}
+\@writefile{toc}{\contentsline {section}{\numberline {6}\hskip -1em.\nobreakspace  {}APPENDIX}{7}{section.6}}

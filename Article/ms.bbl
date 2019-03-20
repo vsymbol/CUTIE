@@ -23,13 +23,31 @@ L.~Chen, Y.~Zhu, G.~Papandreou, F.~Schroff, and H.~Adam.
   segmentation.
 \newblock {\em CoRR}, abs/1802.02611, 2018.
 
+\bibitem{bert}
+J.~Devlin, M.~Chang, K.~Lee, and K.~Toutanova.
+\newblock {BERT:} pre-training of deep bidirectional transformers for language
+  understanding.
+\newblock {\em CoRR}, abs/1810.04805, 2018.
+
 \bibitem{bertgit}
-B.~Github.
+GithubBERT.
 \newblock https://github.com/google-research/bert.
+
+\bibitem{cloudscan}
+R.~B. Palm, O.~Winther, and F.~Laws.
+\newblock Cloudscan - {A} configuration-free invoice analysis system using
+  recurrent neural networks.
+\newblock {\em CoRR}, abs/1708.07403, 2017.
 
 \bibitem{hrnet}
 K.~Sun, B.~Xiao, D.~Liu, and J.~Wang.
 \newblock Deep high-resolution representation learning for human pose
   estimation, 2019.
+
+\bibitem{transformer}
+A.~Vaswani, N.~Shazeer, N.~Parmar, J.~Uszkoreit, L.~Jones, A.~N. Gomez,
+  L.~Kaiser, and I.~Polosukhin.
+\newblock Attention is all you need.
+\newblock {\em CoRR}, abs/1706.03762, 2017.
 
 \end{thebibliography}

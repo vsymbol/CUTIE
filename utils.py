@@ -46,12 +46,12 @@ def cal_accuracy(data_loader, grid_table, gt_classes, model_output_val, label_ma
             logit_bbox_ids = [bbox_mapid[bbox] for bbox in bbox_id_selected[logits_indexes] if bbox in bbox_mapid]            
             
             #if np.array_equal(labels_indexes, logits_indexes):
-            if set(label_bbox_ids) == set(logit_bbox_ids): 
+            if set(label_bbox_ids) == set(logit_bbox_ids): # decide as correct when all ids match
                 num_correct_strict += 1  
                 num_correct_soft += 1
-            elif set(label_bbox_ids).issubset(set(logit_bbox_ids)):
+            elif set(label_bbox_ids).issubset(set(logit_bbox_ids)): # correct when gt is subset of gt
                 num_correct_soft += 1
-            try:  
+            try: # calculate prevalence with decimal precision
                 num_correct += np.shape(np.intersect1d(labels_indexes, logits_indexes))[0] / np.shape(labels_indexes)[0]
             except ZeroDivisionError:
                 if np.shape(labels_indexes)[0] == 0:
@@ -83,10 +83,10 @@ def cal_accuracy(data_loader, grid_table, gt_classes, model_output_val, label_ma
                         #res += ' "%s"/%.2f%s, '%(w, logits_flat[i], l)
                         
                 #print(res)
-    recall = num_correct / num_all
+    prevalence = num_correct / num_all
     accuracy_strict = num_correct_strict / num_all
     accuracy_soft = num_correct_soft / num_all
-    return recall, accuracy_strict, accuracy_soft, res 
+    return prevalence, accuracy_strict, accuracy_soft, res.encode("utf-8")
 
 
 def cal_save_results(data_loader, save_prefix, docs, grid_table, gt_classes, model_output_val):
@@ -168,21 +168,21 @@ def vis_bbox(data_loader, file_prefix, grid_table, gt_classes, model_output_val,
     logits = model_output_val.reshape([-1, data_loader.num_classes])
     bboxes = bboxes.reshape([-1])
     
+    max_len = 768*2 # upper boundary of image display size 
     img = cv2.imread(join(file_prefix, file_name))
     if img is not None:    
         shape = list(img.shape)
         
         bbox_pad = 1
-        gt_color = [[255, 250, 240], [152, 245, 255], [127, 255, 212], [100, 149, 237], 
-                    [192, 255, 62], [175, 238, 238], [255, 130, 171], [240, 128, 128], [255, 105, 180]]
-        inf_color = [[255, 222, 173], [0, 255, 255], [102, 205, 170], [72, 61, 139], 
-                     [154, 205, 50], [0 ,206, 209], [255, 52, 179], [255, 0, 0], [255, 20, 147]]
+        gt_color = [[255, 250, 240], [152, 245, 255], [119,204,119], [100, 149, 237], 
+                    [192, 255, 62], [119,119,204], [114,124,114], [240, 128, 128], [255, 105, 180]]
+        inf_color = [[255, 222, 173], [0, 255, 255], [50,219,50], [72, 61, 139], 
+                     [154, 205, 50], [50,50,219], [64,76,64], [255, 0, 0], [255, 20, 147]]
         
         font_size = 0.5
         font = cv2.FONT_HERSHEY_COMPLEX
         ft_color = [50, 50, 250]
         
-        max_len = 768
         factor = max_len / max(shape)
         shape[0], shape[1] = [int(s*factor) for s in shape[:2]]
         
@@ -214,26 +214,26 @@ def vis_bbox(data_loader, file_prefix, grid_table, gt_classes, model_output_val,
             #cv2.putText(img, text, (x,y), font, font_size, ft_color)  
         
         # legends
-        w = shape[1] // data_loader.cols * 2
-        h = shape[0] // data_loader.cols 
+        w = shape[1] // data_loader.cols * 4
+        h = shape[0] // data_loader.cols * 2
         for i in range(1, len(data_loader.classes)):
             row = i * 3
             col = 0
             x = shape[1] // data_loader.cols * col
-            y = shape[0] // data_loader.rows * row
+            y = shape[0] // data_loader.rows * row 
             cv2.rectangle(img, (x,y), (x+w,y+h), gt_color[i], -1)
-            cv2.putText(img, data_loader.classes[i], (x+w,y+h), font, 0.4, ft_color)  
+            cv2.putText(img, data_loader.classes[i], (x+w,y+h), font, 0.8, ft_color)  
             
             row = i * 3 + 1
             col = 0
             x = shape[1] // data_loader.cols * col
-            y = shape[0] // data_loader.rows * row
+            y = shape[0] // data_loader.rows * row 
             cv2.rectangle(img, (x+bbox_pad,y+bbox_pad), \
-                          (x+bbox_pad+w,y+bbox_pad+h), inf_color[i], max_len//384)
-        
+                          (x+bbox_pad+w,y+bbox_pad+h), inf_color[i], max_len//384)        
         
         alpha = 0.4
         cv2.addWeighted(overlay_box, alpha, img, 1-alpha, 0, img)
         cv2.addWeighted(overlay_line, 1-alpha, img, 1, 0, img)
+        cv2.imwrite('results/' + file_name[:-4]+'.png', img)        
         cv2.imshow("test", img)
         cv2.waitKey(0)
