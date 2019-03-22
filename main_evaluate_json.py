@@ -8,18 +8,18 @@ import argparse
 import os, csv
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-from model_cutie_hr import CUTIERes
+from model_cutie_aspp import CUTIERes
 from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
-parser.add_argument('--doc_path', type=str, default='data/meals_1108/') # modify this
-parser.add_argument('--save_prefix', type=str, default='meals', help='prefix for ckpt and results') # modify this
+parser.add_argument('--doc_path', type=str, default='data/hotel/') # modify this
+parser.add_argument('--save_prefix', type=str, default='hotel', help='prefix for load ckpt model') # modify this
 
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 
 parser.add_argument('--e_ckpt_path', type=str, default='../graph/CUTIE/graph/') # modify this
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_highresolution_8x_d20000c9(r80c80)_iter_40000.ckpt')
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_atrousSPP_d20000c9(r80c80)_iter_40000.ckpt')
 parser.add_argument('--positional_mapping_strategy', type=int, default=1)
 parser.add_argument('--rows_target', type=int, default=72) 
 parser.add_argument('--cols_target', type=int, default=72) 
@@ -42,7 +42,7 @@ params = parser.parse_args()
 if __name__ == '__main__':
     # data
     #data_loader = DataLoader(params, True, True) # True to use 25% training data
-    data_loader = DataLoader(params, update_dict=False, load_dictionary=True, data_split=0) # False to provide a path with only test data
+    data_loader = DataLoader(params, update_dict=False, load_dictionary=True, data_split=0.75) # False to provide a path with only test data
     num_words = max(20000, data_loader.num_words)
     num_classes = data_loader.num_classes
 

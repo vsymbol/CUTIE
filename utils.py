@@ -35,6 +35,7 @@ def cal_accuracy(data_loader, grid_table, gt_classes, model_output_val, label_ma
         bbox_id_selected = bbox_id[indexes]
         
         # calculate accuracy
+        #test_classes = [1,2,3,4,5,6,7,8,9]
         for c in range(1, data_loader.num_classes):
             labels_indexes = np.where(labels_selected == c)[0]
             logits_indexes = np.where(logits_array_selected[:,c] > c_threshold)[0]

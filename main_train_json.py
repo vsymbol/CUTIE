@@ -14,16 +14,16 @@ from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/hotel_1108')
-parser.add_argument('--save_prefix', type=str, default='hotel_1108', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='data/taxi')
+parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
 # ckpt
 parser.add_argument('--restore_ckpt', type=bool, default=False) 
-parser.add_argument('--restore_bertembedding_only', type=bool, default=True) # effective when restore_ckpt is True
+parser.add_argument('--restore_bertembedding_only', type=bool, default=False) # effective when restore_ckpt is True
 parser.add_argument('--embedding_file', type=str, default='../graph/bert/multi_cased_L-12_H-768_A-12/bert_model.ckpt') 
 parser.add_argument('--ckpt_path', type=str, default='../graph/CUTIE/graph/')
-parser.add_argument('--ckpt_file', type=str, default='*.ckpt')  
+parser.add_argument('--ckpt_file', type=str, default='meals/CUTIE_highresolution_8x_d20000c9(r80c80)_iter_40000.ckpt')  
 
 # dict
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
@@ -72,7 +72,7 @@ parser.add_argument('--test_step', type=int, default=400)
 parser.add_argument('--ckpt_save_step', type=int, default=1000)
 
 # model
-parser.add_argument('--embedding_size', type=int, default=128) # not used for bert embedding which has 768 as default
+parser.add_argument('--embedding_size', type=int, default=64) # not used for bert embedding which has 768 as default
 parser.add_argument('--weight_decay', type=float, default=0.0005) 
 parser.add_argument('--eps', type=float, default=1e-6) 
 
@@ -205,7 +205,7 @@ if __name__ == '__main__':
                     ckpt_saver.restore(sess, ckpt_path)
                     print('Restored from {}'.format(ckpt_path))
                     stem = os.path.splitext(os.path.basename(ckpt_path))[0]
-                    iter_start = int(stem.split('_')[-1]) - 1
+                    #iter_start = int(stem.split('_')[-1]) - 1
                     sess.run(global_step.assign(iter_start))
                 except:
                     raise Exception('Check your pretrained {:s}'.format(ckpt_path))

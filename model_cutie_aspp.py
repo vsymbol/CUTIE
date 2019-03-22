@@ -46,6 +46,8 @@ class CUTIERes(CUTIE):
         
         # Atrous Spatial Pyramid Pooling module
         (self.feed('encoder1_8')
+             .conv(1, 1, 256, 1, 1, name='aspp_0'))
+        (self.feed('encoder1_8')
              .dilate_conv(3, 5, 256, 1, 1, 4, name='aspp_1'))
         (self.feed('encoder1_8')
              .dilate_conv(3, 5, 256, 1, 1, 8, name='aspp_2'))
@@ -53,7 +55,7 @@ class CUTIERes(CUTIE):
              .dilate_conv(3, 5, 256, 1, 1, 16, name='aspp_3'))
         (self.feed('encoder1_8')
              .global_pool(name='aspp_4'))
-        (self.feed('aspp_1', 'aspp_2', 'aspp_3', 'aspp_4')
+        (self.feed('aspp_0', 'aspp_1', 'aspp_2', 'aspp_3', 'aspp_4')
              .concat(3, name='aspp_concat')
              .conv(1, 1, 256, 1, 1, name='aspp_1x1'))
         
