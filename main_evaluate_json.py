@@ -13,8 +13,8 @@ from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
-parser.add_argument('--doc_path', type=str, default='data/hotel/') # modify this
-parser.add_argument('--save_prefix', type=str, default='hotel', help='prefix for load ckpt model') # modify this
+parser.add_argument('--doc_path', type=str, default='data/taxi_1108/') # modify this
+parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for load ckpt model') # modify this
 
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 

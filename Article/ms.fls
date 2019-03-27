@@ -168,12 +168,10 @@ INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/adobe/times/ptmr7t.vf
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/adobe/times/ptmb.vf
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
-INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
 INPUT Receipts.png
 INPUT ./Receipts.png
 INPUT ./Receipts.png
-INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/adobe/times/ptmb7t.vf
-INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
+INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
 INPUT appendix/meals/Correct_0.png
 INPUT ./appendix/meals/Correct_0.png
 INPUT ./appendix/meals/Correct_0.png
@@ -213,6 +211,8 @@ INPUT ./appendix/hotel/Correct_2.png
 INPUT appendix/hotel/Correct_3.png
 INPUT ./appendix/hotel/Correct_3.png
 INPUT ./appendix/hotel/Correct_3.png
+INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/adobe/times/ptmb7t.vf
+INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
 INPUT appendix/meals/FalsePositive_0.png
 INPUT ./appendix/meals/FalsePositive_0.png
 INPUT ./appendix/meals/FalsePositive_0.png
@@ -261,10 +261,10 @@ INPUT ./appendix/hotel/FalseLabel_1.png
 INPUT ms.bbl
 INPUT ms.bbl
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
+INPUT /usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
+INPUT /usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/adobe/times/ptmri7t.vf
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmri8r.tfm
-INPUT /usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
-INPUT /usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
 INPUT ms.aux
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb

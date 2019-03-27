@@ -32,7 +32,7 @@
 \author{
   Xiaohui Zhao, Zhuo Wu, and Xiaoguang Wang \\
   New IT Accenture \\
-{\tt\small xiaohui.zhao@accenture.com zhuo.wu@accenture.com danny.x.wang@accenture.com}
+{\tt\small xh.zhao@outlook.com zhuo.wu@accenture.com danny.x.wang@accenture.com}
 % Additional authors and addresses can be added with ``\and'',
 }
 
@@ -41,7 +41,7 @@
 
 %%%%%%%%% ABSTRACT
 \begin{abstract}
-   Extracting key information from documents, such as receipts or invoices, and preserving the interested texts to structured data is crucial in the document-intensive streamline processes of office automation in areas that includes but not limited to accounting, financial, and taxation areas. Large proportion of published works attempt to tackle the problem by exploring the semantic context in text sequences based on the Named Entity Recognition (NER) method in the NLP field. In this paper, we propose to combine the effective information from both semantic meaning and spatial distribution of texts in documents. Specifically, our proposed model, Convolutional Universal Text Information Extractor (CUTIE), applies convolutional neural networks on the gridded texts where texts are embedded as features with semantical connotations. We further explore the effect of employing different structures of convolutional neural network and propose a fast and portable structure. We demonstrate the effectiveness of the proposed method on a dataset with up to $6,980$ labelled receipts, without any pre-training or post-processing, achieving state of the art performance that is much higher than BERT but with only $1/9$ parameters and without requiring the $3,300$M word dataset for pre-training.
+   Extracting key information from documents, such as receipts or invoices, and preserving the interested texts to structured data is crucial in the document-intensive streamline processes of office automation in areas that includes but not limited to accounting, financial, and taxation areas. Large proportion of published works attempt to tackle the problem by exploring the semantic context in text sequences based on the Named Entity Recognition (NER) method in the NLP field. In this paper, we propose to combine the effective information from both semantic meaning and spatial distribution of texts in documents. Specifically, our proposed model, Convolutional Universal Text Information Extractor (CUTIE), applies convolutional neural networks on the gridded texts where texts are embedded as features with semantical connotations. We further explore the effect of employing different structures of convolutional neural network and propose a fast and portable structure. We demonstrate the effectiveness of the proposed method on a dataset with up to $6,980$ labelled receipts, without any pre-training or post-processing, achieving state of the art performance that is much higher than BERT but with only $1/10$ parameters and without requiring the $3,300$M word dataset for pre-training. Experimental results also demonstrate that the CUTIE being able to achieve state of the art performance with much smaller amount of training data.
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
@@ -49,8 +49,7 @@
 
 Implementing Scanned receipts OCR and information extraction (SROIE) is of great benefit to services and applications such as efficient archiving, compliance check, and fast indexing in the document-intensive streamline processes of office automation in areas that includes but not limit to accounting, financial, and taxation areas. There are two specific tasks involved in SROIE: receipt OCR and key information extraction. In this work, we focus on the second task that is rare in published research. In fact, key information extraction faces big challenges, where different types of document structures and vast number of potential interested key words introduces great difficulties. Although the commonly used rule-based method can be implemented with carefully designed expert rules, it can only work on specific type of documents and takes no lesser effort to adapt to new type of documents. Therefore, it is desirable to have a learning-based key information extraction method with limited requirement of human resources and solely employing the deep learning technique without designing expert rules for any specific type of documents. 
 
-History about published learning-based methods goes here.
-The majority of the published learning-based works are based on the Named Entity Recognition (NER) research in the NLP field that is not originally designed to solve the key information extraction problem in SROIE, which align text words in the original document as a long paragraph in line-based rule. However, the real-world documents, such as receipts and invoices, present with various styles of layouts that were designed for different scenarios or from different enterprise entities. The order or word-to-word distance of the texts in the line-based aligned long paragraph tend to vary greatly due to layout variations, which is difficult to be handled with the natural language paragraph oriented methods, one typical example is illustrated in Fig. \ref{fig:receipts}.
+\cite{cloudscan} proposed a learning based invoice analysis system named CloudScan, aiming to not rely on invoice layout templates, CloudScan trains a model that could be generalized to unseen invoice layouts, where a model is trained either using Long Short Term Memory (LSTM) or Logistic Regression (LR) with expert designed rules. This turns out to be extremely similar with a Named Entity Recognition (NER) model or a slot filling model. The Bi-directional Encoder Representations from Transformers (BERT) model proposed in \cite{bert} is a recently proposed state of the art method and has achieved great success in a wide of range of NLP tasks including NER. However, the methods based on the Named Entity Recognition (NER) research in the NLP field that is not originally designed to solve the key information extraction problem in SROIE, which align text words in the original document as a long paragraph in line-based rule. However, the real-world documents, such as receipts and invoices, present with various styles of layouts that were designed for different scenarios or from different enterprise entities. The order or word-to-word distance of the texts in the line-based aligned long paragraph tend to vary greatly due to layout variations, which is difficult to be handled with the natural language paragraph oriented methods, one typical example is illustrated in Fig. \ref{fig:receipts}.
 
 \begin{figure*}
 \begin{center}
@@ -59,11 +58,15 @@ The majority of the published learning-based works are based on the Named Entity
    \caption{Framework of the proposed method, (a) positional map the scanned document image to a grid with text's relative spatial relation preserved, (b) feed the generated grid into the CNN for extracting key information, (c) reverse map the extracted key information for visual reference.}
 \label{fig:cutie}
 \end{figure*}
-In this work, attempting to involve the spatial information into the key information extraction process, we propose to tackle this problem by using the CNN based network structure and involve the semantic features in a properly designed fashion. In particular, our proposed model, called Convolutional Universal Text Information Extractor (CUTIE), tackles the key information extraction problem by applying convolutional deep learning model on the gridded texts, as illustrated in Fig. \ref{fig:cutie}. The gridded texts is formed with the proposed grid positional mapping method, where the grid is generated with the principle that is preserving text's relative spatial relationship in the original scanned document image. The rich semantic information is encoded from the gridded texts at the very beginning stage of the convolutional neural network with a word embedding layer. The CUTIE allows for simultaneously looking into both semantical information and spatial information of the texts in the scanned document image and can reach a new state of the art result for key information extraction, which outperforms BERT model but without demand pretraining on a huge text dataset \cite{bert,transformer}.
+In this work, attempting to involve the spatial information into the key information extraction process, we propose to tackle this problem by using the CNN based network structure and involve the semantic features in a properly designed fashion. In particular, our proposed model, called Convolutional Universal Text Information Extractor (CUTIE), tackles the key information extraction problem by applying convolutional deep learning model on the gridded texts, as illustrated in Fig. \ref{fig:cutie}. The gridded texts is formed with the proposed grid positional mapping method, where the grid is generated with the principle that is preserving texts’ relative spatial relationship in the original scanned document image. The rich semantic information is encoded from the gridded texts at the very beginning stage of the convolutional neural network with a word embedding layer. The CUTIE allows for simultaneously looking into both semantical information and spatial information of the texts in the scanned document image and can reach a new state of the art result for key information extraction, which outperforms BERT model but without demand pretraining on a huge text dataset \cite{bert,transformer}.
 
 
 \section{Related Work}
+Several rule-based invoice analysis systems were proposed in \cite{3,5,7}. Intellix by DocuWare requires the a template being annotated with relevant fields \cite{3}. For that reason, a collection of templates have to be constructed. SmartFix employs specifically designed configuration rules for each template \cite{5}. Esser et al. uses a dataset of fixed key information positions for each template \cite{7}. It is not hard to find that the rule-based methods rely heavily on the pre-defined template rules to extract information from specific invoice layouts.
 
+CloudScan is a work attempting to extracting key information with learning based models \cite{cloudscan}. Firstly, N-grams features are formed by connecting expert designed rules calculated results on texts of each document line. Then, the features are feed to train a RNN-based or a logistic regression based classifier for key information extraction. Certain post-processing are added to further enhance extraction results. However, the line-based feature extraction method can not achieve its best performance if document texts are not perfectly aligned in line. Moreover, the RNN-based classifier, bi-directional LSTM model in CloudScan, has limited ability to learn relationship among distant words. 
+
+Bidirectional Encoder Representations from Transformers (BERT) is a recently proposed model that is pre-trained on a huge dataset and can be fine-tuned for a specific task, including Named Entity Recognition (NER), which outperforms most of the state of the art results in several NLP tasks \cite{bert}. Since the previous learning based methods treats the key information extraction problem as a NER problem, applying BERT can achieve better result than bi-LSTM in CloudScan.
 
 \section{Methods}
 In this section, we introduce the method proposed for creating grid data for model training. We then present the network architectures that capture long distance information and avoid information loss in the convolutional neural networks that have striding or pooling processes.
@@ -95,6 +98,13 @@ p_r(k) = \frac{1}{\sqrt{2 \pi \sigma^2}} e^{- \frac{(k - r_{g_t})^2}{2 \sigma^2}
 \end{equation}
 where $c_{g_t}$ is the mean center of the target augment gird size, $r_{g_t}$ is the mean center of the target augment grid size, and $\sigma$ is the standard deviation.
 
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.99\linewidth]{Receipts.png}
+\end{center}
+   \caption{Example of scanned taxi receipt images. We provide two colored rectangles to help readers find the key information about distance of travel and total amount with blue and red, respectively. Note the different types of spatial layouts and key information texts in these receipt images.}
+\label{fig:receipts}
+\end{figure}
 
 \subsection{CUTIE Model}
 Through matching the output of CUTIE with the labelled grid data, the model learns to generate the label for each text in the grid input via exploring both the spatial and semantic features. For that reason, the task of CUTIE bears resemblance to the semantic segmentation task in the computer vision field but with more sparse data distributions. Specifically, the mapped grid contains scattered data points (text tokens) in contrast to the images bespread with pixels. The grid positional mapped key texts are either close to or distant to each other due to different types of document layouts. Therefore, incorporating multi-scale context processing ability benefits the network.
@@ -116,26 +126,6 @@ n[i] = \sum_k m[i+r\cdot k]w[k]
 \end{equation}
 where $r$ is the atrous rate that indicates the sampling stride of the input signal, which is implemented as convolving the input feature with up sampled filters by inserting $r-1$ zeros between two consecutive filter values along each spatial dimension. Standard convolution is a special case of atrous convolution with $r=1$ \cite{deeplabv1}.
 
-\section{Experiments}
-\label{experiment}
-The proposed method is evaluated on a dataset with $3$ types of scanned document images, which contain $8$ key information classes and $1$ don't care class. For each specific key information class, multiple tokens can be included. The overall performance is referred as strict average precision (AP) and measured in terms of per-class accuracy across the $9$ classes, where one class is determined as correct only when every single token in the class is correct. To achieve deeper analysis of the performance of the proposed method, we propose to use one more criteria, soft average precision (softAP), where the prediction of a key information class is determined as correct as if positive ground truths are correctly predicted even if some false positive are included in the final prediction. SoftAP is important since it indicates model's capability of extracting correct key information with tolerance of incorporating certain false positives. In fact, post processing can be employed to eliminate the false positives. Therefore, joint analysis of AP and softAP provides a better understanding of the model performance.
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=0.99\linewidth]{Receipts.png}
-\end{center}
-   \caption{Example of scanned taxi receipt images. We provide two colored rectangles to help readers find the key information about distance of travel and total amount with blue and red, respectively. Note the different types of spatial layouts and key information texts in these receipt images.}
-\label{fig:receipts}
-\end{figure}
-
-We compare the performance of the proposed method with two state of the art methods CloudScan \cite{cloudscan} and BERT \cite{bert}. For comparison, the Cloud Scan model for SROIE is trained from scratch but with several expert designed features as described in \cite{cloudscan}. The BERT model for SROIE is transform learned with the Google released base model that is pre-trained on a huge dataset with $3,300$M words \cite{bert,bertgit}.
-
-We use a learning rate of $1e-3$ with Adam optimizer and step decay learning strategy. The learning rate is dropped to $1e-4$ and $1e-5$ on the $15,000$-th and $30,000$-th steps, respectively. The training is terminated within $40,000$ steps with batch size of $32$. Instance normalization is involved to facilate training. Our model is trained end-to-end without piecewise pretraining of any component. The embedding size is $128$, target augmentation shape is $64$ for both row and column. The dataset is split as training set and test set with ratio of $75:25$.
-
-\subsection{Dataset}
-The dataset contains $6,980$ annotated scanned Spanish receipt documents, including taxi receipts, meals entertainment (ME) receipts, and hotel receipts, with $9$ different key information classes, as reported in Table \ref{tab:dataset}. We generate the texts and corresponding bounding boxes with Google's OCR API. Each text and their bounding box is manually labelled as one of the $9$ different classes: 'DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', and 'TaxRate'. We then employ the tokenizer introduced in Section \ref{pm} to segment texts into minimum token units, where text bounding boxes are also segmented accordingly. 
-
-The dataset in this work is much more difficult than the neat scanned document images, since various layouts of receipts were captured in different scenarios using ordinary mobile phone camera. Examples of the scanned document images in our dataset are illustrated in Figure \ref{fig:receipts}, note that the colored rectangles is only for visual reference and the actual labelled data is in token-level rather than the line-level that is shown in the figure.
 \begin{table}
 	\caption{Statistic of the numbers of labelled receipt document images and key information classes in the dataset.}
 \begin{center}
@@ -149,25 +139,30 @@ The dataset in this work is much more difficult than the neat scanned document i
 \end{center}
 	\label{tab:dataset}
 \end{table}
+
 \begin{table*}
-	\caption{Performance comparison on different types of documents. (AP / softAP)}
+	\caption{Performance comparison on different types of documents. Post-processing is abbreviated as pp.}
 \begin{center}
 \begin{tabular}{l | c | c | c | c}
 	Method & \#Params & Taxi & ME & Hotel \\
 	\hline
 	CloudScan\cite{cloudscan} & - & 82 / - & 64 / - & 60 / - \\
-	BERT\cite{bert} & 110M & 87.0 / - & 80.3 / - & \textbf{79.4} / - \\
-	CUTIE-A & 67M & / & \textbf{84.8} / \textbf{93.5} & / \\
-	CUTIE-B & \textbf{14M} & \textbf{92.8} / \textbf{98.0} & 84.3 / 91.5 & 70.8 / \textbf{83.8} \\
+	BERT\cite{bert}+pp & 110M & 87.0 / - & 80.3 / - & \textbf{79.4} / - \\
+	CUTIE-A & 67M & 91.2 / 98.1 & \textbf{84.8} / \textbf{93.5} & 62.7 / 88.9 \\
+	CUTIE-B & \textbf{14M} & \textbf{95.2} / \textbf{97.6} & 84.3 / 92.4 & 70.8 / \textbf{89.4} \\
 \end{tabular}
 \end{center}
 	\label{tab:comparison}
 \end{table*}
 
-\subsection{Results on Validation Set}
-We report results of our method in terms of AP and compare with other state of the art methods in Table \ref{tab:comparison}. We also provides softAP results for CUTIE-A and CUTIE-B in Table \ref{tab:comparison}, where both the softAP of CUTIE-A and CUTIE-B exceeds their AP by a large margin.  Examples of inference results are illustrated in Figure \ref{fig:result}. Our big network CUTIE-A achieves $100\%$ AP and $100\%$ softAP on meals entertainment receipts, $100\%$ AP and $100\%$ softAP on taxi receipts, and $100\%$ AP and $100\%$ softAP on hotel receipts, outperforming other methods in almost all of the test cases. Compared to CloudScan, our big network CUTIE-A improves AP by $100\%$ on meals entertainment receipts, $100\%$ on taxi receipt, and $100\%$ on hotel receipts; our small network CUTIE-B improves AP by $100\%$ points on meals entertainment receipts, $100$ on taxi receipts, and $100\%$ on hotel receipts. Furthermore, compared to BERT, where model is pre-trained on a dataset with $3,300M$ words and transfer learned on our dataset, our big network CUTIE-B improves AP by $100\%~100\%$ in meals entertainment and taxi receipts while using only $1/2$ parameters, our small network CUTIE-B improves AP by $100\%~100\%$ in meals entertainment and taxi receipts but with much less complexity and smaller model size with only $1/9$ parameters without requiring a huge dataset for model pretraining. 
+\section{Experiments}
+\label{experiment}
+The proposed method is evaluated on a dataset with $3$ types of scanned document images, which contain $8$ key information classes and $1$ don't care class. For each specific key information class, multiple tokens can be included. The overall performance is referred as strict average precision (AP) and measured in terms of per-class accuracy across the $9$ classes, where one class is determined as correct only when every single token in the class is correct. To achieve deeper analysis of the performance of the proposed method, we propose to use one more criteria, soft average precision (softAP), where the prediction of a key information class is determined as correct as if positive ground truths are correctly predicted even if some false positives are included in the final prediction. SoftAP is important since it indicates model's capability of extracting correct key information with tolerance of incorporating certain false positives. In fact, post processing can be employed to eliminate the false positives. Therefore, joint analysis of AP and softAP provides a better understanding of the model performance.
 
-It is worth noting that the difference of AP in the hotel receipt column actually leads to interesting findings. One of the finding is that if we neglect the 'VendorName' class in the evaluation criteria, the AP is increased to from $70.8\%$ to $76.9\%$ and the softAP drops to $83.8\%$, indicating that CUTIE is capable of extracting the interested 'VendorName' texts but sometimes involves texts that are not in the ground truth label. Another finding is that the hotel receipts are quite different from the meals entertainment receipts and the taxi receipts, where key information appear multi times in different areas of the receipt, whereas the human labelers tend to label only one of their appearances. We look deeper into this in the following part of this section by analyzing some error cases.
+We compare the performance of the proposed method with two state of the art methods CloudScan \cite{cloudscan} and BERT \cite{bert}. For comparison, the Cloud Scan model for SROIE is trained from scratch but with several expert designed features as described in \cite{cloudscan}. The BERT model for SROIE is transform learned with the Google released base model that is pre-trained on a huge dataset with $3,300$M words \cite{bert,bertgit}. Furthermore, post-processing is applied to the BERT results to eliminate certain errors and enhance accuracy. It is worth noting that the CloudScan based method and BERT based method were implemented by other teams. For that reason, there is minor difference in numbers of training / test data. To provide a fair comparison, we also provide ablation study to evaluate the influence of number of training images in CUTIE. We will also provide results generated using the same dataset in the next version of this paper.
+
+We use a learning rate of $1e-3$ with Adam optimizer and step decay learning strategy. The learning rate is dropped to $1e-4$ and $1e-5$ on the $15,000$-th and $30,000$-th steps, respectively. The training is terminated within $40,000$ steps with batch size of $32$. Instance normalization is involved to facilate training. Our model is trained end-to-end without piecewise pretraining of any component. The embedding size is $128$, target augmentation shape is $64$ for both row and column. The dataset is split as training set and test set with ratio of $75:25$. No pre-processing or post-processing are involved in CUTIE.
+
 \begin{figure*}
 \begin{center}
 \subfloat{\includegraphics[width=0.17\linewidth]{appendix/meals/Correct_0.png}} 
@@ -198,6 +193,16 @@ It is worth noting that the difference of AP in the hotel receipt column actuall
 \label{fig:result}
 \end{figure*}
 
+\subsection{Dataset}
+The dataset contains $6,980$ annotated scanned Spanish receipt documents, including taxi receipts, meals entertainment (ME) receipts, and hotel receipts, with $9$ different key information classes, as reported in Table \ref{tab:dataset}. We generate the texts and corresponding bounding boxes with Google's OCR API. Each text and their bounding box is manually labelled as one of the $9$ different classes: 'DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', and 'TaxRate'. We then employ the tokenizer introduced in Section \ref{pm} to segment texts into minimum token units, where text bounding boxes are also segmented accordingly. 
+
+The dataset in this work is much more difficult than the neat scanned document images, since various layouts of receipts were captured in different scenarios using ordinary mobile phone camera. Examples of the scanned document images in our dataset are illustrated in Figure \ref{fig:receipts}, note that the colored rectangles is only for visual reference and the actual labelled data is in token-level rather than the line-level that is shown in the figure.
+
+\subsection{Overall Performance}
+We report results of our method in terms of AP and compare with other state of the art methods in Table \ref{tab:comparison}. We also provides softAP results for CUTIE-A and CUTIE-B in Table \ref{tab:comparison}, where both the softAP of CUTIE-A and CUTIE-B exceeds their AP by a large margin.  Examples of inference results are illustrated in Figure \ref{fig:result}. Our big network CUTIE-A achieves $91.2\%$ AP and $98.1\%$ softAP on taxi receipts, $84.8\%$ AP and $93.5\%$ softAP on meals entertainment receipts, and $62.7\%$ AP and $88.0\%$ softAP on hotel receipts, outperforming other methods in almost all of the test cases. Compared to CloudScan, our big network CUTIE-A improves AP by $20.8\%$ AP on meals entertainment receipts, $9.2\%$ on taxi receipt, and $2.7\%$ on hotel receipts; our small network CUTIE-B improves AP by $13.2$ on taxi receipts, $20.3\%$ points on meals entertainment receipts, and $10.8\%$ on hotel receipts. Furthermore, compared to BERT, where model is pre-trained on a dataset with $3,300M$ words and transfer learned on our dataset, our big network CUTIE-B improves AP by $4.2\%$ and $4.5\%$ in taxi receipts and meals entertainment while using only $1/2$ parameters, our small network CUTIE-B improves AP by $8.2\%$ and $4.0\%$ in taxi receipts and meals entertainment but with much less complexity and smaller model size with only $1/9$ parameters without requiring a huge dataset for model pretraining. We will further prove in Section \ref{parameters} that CUTIE-B is also able to achieve state of the art performance with only $1/10$ of BERT's parameters. Although CUTIE-B is smaller in capacity, it outperforms CUTIE-A in several assessment criterias. This is because CUTIE-B enlarges field of view by employing the atrous convolution rather than the pooling or striding processes, the CUTIE-B model has larger field of view and better understanding of tokens' relative spatial relationship since no restrictions is applied on the feature maps shapes. 
+
+It is worth noting that the difference of AP in the hotel receipt column actually leads to interesting findings. One of the finding is that if we neglect the 'VendorName' class in the evaluation criteria, the AP is increased to from $70.8\%$ to $76.9\%$ and the softAP drops to $83.8\%$, indicating that CUTIE is capable of extracting the interested 'VendorName' texts but sometimes involves texts that are not in the ground truth label. Another finding is that the hotel receipts are quite different from the meals entertainment receipts and the taxi receipts, where key information appears multi times in different areas of the receipt, whereas the human labelers tend to label only one of their appearances. We look deeper into this in the following part of this section by analyzing some inference result cases.
+
 Typical examples of receipts with low AP but high softAP score are shown in Figure \ref{fig:falsepositive}. Most of the false positive cases occur in the 'VenderName' class, where names tend to greatly vary and leads to difficulty in model inference. However, it is not hard to find that these false positives can be easily avoided by appending a dictionary based post processor to the key information extractor. One rare false positive case, the third receipt in the first row, is a 'L' letter being mis-recognized as '1' by the employed OCR engine. Although the letter shows distinct appearance from the other digits in the scanned receipt image, it is mis-interpreted as one part of the 'BaseAmount' class due to its close spatial location to the digits and it-self being a digit. It is also can be seen in the first receipt in the second row that several spatial distant digits were wrongly predicted as in the 'BaseAmount' class. Although these are rare cases in our test set, it still suggests that incorporating image-level information may further boost the inference accuracy inspite of the already involved semantical and spatial features. 
 
 \begin{figure}
@@ -214,7 +219,7 @@ Typical examples of receipts with low AP but high softAP score are shown in Figu
 \subfloat{\includegraphics[width=0.29\linewidth]{appendix/hotel/FalsePositive_1.png}}
 \subfloat{\fcolorbox{white}{white}{}}
 \end{center}
-   \caption{False positive examples of CUITE prediction results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The false positives are results with the boundary-only rectangles being not overlapped with the filled rectangles.}
+   \caption{False positive examples of CUITE prediction results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The false positives are results with the boundary-only rectangles being not overlapped with the filled rectangles. We mask certain sensitive texts with filled gray rectangle only in this figure but not in }
 \label{fig:falsepositive}
 \end{figure}
 
@@ -241,62 +246,60 @@ Furthermore, we find that some wrong cases are actually correct since the ground
 \label{fig:falselabel}
 \end{figure}
 
+\begin{table*}
+	\caption{Performance evaluation of CUTIE on ME with different embedding size.}
+\begin{center}
+\begin{tabular}{l | c | c | c | c | c | c | c | c | c | c}
+	Embedding Size & 1 & 2 & 4 & 8 & 16 & 32 & 64 & 128 & 256 & 512 \\
+	\hline
+	\#Params & 10.6M & 10.6M & 10.7M & 10.7M & 10.9M & 11.3M & 12.1M & 13.6M & 16.6M & 22.7M \\
+	AP & & & 84.3 & 82.8 & 84.9 & 84.8 & \textbf{85.0} & 84.3 & 84.6 & 84.4 \\
+	softAP & & & 94.1 & 92.0 & 91.4 & 91.2 & \textbf{92.9} & 92.4 & 91.9 & 91.9 \\
+\end{tabular}
+\end{center}
+	\label{tab:embedding}
+\end{table*}
+
+\begin{table*}
+	\caption{Performance evaluation of CUTIE-B on ME with different number of training samples.}
+\begin{center}
+\begin{tabular}{l | c | c | c | c | c | c | c | c | c}
+	Percentage(\%) & 3 & 12 & 21 & 30 & 39 & 48 & 57 & 66 & 75 \\
+	\hline
+	AP & 56.2 & 76.4 & 79.6 & 80.8 & 82.6 & 81.4 & 83.4 & \textbf{85.0} & 84.3 \\
+	softAP & 76.0 & 86.5 & 88.7 & 90.3 & 90.5 & 90.7 & 90.7 & 91.1 & \textbf{91.5} \\
+\end{tabular}
+\end{center}
+	\label{tab:samples}
+\end{table*}
 
 \subsection{Ablation Studies}
-Although we have demonstrated extremely strong empirical results, the results presented are achieved by combination of each aspect of the CUTIE framework. In this section, we perform ablation studies over a number of facets of CUTIE in order to better understand their relative importance.
+Although we have demonstrated extremely strong empirical results, the results presented are achieved by combination of each aspect of the CUTIE framework. In this section, we perform ablation studies over a number of facets of CUTIE in order to better understand their relative importance. CUTIE-B is employed as the default model with grid augmentation, embedding size of $128$, and $75\%$ of dataset as training data.
 
 \subsubsection{Effect of Grid Augmentation on Understanding Spatial Information}
-One of our core claim is that the high performance CUTIE is achieved by jointly analysis of the semantical and spatial information with the proposed framework. The highly effective spatial analysis ability is enabled by the CUTIE framework in contrast with the previous NER based methods. The grid augmentation process further enhances this ability. To give evidence to this claim, we evaluate CUTIE with or without the grid augmentation process. Results are presented in Table \ref{tab:augmentation}. We can see that adding grid augment process in CUTIE can significantly improve the performance on all of these receipts. These results demonstrate that CUTIE can greatly benefit from enhancing data diversity in spatial distribution. For that reason, further analysis about grid augmentation techniques will surely further enhance CUTIE's performance, \eg, randomly moving certain texts upward, downward, leftward, or rightward by several pixels during the grid positional mapping process. 
+One of our core claim is that the high performance CUTIE is achieved by jointly analysis of the semantical and spatial information with the proposed framework. The highly effective spatial analysis ability is enabled by the CUTIE framework in contrast with the previous NER based methods. The grid augmentation process further enhances this ability. To provide more evidence to this claim, we evaluate CUTIE with or without the grid augmentation process to test the model performance in terms of spatial diversity. Results are presented in Table \ref{tab:augmentation}. We can see that adding the grid augment process in CUTIE can significantly improve the performance on all of these receipts. These results demonstrate that CUTIE can greatly benefit from enhancing data diversity in spatial distribution. For that reason, further analysis about grid augmentation techniques will surely further enhance CUTIE's performance, \eg, randomly moving certain texts upward, downward, leftward, or rightward by several pixels during the grid positional mapping process. 
 \begin{table}
-	\caption{Performance evaluation of CUTIE with or without the grid augmentation process. (AP / softAP)}
+	\caption{Performance evaluation of CUTIE on ME with or without the grid augmentation process.}
 \begin{center}
-\begin{tabular}{l | c | c | c}
-	 & Taxi & ME & Hotel \\
+\begin{tabular}{l | c | c}
+	 & w/o augmentation & w augmentation \\
 	\hline
-	w augmentation & / & / & \\
-	w/o augmentation & / & / & \\
+	AP & 83.3 & 84.3 \\
+	softAP & 93.7 & 92.4 \\
 \end{tabular}
 \end{center}
 	\label{tab:augmentation}
 \end{table}
 
 \subsubsection{Impact of Semantical Information Capacity}
-Next, we evaluate the impact of semantical information of CUTIE by comparing evaluation with different word embedding sizes, although it is intuitively clear that larger embedding size provides more semantic capacity. As reported in Table \ref{tab:embedding}, CUTIE performs worse with smaller embedding size. The result meets our expectation that $details$. To further enhance the model performance, it might help to randomly mask out certain texts during the grid positional mapping process, such that the model learns inter-text relationship better with / without certain words present in the grid and further improves in generality.
-\begin{table}
-	\caption{Performance evaluation of CUTIE with different embedding size. (AP / softAP)}
-\begin{center}
-\begin{tabular}{l | c | c | c}
-	 & Taxi & ME & Hotel \\
-	\hline
-	64 & / & / & \\
-	128 & / & / & \\
-	256 & / & / & \\
-\end{tabular}
-\end{center}
-	\label{tab:embedding}
-\end{table}
+\label{parameters}
+Next, we evaluate the impact of semantical information of CUTIE by comparing evaluation with different word embedding sizes. As reported in Table \ref{tab:embedding}, CUTIE performs in a bell shape curve as the embedding size increases. The best performance is achieved by CUTIE-B that achieves embedding size of $64$ with $85.0\%$ in AP and $94.3\%$ in softAP and CUTIE-B with embedding size of $64$ and $4$. One interesting finding is that the CUTIE model achieves satisfiable performance even with limited semantical information capacity. We infer the reason is that, for a SROIE problem in this paper with 9 key information classes, there are small amount of key tokens provide the majority of contribution to the model inference and the model can achieve good performance by paying special attention to these key tokens. It is also indicated in the result that too large embedding size also decreases the model performace. To further enhance the model performance, it might help to randomly mask out certain texts during the grid positional mapping process, such that the model learns inter-text relationship better with / without certain words present in the grid and further improves in generality.
 
 \subsubsection{Impact of Number of Training Samples}
-To evaluate the impact of different number of training samples on model performance, we train CUTIE with $30\%$, $39\%$, $48\%$, $57\%$, $66\%$, and $75\%$ of our dataset, and report the results in Table \ref{tab:samples}.
-\begin{table}
-	\caption{Performance evaluation of CUTIE with different number of training samples. (AP / softAP)}
-\begin{center}
-\begin{tabular}{l | c | c | c}
-	 & Taxi & ME & Hotel \\
-	\hline
-	30\% & / & / & \\
-	39\% & / & / & \\
-	48\% & / & / & \\
-	57\% & / & / & \\
-	66\% & / & / & \\
-	75\% & 84.3 / 91.5 & \textbf{92.8} / \textbf{98.0} & 70.8 / \textbf{83.8} \\
-\end{tabular}
-\end{center}
-	\label{tab:samples}
-\end{table}
+To evaluate the impact of different number of training samples on model performance, we train CUTIE with $3\%$, $12\%$, $21\%$, $30\%$, $39\%$, $48\%$, $57\%$, $66\%$, and $75\%$ of our dataset and report results in Table \ref{tab:samples}. It is not hard to find from the result that more training data leads to better performance either in terms of AP or softAP. CUTIE-B achieves the highest AP $85.0\%$ with $66\%$ of dataset as training samples and the highest softAP $91.5\%$ with $75\%$ of dataset as training samples. It is worth noting that CUTIE-B is already capable of achieving $79.6\%$ AP and $88.7\%$ softAP with only $21\%$ of dataset as training samples, which further proves the efficiency of the proposed method being capable of achieving good results with limited amount of training data.
 
 \section{Discussion}
-Automatically extracting interested words / information from the scanned document images is of great interest to various services and applications. This paper proposes CUTIE to tackle this problem without requirement of any pre-training of post processing. Experimental results verifies the effectiveness of the proposed method. In contrast to the previous methods, the proposed method is easy to train and requires much smaller amount of training data while achieving state of the art performance. The performance gain is mainly achieved by exploring three key factors: the spatial relationship among texts, the semantic information of texts, and the grid positional mapping mechanism. One interesting finding is that the trained CUTIE model correctly predicts certain key information that is neglected to be labelled by the human labeler, which further proves the effectiveness of the proposed method. It is also worth mention that incorporating better semantical feature processing module or involving image-level features may further boost the model performance and we leave it to future research.
+Automatically extracting interested words / information from the scanned document images is of great interest to various services and applications. This paper proposes CUTIE to tackle this problem without requirement of any pre-training or post processing. Experimental results verifies the effectiveness of the proposed method. In contrast to the previous methods, the proposed method is easy to train and requires much smaller amount of training data while achieving state of the art performance. The performance gain is mainly achieved by exploring three key factors: the spatial relationship among texts, the semantic information of texts, and the grid positional mapping mechanism. One interesting finding is that the trained CUTIE model correctly predicts certain key information that is neglected to be labelled by the human labeler, which further proves the effectiveness of the proposed method. It is also worth mention that, as observed from experimental results, incorporating better semantical feature processing module or involving image-level features may further boost the model performance and we leave it to future research.
 
 {\small
 \bibliographystyle{ieee}
@@ -305,8 +308,8 @@ Automatically extracting interested words / information from the scanned documen
 
 \section{APPENDIX}
 \subsection{Model Structure}
-We report the best performed CUTIE-B model in Table \ref{tab:cutie}. Tokens are firstly embedd into $128$ dimensional features. Then, $4$ consecutive convolution operations are conducted in the conv block and $4$ consecutive atrous convolution are conducted in the atrous conv block with stride $1$ and rate $2$. Following the atrous conv block, an ASPP module is employed to combine multi-resolution features. The low level but high resolution feature from the $1$st output of the convolution block is also added to the model in the shortcut layer with a concatenation operation and a $1\times1$ convolution. Finally, inference result is achieved through a $1\times1$ convolution.
-\begin{table}
+We report the CUTIE-B model in Table \ref{tab:cutie}. Tokens are firstly embedd into $128$ dimensional features. Then, $4$ consecutive convolution operations are conducted in the conv block and $4$ consecutive atrous convolution are conducted in the atrous conv block with stride $1$ and rate $2$. Following the atrous conv block, an ASPP module is employed to combine multi-resolution features. The low level but high resolution feature from the $1$st output of the convolution block is also added to the model in the shortcut layer with a concatenation operation and a $1\times1$ convolution. Finally, inference result is achieved through a $1\times1$ convolution.
+\begin{table}[H]
 	\caption{Structure of the proposed CUTIE-B model. }
 \begin{center}
 \begin{tabular}{l | c | c | c | c}
