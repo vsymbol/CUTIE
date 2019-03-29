@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  27 MAR 2019 15:57
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  29 MAR 2019 14:11
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -412,97 +412,97 @@ File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 43.
-<Model.png, id=7, 995.3988pt x 254.8722pt>
-File: Model.png Graphic file (type png)
-<use Model.png>
-Package pdftex.def Info: Model.png  used on input line 56.
-(pdftex.def)             Requested size: 491.89041pt x 125.95016pt.
+<Model.jpg, id=7, 2073.7475pt x 530.98375pt>
+File: Model.jpg Graphic file (type jpg)
+<use Model.jpg>
+Package pdftex.def Info: Model.jpg  used on input line 56.
+(pdftex.def)             Requested size: 491.89041pt x 125.94789pt.
  [1{/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
 
 
-] [2 <./Model.png>]
-<Receipts.png, id=52, 443.256pt x 341.1144pt>
-File: Receipts.png Graphic file (type png)
-<use Receipts.png>
-Package pdftex.def Info: Receipts.png  used on input line 103.
-(pdftex.def)             Requested size: 234.76587pt x 180.66483pt.
+] [2 <./Model.jpg>]
+<Receipts.jpg, id=50, 923.45pt x 710.655pt>
+File: Receipts.jpg Graphic file (type jpg)
+<use Receipts.jpg>
+Package pdftex.def Info: Receipts.jpg  used on input line 103.
+(pdftex.def)             Requested size: 234.76587pt x 180.667pt.
 
 Underfull \hbox (badness 2189) in paragraph at lines 116--117
 []\OT1/ptm/m/n/10 Both CUTIE-A and CUITE-B con-ducts se-man-ti-cal
  []
 
+[3 <./Receipts.jpg>]
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 118.
-[3 <./Receipts.png>]
-<appendix/meals/Correct_0.png, id=93, 867.24pt x 1541.76pt>
-File: appendix/meals/Correct_0.png Graphic file (type png)
-<use appendix/meals/Correct_0.png>
-Package pdftex.def Info: appendix/meals/Correct_0.png  used on input line 168.
+<mCorrect_0.jpg, id=90, 867.24pt x 1541.76pt>
+File: mCorrect_0.jpg Graphic file (type jpg)
+<use mCorrect_0.jpg>
+Package pdftex.def Info: mCorrect_0.jpg  used on input line 168.
 (pdftex.def)             Requested size: 84.46465pt x 150.13867pt.
-<appendix/meals/Correct_1.png, id=94, 1541.76pt x 1156.32pt>
-File: appendix/meals/Correct_1.png Graphic file (type png)
-<use appendix/meals/Correct_1.png>
-Package pdftex.def Info: appendix/meals/Correct_1.png  used on input line 170.
+<mCorrect_1.jpg, id=91, 1541.76pt x 1156.32pt>
+File: mCorrect_1.jpg Graphic file (type jpg)
+<use mCorrect_1.jpg>
+Package pdftex.def Info: mCorrect_1.jpg  used on input line 170.
 (pdftex.def)             Requested size: 193.77362pt x 145.31598pt.
-<appendix/meals/Correct_2.png, id=95, 867.24pt x 1541.76pt>
-File: appendix/meals/Correct_2.png Graphic file (type png)
-<use appendix/meals/Correct_2.png>
-Package pdftex.def Info: appendix/meals/Correct_2.png  used on input line 172.
+<mCorrect_2.jpg, id=92, 867.24pt x 1541.76pt>
+File: mCorrect_2.jpg Graphic file (type jpg)
+<use mCorrect_2.jpg>
+Package pdftex.def Info: mCorrect_2.jpg  used on input line 172.
 (pdftex.def)             Requested size: 84.46465pt x 150.13867pt.
-<appendix/meals/Correct_3.png, id=96, 867.24pt x 1541.76pt>
-File: appendix/meals/Correct_3.png Graphic file (type png)
-<use appendix/meals/Correct_3.png>
-Package pdftex.def Info: appendix/meals/Correct_3.png  used on input line 174.
+<mCorrect_3.jpg, id=93, 867.24pt x 1541.76pt>
+File: mCorrect_3.jpg Graphic file (type jpg)
+<use mCorrect_3.jpg>
+Package pdftex.def Info: mCorrect_3.jpg  used on input line 174.
 (pdftex.def)             Requested size: 84.46465pt x 150.13867pt.
-<appendix/meals/Correct_4.png, id=97, 1156.32pt x 1541.76pt>
-File: appendix/meals/Correct_4.png Graphic file (type png)
-<use appendix/meals/Correct_4.png>
-Package pdftex.def Info: appendix/meals/Correct_4.png  used on input line 175.
+<mCorrect_4.jpg, id=94, 1156.32pt x 1541.76pt>
+File: mCorrect_4.jpg Graphic file (type jpg)
+<use mCorrect_4.jpg>
+Package pdftex.def Info: mCorrect_4.jpg  used on input line 175.
 (pdftex.def)             Requested size: 94.40388pt x 125.86052pt.
-<appendix/meals/Correct_5.png, id=98, 1156.32pt x 1541.76pt>
-File: appendix/meals/Correct_5.png Graphic file (type png)
-<use appendix/meals/Correct_5.png>
-Package pdftex.def Info: appendix/meals/Correct_5.png  used on input line 177.
+<mCorrect_5.jpg, id=95, 1156.32pt x 1541.76pt>
+File: mCorrect_5.jpg Graphic file (type jpg)
+<use mCorrect_5.jpg>
+Package pdftex.def Info: mCorrect_5.jpg  used on input line 177.
 (pdftex.def)             Requested size: 94.40388pt x 125.86052pt.
-<appendix/meals/Correct_9.png, id=99, 1156.32pt x 1541.76pt>
-File: appendix/meals/Correct_9.png Graphic file (type png)
-<use appendix/meals/Correct_9.png>
-Package pdftex.def Info: appendix/meals/Correct_9.png  used on input line 179.
+<mCorrect_9.jpg, id=96, 1156.32pt x 1541.76pt>
+File: mCorrect_9.jpg Graphic file (type jpg)
+<use mCorrect_9.jpg>
+Package pdftex.def Info: mCorrect_9.jpg  used on input line 179.
 (pdftex.def)             Requested size: 94.40388pt x 125.86052pt.
-<appendix/meals/Correct_7.png, id=100, 1156.32pt x 1541.76pt>
-File: appendix/meals/Correct_7.png Graphic file (type png)
-<use appendix/meals/Correct_7.png>
-Package pdftex.def Info: appendix/meals/Correct_7.png  used on input line 181.
+<mCorrect_7.jpg, id=97, 1156.32pt x 1541.76pt>
+File: mCorrect_7.jpg Graphic file (type jpg)
+<use mCorrect_7.jpg>
+Package pdftex.def Info: mCorrect_7.jpg  used on input line 181.
 (pdftex.def)             Requested size: 94.40388pt x 125.86052pt.
-<appendix/meals/Correct_8.png, id=101, 1156.32pt x 1541.76pt>
-File: appendix/meals/Correct_8.png Graphic file (type png)
-<use appendix/meals/Correct_8.png>
-Package pdftex.def Info: appendix/meals/Correct_8.png  used on input line 183.
+<mCorrect_8.jpg, id=98, 1156.32pt x 1541.76pt>
+File: mCorrect_8.jpg Graphic file (type jpg)
+<use mCorrect_8.jpg>
+Package pdftex.def Info: mCorrect_8.jpg  used on input line 183.
 (pdftex.def)             Requested size: 94.40388pt x 125.86052pt.
 
 Overfull \hbox (2.36313pt too wide) in paragraph at lines 175--183
  [][][][][][][][][][][][][][][][][][] 
  []
 
-<appendix/hotel/Correct_0.png, id=102, 1541.76pt x 1156.32pt>
-File: appendix/hotel/Correct_0.png Graphic file (type png)
-<use appendix/hotel/Correct_0.png>
-Package pdftex.def Info: appendix/hotel/Correct_0.png  used on input line 184.
+<hCorrect_0.jpg, id=99, 1541.76pt x 1156.32pt>
+File: hCorrect_0.jpg Graphic file (type jpg)
+<use hCorrect_0.jpg>
+Package pdftex.def Info: hCorrect_0.jpg  used on input line 184.
 (pdftex.def)             Requested size: 173.90271pt x 130.42444pt.
-<appendix/hotel/Correct_1.png, id=103, 971.63pt x 1541.76pt>
-File: appendix/hotel/Correct_1.png Graphic file (type png)
-<use appendix/hotel/Correct_1.png>
-Package pdftex.def Info: appendix/hotel/Correct_1.png  used on input line 186.
+<hCorrect_1.jpg, id=100, 971.63pt x 1541.76pt>
+File: hCorrect_1.jpg Graphic file (type jpg)
+<use hCorrect_1.jpg>
+Package pdftex.def Info: hCorrect_1.jpg  used on input line 186.
 (pdftex.def)             Requested size: 94.40388pt x 149.78578pt.
-<appendix/hotel/Correct_2.png, id=104, 1156.32pt x 1541.76pt>
-File: appendix/hotel/Correct_2.png Graphic file (type png)
-<use appendix/hotel/Correct_2.png>
-Package pdftex.def Info: appendix/hotel/Correct_2.png  used on input line 188.
+<hCorrect_2.jpg, id=101, 1156.32pt x 1541.76pt>
+File: hCorrect_2.jpg Graphic file (type jpg)
+<use hCorrect_2.jpg>
+Package pdftex.def Info: hCorrect_2.jpg  used on input line 188.
 (pdftex.def)             Requested size: 104.34314pt x 139.10529pt.
-<appendix/hotel/Correct_3.png, id=105, 1156.32pt x 1541.76pt>
-File: appendix/hotel/Correct_3.png Graphic file (type png)
-<use appendix/hotel/Correct_3.png>
-Package pdftex.def Info: appendix/hotel/Correct_3.png  used on input line 190.
+<hCorrect_3.jpg, id=102, 1156.32pt x 1541.76pt>
+File: hCorrect_3.jpg Graphic file (type jpg)
+<use hCorrect_3.jpg>
+Package pdftex.def Info: hCorrect_3.jpg  used on input line 190.
 (pdftex.def)             Requested size: 104.34314pt x 139.10529pt.
 
 Overfull \hbox (0.53659pt too wide) in paragraph at lines 184--191
@@ -510,160 +510,140 @@ Overfull \hbox (0.53659pt too wide) in paragraph at lines 184--191
  []
 
 [4]
-Underfull \vbox (badness 10000) has occurred while \output is active []
+
+LaTeX Warning: Text page 5 contains only floats.
 
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Overfull \vbox (0.62346pt too high) has occurred while \output is active []
 
- [5 <./appendix/meals/Correct_0.png> <./appendix/meals/Correct_1.png> <./append
-ix/meals/Correct_2.png> <./appendix/meals/Correct_3.png> <./appendix/meals/Corr
-ect_4.png> <./appendix/meals/Correct_5.png> <./appendix/meals/Correct_9.png> <.
-/appendix/meals/Correct_7.png> <./appendix/meals/Correct_8.png> <./appendix/hot
-el/Correct_0.png> <./appendix/hotel/Correct_1.png> <./appendix/hotel/Correct_2.
-png> <./appendix/hotel/Correct_3.png>]
-<appendix/meals/FalsePositive_0.png, id=166, 1156.32pt x 1541.76pt>
-File: appendix/meals/FalsePositive_0.png Graphic file (type png)
-<use appendix/meals/FalsePositive_0.png>
-Package pdftex.def Info: appendix/meals/FalsePositive_0.png  used on input line
- 210.
+
+
+LaTeX Warning: Text page 5 contains only floats.
+
+
+Overfull \vbox (0.62346pt too high) has occurred while \output is active []
+
+
+[5 <./mCorrect_0.jpg> <./mCorrect_1.jpg> <./mCorrect_2.jpg> <./mCorrect_3.jpg> 
+<./mCorrect_4.jpg> <./mCorrect_5.jpg> <./mCorrect_9.jpg> <./mCorrect_7.jpg> <./
+mCorrect_8.jpg> <./hCorrect_0.jpg> <./hCorrect_1.jpg> <./hCorrect_2.jpg> <./hCo
+rrect_3.jpg>]
+<mFalsePositive_0.jpg, id=150, 1156.32pt x 1541.76pt>
+File: mFalsePositive_0.jpg Graphic file (type jpg)
+<use mFalsePositive_0.jpg>
+Package pdftex.def Info: mFalsePositive_0.jpg  used on input line 210.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<appendix/meals/FalsePositive_1.png, id=167, 1156.32pt x 1541.76pt>
-File: appendix/meals/FalsePositive_1.png Graphic file (type png)
-<use appendix/meals/FalsePositive_1.png>
-Package pdftex.def Info: appendix/meals/FalsePositive_1.png  used on input line
- 212.
+<mFalsePositive_1.jpg, id=151, 1156.32pt x 1541.76pt>
+File: mFalsePositive_1.jpg Graphic file (type jpg)
+<use mFalsePositive_1.jpg>
+Package pdftex.def Info: mFalsePositive_1.jpg  used on input line 212.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<appendix/meals/FalsePositive_3.png, id=168, 1156.32pt x 1541.76pt>
-File: appendix/meals/FalsePositive_3.png Graphic file (type png)
-<use appendix/meals/FalsePositive_3.png>
-Package pdftex.def Info: appendix/meals/FalsePositive_3.png  used on input line
- 214.
+<mFalsePositive_3.jpg, id=152, 1156.32pt x 1541.76pt>
+File: mFalsePositive_3.jpg Graphic file (type jpg)
+<use mFalsePositive_3.jpg>
+Package pdftex.def Info: mFalsePositive_3.jpg  used on input line 214.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<appendix/hotel/FalsePositive_0.png, id=169, 1156.32pt x 1541.76pt>
-File: appendix/hotel/FalsePositive_0.png Graphic file (type png)
-<use appendix/hotel/FalsePositive_0.png>
-Package pdftex.def Info: appendix/hotel/FalsePositive_0.png  used on input line
- 215.
+<hFalsePositive_0.jpg, id=153, 1156.32pt x 1541.76pt>
+File: hFalsePositive_0.jpg Graphic file (type jpg)
+<use hFalsePositive_0.jpg>
+Package pdftex.def Info: hFalsePositive_0.jpg  used on input line 215.
 (pdftex.def)             Requested size: 68.76782pt x 91.67822pt.
-<appendix/taxi/FalsePositive_0.png, id=170, 1410.26875pt x 1540.75626pt>
-File: appendix/taxi/FalsePositive_0.png Graphic file (type png)
-<use appendix/taxi/FalsePositive_0.png>
-Package pdftex.def Info: appendix/taxi/FalsePositive_0.png  used on input line 
-217.
+<tFalsePositive_0.jpg, id=154, 1410.26875pt x 1540.75626pt>
+File: tFalsePositive_0.jpg Graphic file (type jpg)
+<use tFalsePositive_0.jpg>
+Package pdftex.def Info: tFalsePositive_0.jpg  used on input line 217.
 (pdftex.def)             Requested size: 82.99902pt x 90.67813pt.
-<appendix/hotel/FalsePositive_1.png, id=171, 1156.32pt x 1541.76pt>
-File: appendix/hotel/FalsePositive_1.png Graphic file (type png)
-<use appendix/hotel/FalsePositive_1.png>
-Package pdftex.def Info: appendix/hotel/FalsePositive_1.png  used on input line
- 219.
+<hFalsePositive_1.jpg, id=155, 1156.32pt x 1541.76pt>
+File: hFalsePositive_1.jpg Graphic file (type jpg)
+<use hFalsePositive_1.jpg>
+Package pdftex.def Info: hFalsePositive_1.jpg  used on input line 219.
 (pdftex.def)             Requested size: 68.76782pt x 91.67822pt.
-
-Overfull \hbox (3.79869pt too wide) in paragraph at lines 215--221
- [][][][][][][][][][][][] 
- []
-
-<appendix/meals/FalseLabel_0.png, id=173, 988.69376pt x 1541.76pt>
-File: appendix/meals/FalseLabel_0.png Graphic file (type png)
-<use appendix/meals/FalseLabel_0.png>
-Package pdftex.def Info: appendix/meals/FalseLabel_0.png  used on input line 22
-9.
+<mFalseLabel_0.jpg, id=157, 988.69376pt x 1541.76pt>
+File: mFalseLabel_0.jpg Graphic file (type jpg)
+<use mFalseLabel_0.jpg>
+Package pdftex.def Info: mFalseLabel_0.jpg  used on input line 228.
 (pdftex.def)             Requested size: 66.39777pt x 103.53499pt.
-<appendix/meals/FalseLabel_1.png, id=174, 1266.7325pt x 1541.76pt>
-File: appendix/meals/FalseLabel_1.png Graphic file (type png)
-<use appendix/meals/FalseLabel_1.png>
-Package pdftex.def Info: appendix/meals/FalseLabel_1.png  used on input line 23
-1.
+<mFalseLabel_1.jpg, id=158, 1266.7325pt x 1541.76pt>
+File: mFalseLabel_1.jpg Graphic file (type jpg)
+<use mFalseLabel_1.jpg>
+Package pdftex.def Info: mFalseLabel_1.jpg  used on input line 230.
 (pdftex.def)             Requested size: 80.62535pt x 98.12416pt.
-<appendix/meals/FalseLabel_2.png, id=175, 1104.125pt x 1541.76pt>
-File: appendix/meals/FalseLabel_2.png Graphic file (type png)
-<use appendix/meals/FalseLabel_2.png>
-Package pdftex.def Info: appendix/meals/FalseLabel_2.png  used on input line 23
-3.
+<mFalseLabel_2.jpg, id=159, 1104.125pt x 1541.76pt>
+File: mFalseLabel_2.jpg Graphic file (type jpg)
+<use mFalseLabel_2.jpg>
+Package pdftex.def Info: mFalseLabel_2.jpg  used on input line 232.
 (pdftex.def)             Requested size: 73.51155pt x 102.64102pt.
-<appendix/meals/FalseLabel_3.png, id=176, 1156.32pt x 1541.76pt>
-File: appendix/meals/FalseLabel_3.png Graphic file (type png)
-<use appendix/meals/FalseLabel_3.png>
-Package pdftex.def Info: appendix/meals/FalseLabel_3.png  used on input line 23
-4.
+<mFalseLabel_3.jpg, id=160, 1156.32pt x 1541.76pt>
+File: mFalseLabel_3.jpg Graphic file (type jpg)
+<use mFalseLabel_3.jpg>
+Package pdftex.def Info: mFalseLabel_3.jpg  used on input line 233.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<appendix/hotel/FalseLabel_0.png, id=177, 1156.32pt x 1541.76pt>
-File: appendix/hotel/FalseLabel_0.png Graphic file (type png)
-<use appendix/hotel/FalseLabel_0.png>
-Package pdftex.def Info: appendix/hotel/FalseLabel_0.png  used on input line 23
-6.
+<hFalseLabel_0.jpg, id=161, 1156.32pt x 1541.76pt>
+File: hFalseLabel_0.jpg Graphic file (type jpg)
+<use hFalseLabel_0.jpg>
+Package pdftex.def Info: hFalseLabel_0.jpg  used on input line 235.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<appendix/taxi/FalseLabel_4.png, id=178, 1156.32pt x 1541.76pt>
-File: appendix/taxi/FalseLabel_4.png Graphic file (type png)
-<use appendix/taxi/FalseLabel_4.png>
-Package pdftex.def Info: appendix/taxi/FalseLabel_4.png  used on input line 238
-.
+<tFalseLabel_4.jpg, id=162, 1156.32pt x 1541.76pt>
+File: tFalseLabel_4.jpg Graphic file (type jpg)
+<use tFalseLabel_4.jpg>
+Package pdftex.def Info: tFalseLabel_4.jpg  used on input line 237.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<appendix/taxi/FalseLabel_0.png, id=179, 1156.32pt x 1541.76pt>
-File: appendix/taxi/FalseLabel_0.png Graphic file (type png)
-<use appendix/taxi/FalseLabel_0.png>
-Package pdftex.def Info: appendix/taxi/FalseLabel_0.png  used on input line 239
-.
+<tFalseLabel_0.jpg, id=163, 1156.32pt x 1541.76pt>
+File: tFalseLabel_0.jpg Graphic file (type jpg)
+<use tFalseLabel_0.jpg>
+Package pdftex.def Info: tFalseLabel_0.jpg  used on input line 238.
 (pdftex.def)             Requested size: 85.36908pt x 113.81555pt.
-<appendix/taxi/FalseLabel_5.png, id=180, 543.02875pt x 1155.31625pt>
-File: appendix/taxi/FalseLabel_5.png Graphic file (type png)
-<use appendix/taxi/FalseLabel_5.png>
-Package pdftex.def Info: appendix/taxi/FalseLabel_5.png  used on input line 241
-.
+<tFalseLabel_5.jpg, id=164, 543.02875pt x 1155.31625pt>
+File: tFalseLabel_5.jpg Graphic file (type jpg)
+<use tFalseLabel_5.jpg>
+Package pdftex.def Info: tFalseLabel_5.jpg  used on input line 240.
 (pdftex.def)             Requested size: 52.17018pt x 110.99019pt.
-<appendix/hotel/FalseLabel_1.png, id=181, 1156.32pt x 1541.76pt>
-File: appendix/hotel/FalseLabel_1.png Graphic file (type png)
-<use appendix/hotel/FalseLabel_1.png>
-Package pdftex.def Info: appendix/hotel/FalseLabel_1.png  used on input line 24
-3.
+<hFalseLabel_1.jpg, id=165, 1156.32pt x 1541.76pt>
+File: hFalseLabel_1.jpg Graphic file (type jpg)
+<use hFalseLabel_1.jpg>
+Package pdftex.def Info: hFalseLabel_1.jpg  used on input line 242.
 (pdftex.def)             Requested size: 85.36908pt x 113.81555pt.
 
-Underfull \vbox (badness 3029) has occurred while \output is active []
+Underfull \vbox (badness 1281) has occurred while \output is active []
 
- [6 <./appendix/meals/FalsePositive_0.png> <./appendix/meals/FalsePositive_1.pn
-g> <./appendix/meals/FalsePositive_3.png> <./appendix/hotel/FalsePositive_0.png
-> <./appendix/taxi/FalsePositive_0.png (PNG copy)> <./appendix/hotel/FalsePosit
-ive_1.png>]
-[7 <./appendix/meals/FalseLabel_0.png> <./appendix/meals/FalseLabel_1.png> <./a
-ppendix/meals/FalseLabel_2.png (PNG copy)> <./appendix/meals/FalseLabel_3.png (
-PNG copy)> <./appendix/hotel/FalseLabel_0.png> <./appendix/taxi/FalseLabel_4.pn
-g (PNG copy)> <./appendix/taxi/FalseLabel_0.png (PNG copy)> <./appendix/taxi/Fa
-lseLabel_5.png> <./appendix/hotel/FalseLabel_1.png>] (./ms.bbl)
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 321.
+ [6 <./mFalsePositive_0.jpg> <./mFalsePositive_1.jpg> <./mFalsePositive_3.jpg> 
+<./hFalsePositive_0.jpg> <./tFalsePositive_0.jpg> <./hFalsePositive_1.jpg>]
+Underfull \vbox (badness 5741) has occurred while \output is active []
+
+ [7 <./mFalseLabel_0.jpg> <./mFalseLabel_1.jpg> <./mFalseLabel_2.jpg> <./mFalse
+Label_3.jpg> <./hFalseLabel_0.jpg> <./tFalseLabel_4.jpg> <./tFalseLabel_0.jpg> 
+<./tFalseLabel_5.jpg> <./hFalseLabel_1.jpg>] (./ms.bbl [8])
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 320.
 
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 321.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 320.
 
-Overfull \hbox (284.5526pt too wide) in paragraph at lines 315--325
+Overfull \hbox (284.5526pt too wide) in paragraph at lines 314--324
  [] 
  []
 
-
-Underfull \vbox (badness 1675) has occurred while \output is active []
-
- [8]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 329.
-
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 328.
 [9
 
 ]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 329.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 328.
  (./ms.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 329.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 329.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 329.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 328.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 328.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 328.
  ) 
 Here is how much of TeX's memory you used:
- 7688 strings out of 492649
- 114517 string characters out of 6129622
- 220584 words of memory out of 5000000
+ 7694 strings out of 492649
+ 113052 string characters out of 6129622
+ 221738 words of memory out of 5000000
  11330 multiletter control sequences out of 15000+600000
  26528 words of font info for 63 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 37i,10n,39p,2023b,371s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 37i,10n,39p,2023b,478s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
 exlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/te
 xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/tex
@@ -679,10 +659,10 @@ ist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2018/texmf-dist/font
 s/type1/urw/times/utmb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/ur
 w/times/utmr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/times/ut
 mri8a.pfb>
-Output written on ms.pdf (9 pages, 45911246 bytes).
+Output written on ms.pdf (9 pages, 7431797 bytes).
 PDF statistics:
- 325 PDF objects out of 1000 (max. 8388607)
- 242 compressed objects within 3 object streams
- 105 named destinations out of 1000 (max. 500000)
+ 298 PDF objects out of 1000 (max. 8388607)
+ 240 compressed objects within 3 object streams
+ 104 named destinations out of 1000 (max. 500000)
  151 words of extra memory for PDF output out of 10000 (max. 10000000)
 

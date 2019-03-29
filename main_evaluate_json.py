@@ -13,8 +13,8 @@ from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
-parser.add_argument('--doc_path', type=str, default='data/taxi_1108/') # modify this
-parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for load ckpt model') # modify this
+parser.add_argument('--doc_path', type=str, default='data/hotel_1108/') # modify this
+parser.add_argument('--save_prefix', type=str, default='hotel', help='prefix for load ckpt model') # modify this
 
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 
@@ -42,7 +42,7 @@ params = parser.parse_args()
 if __name__ == '__main__':
     # data
     #data_loader = DataLoader(params, True, True) # True to use 25% training data
-    data_loader = DataLoader(params, update_dict=False, load_dictionary=True, data_split=0.75) # False to provide a path with only test data
+    data_loader = DataLoader(params, update_dict=False, load_dictionary=True, data_split=0) # False to provide a path with only test data
     num_words = max(20000, data_loader.num_words)
     num_classes = data_loader.num_classes
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
             print('{} restored'.format(ckpt_path))
         except:
             raise Exception('Check your pretrained {:s}'.format(ckpt_path))
-            
+        
         # calculate validation accuracy and display results   
         recalls, accs_strict, accs_soft = [], [], []
         num_test = len(data_loader.validation_docs)

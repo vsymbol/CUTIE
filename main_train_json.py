@@ -131,10 +131,10 @@ if __name__ == '__main__':
     data_loader = DataLoader(params, update_dict=params.update_dict, load_dictionary=params.load_dict, data_split=0.75)
     num_words = max(20000, data_loader.num_words)
     num_classes = data_loader.num_classes
-    for _ in range(2):
-        a = data_loader.next_batch()
-        b = data_loader.fetch_validation_data()
-        c = data_loader.fetch_test_data()
+    #for _ in range(2):
+    #    a = data_loader.next_batch()
+    #    b = data_loader.fetch_validation_data()
+    #    c = data_loader.fetch_test_data()
     
     # model
     network = CUTIERes(num_words, num_classes, params)
@@ -260,7 +260,7 @@ if __name__ == '__main__':
                       %(recall, acc_strict, acc_soft, max(training_recall), max(training_acc_strict), max(training_acc_soft)))
                 
             # calculate validation accuracy and display results
-            if iter%params.validation_step == 0:
+            if iter%params.validation_step == 0 and len(data_loader.validation_docs):
                 
                 recalls, accs_strict, accs_soft = [], [], []
                 for _ in range(len(data_loader.validation_docs)):
@@ -311,7 +311,7 @@ if __name__ == '__main__':
                     print('\nBest up-to-date performance validation checkpoint saved.\n')
                 
             # calculate validation accuracy and display results
-            if params.test_path!='' and iter%params.test_step == 0:
+            if params.test_path!='' and iter%params.test_step == 0 and len(data_loader.test_docs):
                 
                 recalls, accs_strict, accs_soft = [], [], []
                 while True:
