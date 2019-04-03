@@ -16,8 +16,8 @@ from model_cutie2_aspp import CUTIE2 as CUTIEv2
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--use_cutie2', type=bool, default=False) # True to read image from doc_path 
-parser.add_argument('--doc_path', type=str, default='data/table')
+parser.add_argument('--use_cutie2', type=bool, default=True) # True to read image from doc_path 
+parser.add_argument('--doc_path', type=str, default='data/table_small')
 parser.add_argument('--save_prefix', type=str, default='table', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
@@ -30,7 +30,7 @@ parser.add_argument('--ckpt_file', type=str, default='meals/CUTIE_highresolution
 
 # dict
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/20000TC') # 40000 or 20000TC or 119547
+parser.add_argument('--load_dict_from_path', type=str, default='dict/table') # 40000 or 20000TC or table
 parser.add_argument('--tokenize', type=bool, default=True) # tokenize input text
 parser.add_argument('--text_case', type=bool, default=True) # case sensitive
 parser.add_argument('--update_dict', type=bool, default=False)
@@ -41,7 +41,7 @@ parser.add_argument('--segment_grid', type=bool, default=False) # segment grid i
 parser.add_argument('--rows_segment', type=int, default=72) 
 parser.add_argument('--cols_segment', type=int, default=72) 
 parser.add_argument('--augment_strategy', type=int, default=1) # 1 for increasing grid shape size, 2 for gaussian around target shape
-parser.add_argument('--positional_mapping_strategy', type=int, default=2)
+parser.add_argument('--positional_mapping_strategy', type=int, default=1)
 parser.add_argument('--rows_target', type=int, default=64) 
 parser.add_argument('--cols_target', type=int, default=64) 
 parser.add_argument('--rows_ulimit', type=int, default=80) # used when data augmentation is true
@@ -134,9 +134,9 @@ if __name__ == '__main__':
     data_loader = DataLoader(params, update_dict=params.update_dict, load_dictionary=params.load_dict, data_split=0.75)
     num_words = max(20000, data_loader.num_words)
     num_classes = data_loader.num_classes
-    #for _ in range(2):
-    #    a = data_loader.next_batch()
-    #    b = data_loader.fetch_validation_data()
+    for _ in range(2):
+        a = data_loader.next_batch()
+        b = data_loader.fetch_validation_data()
     #    c = data_loader.fetch_test_data()
     
     # model
@@ -171,6 +171,7 @@ if __name__ == '__main__':
     print(network.name, ': ', total_parameters/1000/1000, 'M parameters \n')
 
     # training
+    loss_curve = []
     training_recall, validation_recall, test_recall = [], [], []
     training_acc_strict, validation_acc_strict, test_acc_strict = [], [], []
     training_acc_soft, validation_acc_soft, test_acc_soft = [], [], []
@@ -263,12 +264,16 @@ if __name__ == '__main__':
                 recall, acc_strict, acc_soft, res = cal_accuracy(data_loader, np.array(data['grid_table']), 
                                                        np.array(data['gt_classes']), model_output_val, 
                                                        np.array(data['label_mapids']), np.array(data['bbox_mapids']))
+                loss_curve += [total_loss_val]
                 training_recall += [recall]        
                 training_acc_strict += [acc_strict]   
                 training_acc_soft += [acc_soft]       
+                
+                #print(res.decode())
                 print('\nIter: %d/%d, total loss: %.4f, model loss: %.4f, regularization loss: %.4f'%\
                       (iter, params.iterations, total_loss_val, model_loss_val, regularization_loss_val))
-                print(res.decode())
+                print('LOSS CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
+                                  format(i*params.log_disp_step,w) for i,w in enumerate(loss_curve)]))
                 print('TRAINING ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                   format(i*params.log_disp_step,w) for i,w in enumerate(training_acc_strict)]))
                 print('TRAINING ACC (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f)'\
@@ -306,7 +311,7 @@ if __name__ == '__main__':
                 validation_recall += [recall]
                 validation_acc_strict += [acc_strict]  
                 validation_acc_soft += [acc_soft]
-                print(res.decode()) # show res from the last execution of the while loop 
+                #print(res.decode()) # show res from the last execution of the while loop 
 
                 print('VALIDATION ACC (STRICT) CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                   format(i*params.validation_step,w) for i,w in enumerate(validation_acc_strict)]))

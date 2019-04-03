@@ -78,10 +78,11 @@ class Model(object):
         
         shape_grid = tf.shape(grid)
         
-        featuremap_flat = tf.reshape(featuremap, [shape_grid[0], -1])        
+        featuremap_flat = tf.reshape(featuremap, [shape_grid[0], -1, feature_dimension])        
         batch_indices_flat = tf.reshape(batch_indices, [shape_grid[0], -1])        
         batch_ps_flat = tf.batch_gather(featuremap_flat, batch_indices_flat)
         
+        print(shape_grid)
         b, h, w, c = shape_grid[0], shape_grid[1], shape_grid[2], feature_dimension
         return tf.reshape(batch_ps_flat, [b,h,w,c])
     

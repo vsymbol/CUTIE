@@ -62,7 +62,7 @@ class CUTIE2(CUTIE):
              .conv(3, 3, 32, 1, 1, name='image_featuremap'))
          
         # feature map positional mapping
-        (self.feed('image_featuremap', 'ps_1d_indices', 'embedding')
+        (self.feed('image_featuremap', 'ps_1d_indices', 'data_grid')
              .positional_sampling(32, name='positional_sampling'))
          
         ## concate image with grid

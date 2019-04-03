@@ -12,7 +12,7 @@ import tensorflow as tf
 import tokenization
 import cv2
 
-DEBUG = False # True to show grid as image 
+DEBUG = True # True to show grid as image 
 
 import unicodedata
 def is_number(s):
@@ -749,9 +749,9 @@ class DataLoader():
             cls = line['field_name']
             if cls in self.classes:
                 label_dressed[file_id][cls] = {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} 
-                label_dressed[file_id][cls]['key_id'] = line.get('key_id', [])
+                #label_dressed[file_id][cls]['key_id'] = line.get('key_id', [])
                 label_dressed[file_id][cls]['value_id'] = line['id'] # value_id
-                label_dressed[file_id][cls]['key_text'] = line.get('key_text', []) 
+                #label_dressed[file_id][cls]['key_text'] = line.get('key_text', []) 
                 label_dressed[file_id][cls]['value_text'] = line['text'] # value_text
                 
         # handle corrupted data
