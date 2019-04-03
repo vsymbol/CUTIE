@@ -8,14 +8,17 @@ import timeit
 from pprint import pprint
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-from model_cutie_aspp import CUTIERes
 from data_loader_json import DataLoader
 from utils import *
 
+from model_cutie_aspp import CUTIERes as CUTIEv1
+from model_cutie2_aspp import CUTIE2 as CUTIEv2
+
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--doc_path', type=str, default='data/taxi')
-parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--use_cutie2', type=bool, default=False) # True to read image from doc_path 
+parser.add_argument('--doc_path', type=str, default='data/table')
+parser.add_argument('--save_prefix', type=str, default='table', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
 # ckpt
@@ -34,26 +37,26 @@ parser.add_argument('--update_dict', type=bool, default=False)
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
 # data manipulation
-parser.add_argument('--segment_grid', type=bool, default=True) # segment grid into two parts if grid is larger than cols_target
+parser.add_argument('--segment_grid', type=bool, default=False) # segment grid into two parts if grid is larger than cols_target
 parser.add_argument('--rows_segment', type=int, default=72) 
 parser.add_argument('--cols_segment', type=int, default=72) 
 parser.add_argument('--augment_strategy', type=int, default=1) # 1 for increasing grid shape size, 2 for gaussian around target shape
 parser.add_argument('--positional_mapping_strategy', type=int, default=2)
 parser.add_argument('--rows_target', type=int, default=64) 
 parser.add_argument('--cols_target', type=int, default=64) 
-parser.add_argument('--rows_ulimit', type=int, default=80) 
+parser.add_argument('--rows_ulimit', type=int, default=80) # used when data augmentation is true
 parser.add_argument('--cols_ulimit', type=int, default=80) 
 parser.add_argument('--fill_bbox', type=bool, default=False) # fill bbox with dict_id / label_id
 
 parser.add_argument('--data_augmentation_extra', type=bool, default=True) # randomly expand rows/cols
-parser.add_argument('--data_augmentation_dropout', type=bool, default=False) # randomly shrink rows/cols
+parser.add_argument('--data_augmentation_dropout', type=float, default=1)
 parser.add_argument('--data_augmentation_extra_rows', type=int, default=16) 
 parser.add_argument('--data_augmentation_extra_cols', type=int, default=16) 
 
 # training
 parser.add_argument('--batch_size', type=int, default=32) 
 parser.add_argument('--iterations', type=int, default=40000)  
-parser.add_argument('--lr_decay_step', type=int, default=15000) 
+parser.add_argument('--lr_decay_step', type=int, default=13000) 
 parser.add_argument('--learning_rate', type=float, default=0.0001)
 parser.add_argument('--lr_decay_factor', type=float, default=0.1) 
 
@@ -72,7 +75,7 @@ parser.add_argument('--test_step', type=int, default=400)
 parser.add_argument('--ckpt_save_step', type=int, default=1000)
 
 # model
-parser.add_argument('--embedding_size', type=int, default=64) # not used for bert embedding which has 768 as default
+parser.add_argument('--embedding_size', type=int, default=128) # not used for bert embedding which has 768 as default
 parser.add_argument('--weight_decay', type=float, default=0.0005) 
 parser.add_argument('--eps', type=float, default=1e-6) 
 
@@ -137,8 +140,10 @@ if __name__ == '__main__':
     #    c = data_loader.fetch_test_data()
     
     # model
-    network = CUTIERes(num_words, num_classes, params)
-    #network = CUTIEUNet(num_words, num_classes, params)
+    if params.use_cutie2:
+        network = CUTIEv2(num_words, num_classes, params)
+    else:
+        network = CUTIEv1(num_words, num_classes, params)
     model_loss, regularization_loss, total_loss, model_logits, model_output = network.build_loss()  
     
     # operators
@@ -211,6 +216,7 @@ if __name__ == '__main__':
                     raise Exception('Check your pretrained {:s}'.format(ckpt_path))
             
         # iterations
+        print(" Let's roll! ")
         for iter in range(iter_start, params.iterations+1):
             timer_start = timeit.default_timer()
             
@@ -219,15 +225,22 @@ if __name__ == '__main__':
                 sess.run(tf.assign(lr, lr.eval()*params.lr_decay_factor))
             
             data = data_loader.next_batch()
-            feeds = [network.data, network.gt_classes, network.ghm_weights]
+            feeds = [network.data_grid, network.gt_classes, network.data_image, network.ps_1d_indices, network.ghm_weights]
             fetches = [model_loss, regularization_loss, total_loss, summary_op, train_dummy, model_logits, model_output]
             h = sess.partial_run_setup(fetches, feeds)
             
             # one step inference 
             feed_dict = {
-                network.data: data['grid_table'],
-                network.gt_classes: data['gt_classes'],
+                network.data_grid: data['grid_table'],
+                network.gt_classes: data['gt_classes']
             }
+            if params.use_cutie2:
+                feed_dict = {
+                    network.data_grid: data['grid_table'],
+                    network.gt_classes: data['gt_classes'],
+                    network.data_image: data['data_image'],
+                    network.ps_1d_indices: data['ps_1d_indices']
+                }
             fetches = [model_logits, model_output]
             (model_logit_val, model_output_val) = sess.partial_run(h, fetches, feed_dict)
             
@@ -255,13 +268,14 @@ if __name__ == '__main__':
                 training_acc_soft += [acc_soft]       
                 print('\nIter: %d/%d, total loss: %.4f, model loss: %.4f, regularization loss: %.4f'%\
                       (iter, params.iterations, total_loss_val, model_loss_val, regularization_loss_val))
-                #print(res.decode())
+                print(res.decode())
+                print('TRAINING ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
+                                  format(i*params.log_disp_step,w) for i,w in enumerate(training_acc_strict)]))
                 print('TRAINING ACC (Recall/Acc): %.3f / %.3f (%.3f) | highest %.3f / %.3f (%.3f)'\
                       %(recall, acc_strict, acc_soft, max(training_recall), max(training_acc_strict), max(training_acc_soft)))
                 
             # calculate validation accuracy and display results
-            if iter%params.validation_step == 0 and len(data_loader.validation_docs):
-                
+            if iter%params.validation_step == 0 and len(data_loader.validation_docs):                
                 recalls, accs_strict, accs_soft = [], [], []
                 for _ in range(len(data_loader.validation_docs)):
                     data = data_loader.fetch_validation_data()
@@ -269,8 +283,14 @@ if __name__ == '__main__':
                     gt_classes = data['gt_classes']
                     
                     feed_dict = {
-                        network.data: grid_tables
+                        network.data_grid: grid_tables,
                     }
+                    if params.use_cutie2:
+                        feed_dict = {
+                            network.data_grid: grid_tables,
+                            network.data_image: data['data_image'],
+                            network.ps_1d_indices: data['ps_1d_indices']
+                        }
                     fetches = [model_output]                    
                     [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)  
                     recall, acc_strict, acc_soft, res = cal_accuracy(data_loader, np.array(grid_tables), 
@@ -288,8 +308,6 @@ if __name__ == '__main__':
                 validation_acc_soft += [acc_soft]
                 print(res.decode()) # show res from the last execution of the while loop 
 
-                print('TRAINING ACC CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
-                                  format(i*params.log_disp_step,w) for i,w in enumerate(training_acc_strict)]))
                 print('VALIDATION ACC (STRICT) CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
                                   format(i*params.validation_step,w) for i,w in enumerate(validation_acc_strict)]))
                 print('VALIDATION ACC (SOFT) CURVE: ' + ' >'.join(['{:d}:{:.3f}'.
@@ -321,9 +339,16 @@ if __name__ == '__main__':
                     grid_tables = data['grid_table']
                     gt_classes = data['gt_classes']
                     
+                    
                     feed_dict = {
-                        network.data: grid_tables
+                        network.data_grid: grid_tables,
                     }
+                    if params.use_cutie2:
+                        feed_dict = {
+                            network.data_grid: grid_tables,
+                            network.data_image: data['data_image'],
+                            network.ps_1d_indices: data['ps_1d_indices']
+                        }
                     fetches = [model_output]                    
                     [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)                    
                     recall, acc_strict, acc_soft, res = cal_accuracy(data_loader, np.array(grid_tables), 

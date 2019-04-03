@@ -13,16 +13,16 @@ from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
-parser.add_argument('--doc_path', type=str, default='data/hotel_1108/') # modify this
+parser.add_argument('--doc_path', type=str, default='data/hotel_small') # modify this
 parser.add_argument('--save_prefix', type=str, default='hotel', help='prefix for load ckpt model') # modify this
 
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 
 parser.add_argument('--e_ckpt_path', type=str, default='../graph/CUTIE/graph/') # modify this
 parser.add_argument('--ckpt_file', type=str, default='CUTIE_atrousSPP_d20000c9(r80c80)_iter_40000.ckpt')
-parser.add_argument('--positional_mapping_strategy', type=int, default=1)
-parser.add_argument('--rows_target', type=int, default=72) 
-parser.add_argument('--cols_target', type=int, default=72) 
+parser.add_argument('--positional_mapping_strategy', type=int, default=2)
+parser.add_argument('--rows_target', type=int, default=80)  
+parser.add_argument('--cols_target', type=int, default=80) 
 parser.add_argument('--rows_ulimit', type=int, default=80) 
 parser.add_argument('--cols_ulimit', type=int, default=80) 
 
@@ -42,7 +42,7 @@ params = parser.parse_args()
 if __name__ == '__main__':
     # data
     #data_loader = DataLoader(params, True, True) # True to use 25% training data
-    data_loader = DataLoader(params, update_dict=False, load_dictionary=True, data_split=0) # False to provide a path with only test data
+    data_loader = DataLoader(params, update_dict=False, load_dictionary=True, data_split=0.75) # False to provide a path with only test data
     num_words = max(20000, data_loader.num_words)
     num_classes = data_loader.num_classes
 
@@ -79,9 +79,14 @@ if __name__ == '__main__':
             fetches = [model_output]
             
             [model_output_val] = sess.run(fetches=fetches, feed_dict=feed_dict)
-            recall, acc_strict, acc_soft, res = cal_accuracy(data_loader, np.array(data['grid_table']), 
-                                                   np.array(data['gt_classes']), model_output_val, 
-                                                   np.array(data['label_mapids']), data['bbox_mapids'])                  
+#             recall, acc_strict, acc_soft, res = cal_accuracy(data_loader, np.array(data['grid_table']), 
+#                                                    np.array(data['gt_classes']), model_output_val, 
+#                                                    np.array(data['label_mapids']), data['bbox_mapids'])                  
+            recall, acc_strict, acc_soft, res = cal_save_results(data_loader, np.array(data['grid_table']), 
+                                                       np.array(data['gt_classes']), model_output_val, 
+                                                       np.array(data['label_mapids']), data['bbox_mapids'],
+                                                       data['file_name'][0], params.save_prefix)
+            
 #             recall, acc_strict, res = cal_save_results(data_loader, params.save_prefix,
 #                                                        np.array(docs), 
 #                                                        np.array(grid_table), 

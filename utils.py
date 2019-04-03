@@ -2,6 +2,7 @@
 # 2018-01 
 # xiaohui.zhao@accenture.com
 import numpy as np
+import csv
 from os.path import join
 try:
     import cv2
@@ -35,7 +36,8 @@ def cal_accuracy(data_loader, grid_table, gt_classes, model_output_val, label_ma
         bbox_id_selected = bbox_id[indexes]
         
         # calculate accuracy
-        #test_classes = [1,2,3,4,5,6,7,8,9]
+        #test_classes = [1,2,3,4,5]
+        #for c in test_classes:
         for c in range(1, data_loader.num_classes):
             labels_indexes = np.where(labels_selected == c)[0]
             logits_indexes = np.where(logits_array_selected[:,c] > c_threshold)[0]
@@ -90,45 +92,61 @@ def cal_accuracy(data_loader, grid_table, gt_classes, model_output_val, label_ma
     return prevalence, accuracy_strict, accuracy_soft, res.encode("utf-8")
 
 
-def cal_save_results(data_loader, save_prefix, docs, grid_table, gt_classes, model_output_val):
+def cal_save_results(data_loader, grid_table, gt_classes, model_output_val, label_mapids, bbox_mapids, file_names, save_prefix):
     res = ''
     num_correct = 0
     num_correct_strict = 0
+    num_correct_soft = 0
     num_all = grid_table.shape[0] * (model_output_val.shape[-1]-1)
     for b in range(grid_table.shape[0]):
-        filename = docs[b][0][0]
+        filename = file_names[0]
         
         data_input_flat = grid_table[b,:,:,0].reshape([-1])
         labels = gt_classes[b,:,:].reshape([-1])
         logits = model_output_val[b,:,:,:].reshape([-1, data_loader.num_classes])
+        label_mapid = label_mapids[b]
+        bbox_mapid = bbox_mapids[b]
+        rows, cols = grid_table.shape[1:3]
+        bbox_id = np.array([row*cols+col for row in range(rows) for col in range(cols)])
         
         # ignore inputs that are not word
         indexes = np.where(data_input_flat != 0)[0]
         data_selected = data_input_flat[indexes]
         labels_selected = labels[indexes]
         logits_array_selected = logits[indexes]
+        bbox_id_selected = bbox_id[indexes]
         
         # calculate accuracy
         for c in range(1, data_loader.num_classes):
             labels_indexes = np.where(labels_selected == c)[0]
             logits_indexes = np.where(logits_array_selected[:,c] > c_threshold)[0]
-            if np.array_equal(labels_indexes, logits_indexes): 
-                num_correct_strict += 1        
-            try:  
+            
+            labels_words = list(data_loader.index_to_word[i] for i in data_selected[labels_indexes])
+            logits_words = list(data_loader.index_to_word[i] for i in data_selected[logits_indexes])
+            
+            label_bbox_ids = label_mapid[c] # GT bbox_ids related to the type of class
+            logit_bbox_ids = [bbox_mapid[bbox] for bbox in bbox_id_selected[logits_indexes] if bbox in bbox_mapid]            
+            
+            #if np.array_equal(labels_indexes, logits_indexes):
+            if set(label_bbox_ids) == set(logit_bbox_ids): # decide as correct when all ids match
+                num_correct_strict += 1  
+                num_correct_soft += 1
+            elif set(label_bbox_ids).issubset(set(logit_bbox_ids)): # correct when gt is subset of gt
+                num_correct_soft += 1
+            try: # calculate prevalence with decimal precision
                 num_correct += np.shape(np.intersect1d(labels_indexes, logits_indexes))[0] / np.shape(labels_indexes)[0]
             except ZeroDivisionError:
-                if np.shape(logits_indexes)[0] == 0:
+                if np.shape(labels_indexes)[0] == 0:
                     num_correct += 1
                 else:
-                    num_correct += 0                    
-        
+                    num_correct += 0        
+            
             # show results without the <DontCare> class      
-            res += '\n{}(GT/Inf):\t"'.format(data_loader.classes[c])
             
             # ground truth label
-            gt = str(' '.join([data_loader.index_to_word[i] for i in data_selected[labels_indexes]]).encode('utf-8'))
-            predict = str(' '.join([data_loader.index_to_word[i] for i in data_selected[logits_indexes]]).encode('utf-8'))
-            res += gt + '" | "' + predict + '"'
+            gt = str(' '.join(data_loader.index_to_word[i] for i in data_selected[labels_indexes]))
+            predict = str(' '.join(data_loader.index_to_word[i] for i in data_selected[logits_indexes]))
+            
         
             # write results to csv
             fieldnames = ['TaskID', 'GT', 'Predicted']
@@ -144,23 +162,27 @@ def cal_save_results(data_loader, save_prefix, docs, grid_table, gt_classes, mod
                 row = {'TaskID':filename, 'GT':gt, 'Predicted':predict}
                 writer.writerow(row)
             
-            # wrong inferences results
-            if not np.array_equal(labels_indexes, logits_indexes): 
-                res += '\n \t FALSES =>>'
-                logits_flat = logits_array_selected[:,c]
-                fault_logits_indexes = np.setdiff1d(logits_indexes, labels_indexes)
-                for i in range(len(data_selected)):
-                    if i not in fault_logits_indexes: # only show fault_logits_indexes
-                        continue
-                    w = data_loader.index_to_word[data_selected[i]]
-                    l = data_loader.classes[labels_selected[i]]
-                    res += ' "%s"/%s, '%(w, l)
-                    #res += ' "%s"/%.2f%s, '%(w, logits_flat[i], l)
+            if b == 0:
+                res += '\n{}(GT/Inf):\t"'.format(data_loader.classes[c])
+                res += gt + '" | "' + predict + '"'
+                # wrong inferences results
+                if not np.array_equal(labels_indexes, logits_indexes): 
+                    res += '\n \t FALSES =>>'
+                    logits_flat = logits_array_selected[:,c]
+                    fault_logits_indexes = np.setdiff1d(logits_indexes, labels_indexes)
+                    for i in range(len(data_selected)):
+                        if i not in fault_logits_indexes: # only show fault_logits_indexes
+                            continue
+                        w = data_loader.index_to_word[data_selected[i]]
+                        l = data_loader.classes[labels_selected[i]]
+                        res += ' "%s"/%s, '%(w, l)
+                        #res += ' "%s"/%.2f%s, '%(w, logits_flat[i], l)
                         
             #print(res)
-    recall = num_correct / num_all
+    prevalence = num_correct / num_all
     accuracy_strict = num_correct_strict / num_all
-    return recall, accuracy_strict, res
+    accuracy_soft = num_correct_soft / num_all
+    return prevalence, accuracy_strict, accuracy_soft, res.encode("utf-8")
 
 
 def vis_bbox(data_loader, file_prefix, grid_table, gt_classes, model_output_val, file_name, bboxes, shape):

@@ -8,12 +8,13 @@ class CUTIERes(CUTIE):
     def __init__(self, num_vocabs, num_classes, params, trainable=True):
         self.name = "CUTIE_highresolution_8x" # 8x down sampling
         
-        self.data = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='grid_table')
+        self.data_grid = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='grid_table')
         self.gt_classes = tf.placeholder(tf.int32, shape=[None, None, None], name='gt_classes')
         self.use_ghm = tf.equal(1, params.use_ghm) if hasattr(params, 'use_ghm') else tf.equal(1, 0) #params.use_ghm 
         self.activation = 'sigmoid' if (hasattr(params, 'use_ghm') and params.use_ghm) else 'relu'
+        self.dropout = params.data_augmentation_dropout if hasattr(params, 'data_augmentation_dropout') else 1
         self.ghm_weights = tf.placeholder(tf.float32, shape=[None, None, None, num_classes], name='ghm_weights')        
-        self.layers = dict({'data': self.data, 'gt_classes': self.gt_classes, 'ghm_weights':self.ghm_weights})
+        self.layers = dict({'data_grid': self.data_grid, 'gt_classes': self.gt_classes, 'ghm_weights':self.ghm_weights})
 
         self.num_vocabs = num_vocabs
         self.num_classes = num_classes     
@@ -30,8 +31,8 @@ class CUTIERes(CUTIE):
     
     def setup(self):        
         # input
-        (self.feed('data')
-             .embed(self.num_vocabs, self.embedding_size, name='embedding'))  
+        (self.feed('data_grid')
+             .embed(self.num_vocabs, self.embedding_size, name='embedding', dropout=self.dropout)) 
         
         # stage 1 block 1
         (self.feed('embedding')

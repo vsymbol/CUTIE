@@ -10,6 +10,7 @@ from collections import defaultdict
 import numpy as np
 import tensorflow as tf
 import tokenization
+import cv2
 
 DEBUG = False # True to show grid as image 
 
@@ -34,8 +35,13 @@ class DataLoader():
     """
     def __init__(self, params, update_dict=True, load_dictionary=False, data_split=0.75):
         self.random = False
+        self.data_laundry = False
         self.encoding_factor = 1 # ensures the size (rows/cols) of grid table compat with the network
+        self.classes = ['DontCare', 'Table']
+        #self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
+        
         self.doc_path = params.doc_path
+        self.use_cutie2 = params.use_cutie2 
         self.text_case = params.text_case 
         self.tokenize = params.tokenize
         if self.tokenize:
@@ -52,7 +58,7 @@ class DataLoader():
         self.cols_target = params.cols_target if hasattr(params, 'cols_target') else 64 
         self.rows_ulimit = params.rows_ulimit if hasattr(params, 'rows_ulimit') else 80 # handle OOM, must be multiple of self.encoding_factor
         self.cols_ulimit = params.cols_ulimit if hasattr(params, 'cols_ulimit') else 80 # handle OOM, must be multiple of self.encoding_factor
-        
+                
         self.fill_bbox = params.fill_bbox if hasattr(params, 'fill_bbox') else False # fill bbox with labels or use one single lable for the entire bbox
         
         self.data_augmentation_dropout = params.data_augmentation_dropout if hasattr(params, 'data_augmentation_dropout') else False # TBD: randomly dropout rows/cols
@@ -71,7 +77,6 @@ class DataLoader():
             self.dictionary = {'[PAD]':0, '[UNK]':0} # word/counts. to be updated in self.load_data() and self._update_docs_dictionary()
             self.word_to_index = {}
             self.index_to_word = {}
-        self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
 
         self.data_split = data_split # split data to training/validation, 0 for all for validation
         self.data_mode = 2 # 0 to consider key and value as two different class, 1 the same class, 2 only value considered
@@ -165,26 +170,29 @@ class DataLoader():
 
         training_docs = [self.training_docs[x] for x in selected_index]
         
-        # data augmentation in each batch if self.data_augmentation==True
+        ## data augmentation in each batch if self.data_augmentation==True
         rows, cols, pre_rows, pre_cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra, dropout=self.data_augmentation_dropout)
         if self.data_augmentation_extra:
             print('Training grid AUGMENT size: ({},{}) from ({},{})'\
                   .format(rows, cols, pre_rows, pre_cols))
         
-        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, updated_cols = \
+        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, updated_cols, ps_indices_x, ps_indices_y = \
             self._positional_mapping(training_docs, self.training_labels, rows, cols)   
         if updated_cols > cols:
             print('Training grid EXPAND size: ({},{}) from ({},{})'\
                   .format(rows, updated_cols, rows, cols))
-            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, _ = \
+            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
                 self._positional_mapping(training_docs, self.training_labels, rows, updated_cols, update_col=False)  
-            
-        #grid_table = np.ones([self.batch_size, self.rows, self.cols, 1])
-        #gt_classes = np.ones([self.batch_size, self.rows, self.cols])
-        #gt_classes[:,:,0:32] = 0 
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 
-                 'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
-                 'file_name': file_name, 'shape': [rows,cols]}
+        
+        ## load image and generate corresponding @ps_1dindices
+        images, ps_1d_indices = [], []
+        if self.use_cutie2:
+            images, ps_1d_indices = self._positional_sampling(file_names, ps_indices_x, ps_indices_y, updated_cols)                
+        
+        batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
+                 'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
+                 'bboxes': bboxes, 'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
+                 'file_name': file_names, 'shape': [rows,cols]}
         return batch
     
     def fetch_validation_data(self):
@@ -200,18 +208,25 @@ class DataLoader():
         ## fixed validation shape leads to better result (to be verified)
         real_rows, real_cols, _, _ = self._cal_rows_cols(validation_docs, extra_augmentation=False)
         rows = max(self.rows_target, real_rows)
-        cols = max(self.cols_target, real_cols)
+        cols = max(self.rows_target, real_cols)
         
-        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, updated_cols = \
+        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, updated_cols, ps_indices_x, ps_indices_y = \
             self._positional_mapping(validation_docs, self.validation_labels, rows, cols)   
         if updated_cols > cols:
             print('Validation grid EXPAND size: ({},{}) from ({},{})'\
                   .format(rows, updated_cols, rows, cols))
-            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, _ = \
-                self._positional_mapping(validation_docs, self.validation_labels, rows, updated_cols, update_col=False)      
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 
-                 'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
-                 'file_name': file_name, 'shape': [rows,cols]}
+            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
+                self._positional_mapping(validation_docs, self.validation_labels, rows, updated_cols, update_col=False)     
+                
+        ## load image and generate corresponding @ps_1dindices
+        images, ps_1d_indices = [], []
+        if self.use_cutie2:
+            images, ps_1d_indices = self._positional_sampling(file_names, ps_indices_x, ps_indices_y, updated_cols)                
+        
+        batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
+                 'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
+                 'bboxes': bboxes, 'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
+                 'file_name': file_names, 'shape': [rows,cols]}
         return batch
     
     def fetch_test_data(self): 
@@ -227,19 +242,26 @@ class DataLoader():
         test_docs = [self.test_docs[selected_index]]
         
         real_rows, real_cols, _, _ = self._cal_rows_cols(test_docs, extra_augmentation=False)
-        rows = max(self.rows_target, real_rows)
-        cols = max(self.cols_target, real_cols)
+        rows = max(self.rows_target, real_rows) # small shaped documents have better performance with shape 64
+        cols = max(self.cols_target, real_cols) # large shaped docuemnts have better performance with shape 80
             
-        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, updated_cols = \
+        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, updated_cols, ps_indices_x, ps_indices_y = \
             self._positional_mapping(test_docs, self.test_labels, rows, cols)   
         if updated_cols > cols:
             print('Test grid EXPAND size: ({},{}) from ({},{})'\
                   .format(rows, updated_cols, rows, cols))
-            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_name, _ = \
-                self._positional_mapping(test_docs, self.test_labels, rows, updated_cols, update_col=False)         
-        batch = {'grid_table': grid_table, 'gt_classes': gt_classes, 'bboxes': bboxes, 
-                 'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
-                 'file_name': file_name, 'shape': [rows,cols]}
+            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
+                self._positional_mapping(test_docs, self.test_labels, rows, updated_cols, update_col=False)    
+                
+        ## load image and generate corresponding @ps_1dindices
+        images, ps_1d_indices = [], []
+        if self.use_cutie2:
+            images, ps_1d_indices = self._positional_sampling(file_names, ps_indices_x, ps_indices_y, updated_cols)                
+        
+        batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
+                 'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
+                 'bboxes': bboxes, 'label_mapids': label_mapids, 'bbox_mapids': bbox_mapids,
+                 'file_name': file_names, 'shape': [rows,cols]}
         return batch
     
     def data_shape_statistic(self):        
@@ -283,26 +305,27 @@ class DataLoader():
                     del docs[idx]
                 else:
                     idx += 1
-        data_laundry(self.training_docs)
-        data_laundry(self.validation_docs)
-        data_laundry(self.training_docs)
-        print("\nRemoving grids with shape larger than ({},{}).".format(self.rows_ulimit, self.cols_ulimit))
+        if self.data_laundry:
+            print("\nRemoving grids with shape larger than ({},{}).".format(self.rows_ulimit, self.cols_ulimit))
+            data_laundry(self.training_docs)
+            data_laundry(self.validation_docs)
+            data_laundry(self.training_docs)
         
-        tss, tss_r, tss_c = shape_statistic(self.training_docs) # training shape static
-        vss, vss_r, vss_c = shape_statistic(self.validation_docs)
-        tess, tess_r, tess_c = shape_statistic(self.test_docs)
-        print("Training statistic after laundary: ", tss)
-        print("\t num: ", len(self.training_docs))
-        print("\t rows statistic: ", tss_r)
-        print("\t cols statistic: ", tss_c)
-        print("Validation statistic after laundary: ", vss)
-        print("\t num: ", len(self.validation_docs))
-        print("\t rows statistic: ", vss_r)
-        print("\t cols statistic: ", vss_c)
-        print("Test statistic after laundary: ", tess)
-        print("\t num: ", len(self.test_docs))
-        print("\t rows statistic: ", tess_r)
-        print("\t cols statistic: ", tess_c)
+            tss, tss_r, tss_c = shape_statistic(self.training_docs) # training shape static
+            vss, vss_r, vss_c = shape_statistic(self.validation_docs)
+            tess, tess_r, tess_c = shape_statistic(self.test_docs)
+            print("Training statistic after laundary: ", tss)
+            print("\t num: ", len(self.training_docs))
+            print("\t rows statistic: ", tss_r)
+            print("\t cols statistic: ", tss_c)
+            print("Validation statistic after laundary: ", vss)
+            print("\t num: ", len(self.validation_docs))
+            print("\t rows statistic: ", vss_r)
+            print("\t cols statistic: ", vss_c)
+            print("Test statistic after laundary: ", tess)
+            print("\t num: ", len(self.test_docs))
+            print("\t rows statistic: ", tess_r)
+            print("\t cols statistic: ", tess_c)
     
     def _positional_mapping(self, docs, labels, rows, cols):
         """
@@ -312,6 +335,8 @@ class DataLoader():
         """
         grid_tables = []
         gird_labels = []
+        ps_indices_x = [] # positional sampling indices
+        ps_indices_y = [] # positional sampling indices
         bboxes = {}
         label_mapids = []
         bbox_mapids = [] # [{}, ] bbox identifier, each id with one or multiple bbox/bboxes
@@ -321,6 +346,8 @@ class DataLoader():
             cols_e = 2 * cols # use @cols_e larger than required @cols as buffer
             grid_table = np.zeros([rows, cols_e], dtype=np.int32)
             grid_label = np.zeros([rows, cols_e], dtype=np.int8)
+            ps_x = np.zeros([rows, cols_e], dtype=np.int32)
+            ps_y = np.zeros([rows, cols_e], dtype=np.int32)
             bbox = [[] for c in range(cols_e) for r in range(rows)]
             bbox_id, bbox_mapid = 0, {} # one word in one or many positions in a bbox is mapped in bbox_mapid
             label_mapid = [[] for _ in range(self.num_classes)] # each class is connected to several bboxes (words)
@@ -362,15 +389,17 @@ class DataLoader():
                 #h_c = (x_left-left) / (right-left)
                 #v_c = (y_top) / (bottom)
                 #h_c = (x_left) / (right)
+                box_y = y_top + (y_bottom-y_top)/2
+                box_x = x_left # h_l is used for image feature map positional sampling
                 v_c = (y_top - top + (y_bottom-y_top)/2) / (bottom-top)
                 h_c = (x_left - left + (x_right-x_left)/2) / (right-left) # h_c is used for sorting items
                 row = int(rows * v_c) 
                 col = int(cols * h_c) 
-                items.append([row, col, v_c, h_c, file_name, dict_id, class_id, bbox_id, [x_left, y_top, x_right-x_left, y_bottom-y_top]])                       
+                items.append([row, col, [box_y, box_x], [v_c, h_c], file_name, dict_id, class_id, bbox_id, [x_left, y_top, x_right-x_left, y_bottom-y_top]])                       
             
             items.sort(key=lambda x: (x[0], x[3], x[5])) # sort according to row > h_c > bbox_id
             for item in items:
-                row, col, v_c, h_c, file_name, dict_id, class_id, bbox_id, box = item
+                row, col, [box_y, box_x], [v_c, h_c], file_name, dict_id, class_id, bbox_id, box = item
                 
                 while col < cols and grid_table[row, col] != 0:
                     col += 1            
@@ -410,28 +439,80 @@ class DataLoader():
                                   format(file_name, self.index_to_word[dict_id], row, rows, cols))
                             cols = col
                         if col == cols_e:      
-                            print('wrong!')
+                            print('overlap!')
                     
                     grid_table[row, col] = dict_id
                     grid_label[row, col] = class_id
+                    ps_x[row, col] = box_x
+                    ps_y[row, col] = box_y
                     bbox_mapid[row*cols+col] = bbox_id     
                     bbox[row*cols+col] = box
                 
             cols = self._fit_shape(cols)
             grid_table = grid_table[..., :cols]
             grid_label = grid_label[..., :cols]
+            ps_x = np.array(ps_x[..., :cols])
+            ps_y = np.array(ps_y[..., :cols])
             
             if DEBUG:
                 self.grid_visualization(file_name, grid_table, grid_label)
             
             grid_tables.append(np.expand_dims(grid_table, -1)) 
             gird_labels.append(grid_label) 
+            ps_indices_x.append(ps_x)
+            ps_indices_y.append(ps_y)
             bboxes[file_name] = bbox
             label_mapids.append(label_mapid)
             bbox_mapids.append(bbox_mapid)
             file_names.append(file_name)
             
-        return grid_tables, gird_labels, bboxes, label_mapids, bbox_mapids, file_names, cols
+        return grid_tables, gird_labels, bboxes, label_mapids, bbox_mapids, file_names, cols, ps_indices_x, ps_indices_y
+    
+    def _positional_sampling(self, file_names, ps_indices_x, ps_indices_y, updated_cols):
+        images, ps_1d_indices = [], []
+        
+        max_h, max_w = 0, updated_cols
+        for i in range(len(file_names)): # load image and generate corresponding @ps_1dindices
+            file_name = file_names[i]
+            file_path = join(self.doc_path, file_name) # TBD: ensure image is upright
+            ps_1d_x = np.array(ps_indices_x[i], dtype=np.float32).reshape([-1])
+            ps_1d_y = np.array(ps_indices_y[i], dtype=np.float32).reshape([-1])
+            
+            image, ps_1d = self._read_image_n_gen_indices(file_path, updated_cols, ps_1d_x, ps_1d_y)   
+            if image is not None and ps_1d is not None: # ignore data with no images                 
+                ps_1d_indices.append(ps_1d)
+                images.append(image)
+                h,w,c = image.shape
+                if h > max_h:
+                    max_h = h
+            else:
+                print('{} ignored due to image file not found.'.format(file_path))
+                
+        for i,image in enumerate(images): # pad image to the same shape
+            pad_img = np.zeros([max_h, max_w, 3], dtype=image.dtype)
+            pad_img[:image.shape[0], :, :] = image
+            images[i] = pad_img
+            
+        return images, ps_1d_indices
+    
+    def _read_image_n_gen_indices(self, file_path, max_width, ps_1d_x, ps_1d_y):
+        image = cv2.imread(file_path)
+        if image is not None:
+            h, w, _ = image.shape # [h,w,c]
+            factor = max_width / w
+            
+            ps_1d_x *= factor # TBD: more accurate mapping method rather than nearest neighbor, since the .4 or .6 leads to two different sampling results
+            ps_1d_y *= factor
+            h *= factor
+            
+            ps_1d = np.int32(ps_1d_x + ps_1d_y * max_width)
+            
+            image = cv2.resize(image, (max_width, int(h)))
+            image = (image-127.5) / 255
+            return image, ps_1d
+        else:
+            print('Warning: {} image not found!'.format(file_path))
+            return None, None            
     
     def load_data(self, data_files, update_dict=False):
         """
@@ -545,7 +626,7 @@ class DataLoader():
                 num_words_col[x] += 1
         max_row_words = self._fit_shape(max(num_words_row))
         max_col_words = 0#self._fit_shape(max(num_words_col))
-                
+        
         # further expansion of maximum number of words in rows/cols in terms of grid shape
         max_rows = max(self.encoding_factor, max_row_words)
         max_cols = max(self.encoding_factor, max_col_words)
@@ -666,17 +747,16 @@ class DataLoader():
         label_dressed[file_id] = {cls:{} for cls in self.classes[1:]}
         for line in content:
             cls = line['field_name']
-            if cls in self.classes:     
-                label_dressed[file_id][cls] = \
-                    {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} 
-                label_dressed[file_id][cls]['key_id'] = line['key_id']
-                label_dressed[file_id][cls]['value_id'] = line['value_id']
-                label_dressed[file_id][cls]['key_text'] = line['key_text'] 
-                label_dressed[file_id][cls]['value_text'] = line['value_text']
+            if cls in self.classes:
+                label_dressed[file_id][cls] = {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} 
+                label_dressed[file_id][cls]['key_id'] = line.get('key_id', [])
+                label_dressed[file_id][cls]['value_id'] = line['id'] # value_id
+                label_dressed[file_id][cls]['key_text'] = line.get('key_text', []) 
+                label_dressed[file_id][cls]['value_text'] = line['text'] # value_text
                 
         # handle corrupted data
         for cls in label_dressed[file_id]: 
-            if len(label_dressed[file_id][cls]) == 0: # no relvant class in sample @file_id
+            if len(label_dressed[file_id][cls]) == 0: # no relevant class in sample @file_id
                 continue
             if (len(label_dressed[file_id][cls]['key_text'])>0 and len(label_dressed[file_id][cls]['key_id'])==0) or \
                (len(label_dressed[file_id][cls]['value_text'])>0 and len(label_dressed[file_id][cls]['value_id'])==0):
@@ -756,7 +836,7 @@ class DataLoader():
         y_bottom = max(positions[1::2])
         w = x_right - x_left
         h = y_bottom - y_top
-        return x_left, y_top, x_right, y_bottom   
+        return x_left, y_top, x_right, y_bottom       
     
     def _get_filenames(self, data_path):
         files = []

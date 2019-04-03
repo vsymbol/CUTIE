@@ -41,7 +41,7 @@ class Model(object):
      
     
     @layer
-    def embed(self, layer_input, vocabulary_size, embedding_size, name, trainable=True):
+    def embed(self, layer_input, vocabulary_size, embedding_size, name, dropout=1, trainable=True):
         with tf.variable_scope(name) as scope:
             init_embedding = tf.random_uniform_initializer(-1.0, 1.0)
             embeddings = self.make_var('weights', [vocabulary_size, embedding_size], init_embedding, None, trainable)
@@ -49,6 +49,7 @@ class Model(object):
             
             reshaped_input = tf.reshape(layer_input, [-1])
             e = tf.nn.embedding_lookup(embeddings, reshaped_input)
+            e = tf.nn.dropout(e, dropout)
             reshaped_e = tf.reshape(e, [shape[0], shape[1], shape[2], embedding_size])
             return reshaped_e
     
@@ -67,8 +68,24 @@ class Model(object):
                 trainable=trainable)
             self.embedding_table = embedding_table # the inherited class need a self.embedding_table variable
             return embedding_output        
+        
     
-     
+    @layer
+    def positional_sampling(self, layer_input, feature_dimension, name='positional_sampling'):
+        featuremap = layer_input[0]
+        batch_indices = layer_input[1]
+        grid = layer_input[2]        
+        
+        shape_grid = tf.shape(grid)
+        
+        featuremap_flat = tf.reshape(featuremap, [shape_grid[0], -1])        
+        batch_indices_flat = tf.reshape(batch_indices, [shape_grid[0], -1])        
+        batch_ps_flat = tf.batch_gather(featuremap_flat, batch_indices_flat)
+        
+        b, h, w, c = shape_grid[0], shape_grid[1], shape_grid[2], feature_dimension
+        return tf.reshape(batch_ps_flat, [b,h,w,c])
+    
+    
     @layer
     def sepconv(self, layer_input, k_h, k_w, cardinality, compression, name, activation='relu', trainable=True):
         """ customized seperable convolution

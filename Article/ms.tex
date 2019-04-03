@@ -96,7 +96,7 @@ p_c(k) = \frac{1}{\sqrt{2 \pi \sigma^2}} e^{- \frac{(k - c_{g_t})^2}{2 \sigma^2}
 \label{augmentr}
 p_r(k) = \frac{1}{\sqrt{2 \pi \sigma^2}} e^{- \frac{(k - r_{g_t})^2}{2 \sigma^2}}
 \end{equation}
-where $c_{g_t}$ is the mean center of the target augment gird size, $r_{g_t}$ is the mean center of the target augment grid size, and $\sigma$ is the standard deviation.
+where $c_{g_t}$ is the mean center of the target augment gird size, $r_{g_t}$ is the mean center of the target augment grid size, and $\sigma$ is the standard deviation. In case of two tokens occupy the same grid cell, tokens in the same row are shifted to place the tokens. This is acceptable since the model learns the relative spatial relationship among tokens and convolutional neural networks handle translations well.
 
 \begin{figure}
 \begin{center}
@@ -133,23 +133,25 @@ where $r$ is the atrous rate that indicates the sampling stride of the input sig
 	 & Training Set & Test Set & \#classes \\
 	\hline
 	ME & 1109 & 475 & 9 \\
-	Taxi & 2514 & 1077 & 6 \\
-	Hotel & 1353 & 452 & 9 \\
+	Taxi & 1125 & 375 & 6 \\
+	Hotel & 1125 & 375 & 9 \\
 \end{tabular}
 \end{center}
 	\label{tab:dataset}
 \end{table}
 
 \begin{table*}
-	\caption{Performance comparison on different types of documents. Post-processing is abbreviated as pp.}
+	\caption{Performance comparison on different types of documents. (AP/softAP)}
 \begin{center}
 \begin{tabular}{l | c | c | c | c}
 	Method & \#Params & Taxi & ME & Hotel \\
 	\hline
 	CloudScan\cite{cloudscan} & - & 82 / - & 64 / - & 60 / - \\
-	BERT\cite{bert}+pp & 110M & 87.0 / - & 80.3 / - & \textbf{79.4} / - \\
-	CUTIE-A & 67M & 91.2 / 98.1 & \textbf{84.8} / \textbf{93.5} & 62.7 / 88.9 \\
-	CUTIE-B & \textbf{14M} & \textbf{95.2} / \textbf{97.6} & 84.3 / 92.4 & 70.8 / \textbf{89.4} \\
+	BERT\cite{bert} & 110M & 88.1 / - & 80.1 / - & 71.7 / - \\
+	CUTIE-A & 67M & \\
+	CUTIE-B & 14M & 93.3 / 96.9 & 81.0 / 88.9 & 75.8 / 87.1 \\
+	%CUTIE-A split & 67M & 92.9 / 96.7 & 81.4 / 91.6 & 72.3 / 95.0 \\
+	%CUTIE-B split & 14M & 95.2 / 97.6 & 84.3 / 92.4 & 70.8 / 89.4 \\
 \end{tabular}
 \end{center}
 	\label{tab:comparison}
@@ -159,7 +161,7 @@ where $r$ is the atrous rate that indicates the sampling stride of the input sig
 \label{experiment}
 The proposed method is evaluated on a dataset with $3$ types of scanned document images, which contain $8$ key information classes and $1$ don't care class. For each specific key information class, multiple tokens can be included. The overall performance is referred as strict average precision (AP) and measured in terms of per-class accuracy across the $9$ classes, where one class is determined as correct only when every single token in the class is correct. To achieve deeper analysis of the performance of the proposed method, we propose to use one more criteria, soft average precision (softAP), where the prediction of a key information class is determined as correct as if positive ground truths are correctly predicted even if some false positives are included in the final prediction. SoftAP is important since it indicates model's capability of extracting correct key information with tolerance of incorporating certain false positives. In fact, post processing can be employed to eliminate the false positives. Therefore, joint analysis of AP and softAP provides a better understanding of the model performance.
 
-We compare the performance of the proposed method with two state of the art methods CloudScan \cite{cloudscan} and BERT \cite{bert}. For comparison, the Cloud Scan model for SROIE is trained from scratch but with several expert designed features as described in \cite{cloudscan}. The BERT model for SROIE is transform learned with the Google released base model that is pre-trained on a huge dataset with $3,300$M words \cite{bert,bertgit}. Furthermore, post-processing is applied to the BERT results to eliminate certain errors and enhance accuracy. It is worth noting that the CloudScan based method and BERT based method were implemented by other teams. For that reason, there is minor difference in numbers of training / test data. To provide a fair comparison, we also provide ablation study to evaluate the influence of number of training images in CUTIE. We will also provide results generated using the same dataset in the next version of this paper.
+We compare the performance of the proposed method with two state of the art methods CloudScan \cite{cloudscan} and BERT \cite{bert}. For comparison, the Cloud Scan model for SROIE is trained from scratch but with several expert designed features as described in \cite{cloudscan}. The BERT model for SROIE is transform learned with the Google released base model that is pre-trained on a huge dataset with $3,300$M words \cite{bert,bertgit}. It is worth noting that the CloudScan based method and BERT based method were implemented by other teams. For that reason, there is minor difference in numbers of training / test data. To provide a fair comparison, we also provide ablation study to evaluate the influence of number of training images in CUTIE. We will also provide results generated using the same dataset in the next version of this paper.
 
 We use a learning rate of $1e-3$ with Adam optimizer and step decay learning strategy. The learning rate is dropped to $1e-4$ and $1e-5$ on the $15,000$-th and $30,000$-th steps, respectively. The training is terminated within $40,000$ steps with batch size of $32$. We train our model on Tesla V100 GPU where $11$ to $19$GB memories is used depending the configuration of the model framework and size of the dataset. Instance normalization is involved to facilate training. Our model is trained end-to-end without piecewise pretraining of any component. The default embedding size is $128$, target augmentation shape is $64$ for both row and column. The dataset is split as training set and test set with ratio of $75:25$. No pre-processing or post-processing are involved in CUTIE.
 
@@ -252,8 +254,8 @@ Furthermore, we find that some wrong cases are actually correct since the ground
 	Embedding Size & 1 & 2 & 4 & 8 & 16 & 32 & 64 & 128 & 256 & 512 \\
 	\hline
 	\#Params & 10.6M & 10.6M & 10.7M & 10.7M & 10.9M & 11.3M & 12.1M & 13.6M & 16.6M & 22.7M \\
-	AP & 79.1 & 82.8 & 83.1 & 82.8 & 84.9 & 84.8 & \textbf{85.0} & 84.3 & 84.6 & 84.4 \\
-	softAP & 87.3 & 90.3 & 90.4 & 92.0 & 91.4 & 91.2 & \textbf{92.9} & 92.4 & 91.9 & 91.9 \\
+	AP & 79.1 & 82.8 & 83.1 & 82.8 & 82.9 & 83.2 & 83.8 & 84.3 & \textbf{84.6} & 84.4 \\
+	softAP & 87.3 & 90.3 & 90.4 & 92.0 & 90.6 & 90.7 & 92.3 & \textbf{92.4} & 91.9 & 91.9 \\
 \end{tabular}
 \end{center}
 	\label{tab:embedding}
