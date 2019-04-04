@@ -8,8 +8,11 @@ class CUTIERes(CUTIE):
     def __init__(self, num_vocabs, num_classes, params, trainable=True):
         self.name = "CUTIE_highresolution_8x" # 8x down sampling
         
-        self.data_grid = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='grid_table')
-        self.gt_classes = tf.placeholder(tf.int32, shape=[None, None, None], name='gt_classes')
+        self.data_grid = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='data_grid')
+        self.gt_classes = tf.placeholder(tf.int32, shape=[None, None, None], name='gt_classes') 
+        self.data_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='data_image') # not used in CUTIEv1
+        self.ps_1d_indices = tf.placeholder(tf.int32, shape=[None, None], name='ps_1d_indices') # not used in CUTIEv1
+        
         self.use_ghm = tf.equal(1, params.use_ghm) if hasattr(params, 'use_ghm') else tf.equal(1, 0) #params.use_ghm 
         self.activation = 'sigmoid' if (hasattr(params, 'use_ghm') and params.use_ghm) else 'relu'
         self.dropout = params.data_augmentation_dropout if hasattr(params, 'data_augmentation_dropout') else 1

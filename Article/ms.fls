@@ -261,10 +261,10 @@ INPUT ./hFalseLabel_1.jpg
 INPUT ms.bbl
 INPUT ms.bbl
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
+INPUT /usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
+INPUT /usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/vf/adobe/times/ptmri7t.vf
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/times/ptmri8r.tfm
-INPUT /usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
-INPUT /usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
 INPUT ms.aux
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc
 INPUT /usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb

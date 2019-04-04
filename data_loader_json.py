@@ -12,7 +12,7 @@ import tensorflow as tf
 import tokenization
 import cv2
 
-DEBUG = True # True to show grid as image 
+DEBUG = False # True to show grid as image 
 
 import unicodedata
 def is_number(s):
@@ -471,14 +471,37 @@ class DataLoader():
     def _positional_sampling(self, file_names, ps_indices_x, ps_indices_y, updated_cols):
         images, ps_1d_indices = [], []
         
+        ## load image and generate corresponding @ps_1dindices
         max_h, max_w = 0, updated_cols
-        for i in range(len(file_names)): # load image and generate corresponding @ps_1dindices
+        for i in range(len(file_names)):
             file_name = file_names[i]
             file_path = join(self.doc_path, file_name) # TBD: ensure image is upright
             ps_1d_x = np.array(ps_indices_x[i], dtype=np.float32).reshape([-1])
             ps_1d_y = np.array(ps_indices_y[i], dtype=np.float32).reshape([-1])
             
-            image, ps_1d = self._read_image_n_gen_indices(file_path, updated_cols, ps_1d_x, ps_1d_y)   
+            image = cv2.imread(file_path)
+            if image is not None:
+                h, w, _ = image.shape # [h,w,c]
+                factor = max_w / w
+                
+                w *= factor
+                h *= factor
+                ps_1d_x *= factor # TBD: implement more accurate mapping method rather than nearest neighbor, since the .4 or .6 leads to two different sampling results
+                ps_1d_y *= factor                
+                
+                ps_1d = np.int32(np.floor(ps_1d_x) + np.floor(ps_1d_y) * max_w)
+                max_items = w*h - 1
+                for i in range(len(ps_1d)):
+                    if ps_1d[i] > max_items - 1:
+                        ps_1d[i] = max_items - 1
+                    
+                
+                image = cv2.resize(image, (max_w, int(h)))
+                image = (image-127.5) / 255
+            else:
+                print('Warning: {} image not found!'.format(file_path))
+                image, ps_1d = None, None            
+                
             if image is not None and ps_1d is not None: # ignore data with no images                 
                 ps_1d_indices.append(ps_1d)
                 images.append(image)
@@ -488,31 +511,13 @@ class DataLoader():
             else:
                 print('{} ignored due to image file not found.'.format(file_path))
                 
-        for i,image in enumerate(images): # pad image to the same shape
+        ## pad image to the same shape
+        for i,image in enumerate(images): 
             pad_img = np.zeros([max_h, max_w, 3], dtype=image.dtype)
             pad_img[:image.shape[0], :, :] = image
             images[i] = pad_img
             
         return images, ps_1d_indices
-    
-    def _read_image_n_gen_indices(self, file_path, max_width, ps_1d_x, ps_1d_y):
-        image = cv2.imread(file_path)
-        if image is not None:
-            h, w, _ = image.shape # [h,w,c]
-            factor = max_width / w
-            
-            ps_1d_x *= factor # TBD: more accurate mapping method rather than nearest neighbor, since the .4 or .6 leads to two different sampling results
-            ps_1d_y *= factor
-            h *= factor
-            
-            ps_1d = np.int32(ps_1d_x + ps_1d_y * max_width)
-            
-            image = cv2.resize(image, (max_width, int(h)))
-            image = (image-127.5) / 255
-            return image, ps_1d
-        else:
-            print('Warning: {} image not found!'.format(file_path))
-            return None, None            
     
     def load_data(self, data_files, update_dict=False):
         """
@@ -673,28 +678,6 @@ class DataLoader():
         
         # segment grid into two parts if number of cols is larger than self.cols_target
         data = []
-#         if self.segment_grid and max_cols > self.cols_target:
-#             max_cols = max_cols // 2
-#             right = right // 2
-#             content_dressed_left = []
-#             content_dressed_right = []
-#             for i, line in enumerate(content_dressed): # append height/width/numofwords to the list
-#                 file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom] = line
-#                                 
-#                 hc = x_left + (x_right-x_left)/2 
-#                 if hc < right: # left part
-#                     content_dressed_left.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
-#                                       [left, top, right, bottom], max_rows, max_cols])
-#                 else: # right part
-#                     left = 0
-#                     x_left -= right
-#                     x_right -= right
-#                     content_dressed_right.append([file_name, dressed_text, word_id, [x_left, y_top, x_right, y_bottom], \
-#                                       [left, top, right, bottom], max_rows, max_cols])
-#                     
-#             #print('\t segmentated as: 2*({},{})'.format(max_rows, max_cols))
-#             data.append(content_dressed_left)
-#             data.append(content_dressed_right)
         if self.segment_grid and max_cols > self.cols_segment:
             content_dressed_left = []
             content_dressed_right = []

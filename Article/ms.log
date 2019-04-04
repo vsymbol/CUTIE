@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  3 APR 2019 11:34
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  4 APR 2019 13:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -434,47 +434,47 @@ Underfull \hbox (badness 2189) in paragraph at lines 116--117
 [3 <./Receipts.jpg>]
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 118.
-<mCorrect_0.jpg, id=90, 867.24pt x 1541.76pt>
+<mCorrect_0.jpg, id=91, 867.24pt x 1541.76pt>
 File: mCorrect_0.jpg Graphic file (type jpg)
 <use mCorrect_0.jpg>
 Package pdftex.def Info: mCorrect_0.jpg  used on input line 170.
 (pdftex.def)             Requested size: 84.46465pt x 150.13867pt.
-<mCorrect_1.jpg, id=91, 1541.76pt x 1156.32pt>
+<mCorrect_1.jpg, id=92, 1541.76pt x 1156.32pt>
 File: mCorrect_1.jpg Graphic file (type jpg)
 <use mCorrect_1.jpg>
 Package pdftex.def Info: mCorrect_1.jpg  used on input line 172.
 (pdftex.def)             Requested size: 193.77362pt x 145.31598pt.
-<mCorrect_2.jpg, id=92, 867.24pt x 1541.76pt>
+<mCorrect_2.jpg, id=93, 867.24pt x 1541.76pt>
 File: mCorrect_2.jpg Graphic file (type jpg)
 <use mCorrect_2.jpg>
 Package pdftex.def Info: mCorrect_2.jpg  used on input line 174.
 (pdftex.def)             Requested size: 84.46465pt x 150.13867pt.
-<mCorrect_3.jpg, id=93, 867.24pt x 1541.76pt>
+<mCorrect_3.jpg, id=94, 867.24pt x 1541.76pt>
 File: mCorrect_3.jpg Graphic file (type jpg)
 <use mCorrect_3.jpg>
 Package pdftex.def Info: mCorrect_3.jpg  used on input line 176.
 (pdftex.def)             Requested size: 84.46465pt x 150.13867pt.
-<mCorrect_4.jpg, id=94, 1156.32pt x 1541.76pt>
+<mCorrect_4.jpg, id=95, 1156.32pt x 1541.76pt>
 File: mCorrect_4.jpg Graphic file (type jpg)
 <use mCorrect_4.jpg>
 Package pdftex.def Info: mCorrect_4.jpg  used on input line 177.
 (pdftex.def)             Requested size: 94.40388pt x 125.86052pt.
-<mCorrect_5.jpg, id=95, 1156.32pt x 1541.76pt>
+<mCorrect_5.jpg, id=96, 1156.32pt x 1541.76pt>
 File: mCorrect_5.jpg Graphic file (type jpg)
 <use mCorrect_5.jpg>
 Package pdftex.def Info: mCorrect_5.jpg  used on input line 179.
 (pdftex.def)             Requested size: 94.40388pt x 125.86052pt.
-<mCorrect_9.jpg, id=96, 1156.32pt x 1541.76pt>
+<mCorrect_9.jpg, id=97, 1156.32pt x 1541.76pt>
 File: mCorrect_9.jpg Graphic file (type jpg)
 <use mCorrect_9.jpg>
 Package pdftex.def Info: mCorrect_9.jpg  used on input line 181.
 (pdftex.def)             Requested size: 94.40388pt x 125.86052pt.
-<mCorrect_7.jpg, id=97, 1156.32pt x 1541.76pt>
+<mCorrect_7.jpg, id=98, 1156.32pt x 1541.76pt>
 File: mCorrect_7.jpg Graphic file (type jpg)
 <use mCorrect_7.jpg>
 Package pdftex.def Info: mCorrect_7.jpg  used on input line 183.
 (pdftex.def)             Requested size: 94.40388pt x 125.86052pt.
-<mCorrect_8.jpg, id=98, 1156.32pt x 1541.76pt>
+<mCorrect_8.jpg, id=99, 1156.32pt x 1541.76pt>
 File: mCorrect_8.jpg Graphic file (type jpg)
 <use mCorrect_8.jpg>
 Package pdftex.def Info: mCorrect_8.jpg  used on input line 185.
@@ -484,22 +484,22 @@ Overfull \hbox (2.36313pt too wide) in paragraph at lines 177--185
  [][][][][][][][][][][][][][][][][][] 
  []
 
-<hCorrect_0.jpg, id=99, 1541.76pt x 1156.32pt>
+<hCorrect_0.jpg, id=100, 1541.76pt x 1156.32pt>
 File: hCorrect_0.jpg Graphic file (type jpg)
 <use hCorrect_0.jpg>
 Package pdftex.def Info: hCorrect_0.jpg  used on input line 186.
 (pdftex.def)             Requested size: 173.90271pt x 130.42444pt.
-<hCorrect_1.jpg, id=100, 971.63pt x 1541.76pt>
+<hCorrect_1.jpg, id=101, 971.63pt x 1541.76pt>
 File: hCorrect_1.jpg Graphic file (type jpg)
 <use hCorrect_1.jpg>
 Package pdftex.def Info: hCorrect_1.jpg  used on input line 188.
 (pdftex.def)             Requested size: 94.40388pt x 149.78578pt.
-<hCorrect_2.jpg, id=101, 1156.32pt x 1541.76pt>
+<hCorrect_2.jpg, id=102, 1156.32pt x 1541.76pt>
 File: hCorrect_2.jpg Graphic file (type jpg)
 <use hCorrect_2.jpg>
 Package pdftex.def Info: hCorrect_2.jpg  used on input line 190.
 (pdftex.def)             Requested size: 104.34314pt x 139.10529pt.
-<hCorrect_3.jpg, id=102, 1156.32pt x 1541.76pt>
+<hCorrect_3.jpg, id=103, 1156.32pt x 1541.76pt>
 File: hCorrect_3.jpg Graphic file (type jpg)
 <use hCorrect_3.jpg>
 Package pdftex.def Info: hCorrect_3.jpg  used on input line 192.
@@ -604,15 +604,18 @@ File: hFalseLabel_1.jpg Graphic file (type jpg)
 Package pdftex.def Info: hFalseLabel_1.jpg  used on input line 244.
 (pdftex.def)             Requested size: 85.36908pt x 113.81555pt.
 
-Underfull \vbox (badness 3029) has occurred while \output is active []
+Underfull \vbox (badness 1281) has occurred while \output is active []
 
  [6 <./mFalsePositive_0.jpg> <./mFalsePositive_1.jpg> <./mFalsePositive_3.jpg> 
 <./hFalsePositive_0.jpg> <./tFalsePositive_0.jpg> <./hFalsePositive_1.jpg>]
-Underfull \vbox (badness 2213) has occurred while \output is active []
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+Underfull \vbox (badness 1960) has occurred while \output is active []
 
  [7 <./mFalseLabel_0.jpg> <./mFalseLabel_1.jpg> <./mFalseLabel_2.jpg> <./mFalse
 Label_3.jpg> <./hFalseLabel_0.jpg> <./tFalseLabel_4.jpg> <./tFalseLabel_0.jpg> 
-<./tFalseLabel_5.jpg> <./hFalseLabel_1.jpg>] (./ms.bbl [8])
+<./tFalseLabel_5.jpg> <./hFalseLabel_1.jpg>] (./ms.bbl)
 LaTeX Font Info:    Try loading font information for OMS+ptm on input line 322.
 
 
@@ -626,8 +629,9 @@ Overfull \hbox (284.5526pt too wide) in paragraph at lines 316--326
  [] 
  []
 
+[8]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 330.
-[9
+ [9
 
 ]
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 330.
@@ -639,11 +643,11 @@ Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 330.
 Here is how much of TeX's memory you used:
  7694 strings out of 492649
  113052 string characters out of 6129622
- 221713 words of memory out of 5000000
+ 220713 words of memory out of 5000000
  11330 multiletter control sequences out of 15000+600000
  26528 words of font info for 63 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 37i,10n,39p,2023b,478s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 37i,10n,39p,1846b,369s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
 exlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/te
 xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/tex
@@ -659,7 +663,7 @@ ist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2018/texmf-dist/font
 s/type1/urw/times/utmb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/ur
 w/times/utmr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/times/ut
 mri8a.pfb>
-Output written on ms.pdf (9 pages, 7431643 bytes).
+Output written on ms.pdf (9 pages, 7430707 bytes).
 PDF statistics:
  298 PDF objects out of 1000 (max. 8388607)
  240 compressed objects within 3 object streams
