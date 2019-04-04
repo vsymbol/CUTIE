@@ -484,19 +484,18 @@ class DataLoader():
                 h, w, _ = image.shape # [h,w,c]
                 factor = max_w / w
                 
-                w *= factor
-                h *= factor
+                h = int(h*factor)
                 ps_1d_x *= factor # TBD: implement more accurate mapping method rather than nearest neighbor, since the .4 or .6 leads to two different sampling results
                 ps_1d_y *= factor                
                 
                 ps_1d = np.int32(np.floor(ps_1d_x) + np.floor(ps_1d_y) * max_w)
-                max_items = w*h - 1
+                max_items = max_w * h - 1
                 for i in range(len(ps_1d)):
                     if ps_1d[i] > max_items - 1:
                         ps_1d[i] = max_items - 1
                     
                 
-                image = cv2.resize(image, (max_w, int(h)))
+                image = cv2.resize(image, (max_w, h))
                 image = (image-127.5) / 255
             else:
                 print('Warning: {} image not found!'.format(file_path))

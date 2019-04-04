@@ -14,14 +14,14 @@ from data_loader_json import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
-parser.add_argument('--use_cutie2', type=bool, default=True) # True to read image from doc_path 
+parser.add_argument('--use_cutie2', type=bool, default=False) # True to read image from doc_path 
 parser.add_argument('--doc_path', type=str, default='data/table_small') # modify this
 parser.add_argument('--save_prefix', type=str, default='table', help='prefix for load ckpt model') # modify this
 
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 
 parser.add_argument('--e_ckpt_path', type=str, default='../graph/CUTIE/graph/') # modify this
-parser.add_argument('--ckpt_file', type=str, default='CUTIE2_atrousSPP_d20000c2(r80c80)_iter_1201.ckpt')
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_atrousSPP_d20000c2(r80c80)_iter_1801.ckpt')
 parser.add_argument('--positional_mapping_strategy', type=int, default=1)
 parser.add_argument('--rows_target', type=int, default=80)  
 parser.add_argument('--cols_target', type=int, default=80) 
@@ -89,7 +89,7 @@ if __name__ == '__main__':
                 }
             fetches = [model_output]
             
-            if data['file_name'][0] != '000009704366_CLMREC_2-1.png':
+            if data['file_name'][0] != '000009682304_CLMREC_9-5.png':
                 continue
             print(data['file_name'][0])
             print(data['grid_table'].shape, data['data_image'].shape, data['ps_1d_indices'].shape)
@@ -111,9 +111,9 @@ if __name__ == '__main__':
             shape = data['shape']
             file_name = data['file_name'][0] # use one single file_name
             bboxes = data['bboxes'][file_name]
-#             vis_bbox(data_loader, params.doc_path, np.array(data['grid_table'])[0], 
-#                      np.array(data['gt_classes'])[0], np.array(model_output_val)[0], file_name, 
-#                      np.array(bboxes), shape)
+            vis_bbox(data_loader, params.doc_path, np.array(data['grid_table'])[0], 
+                     np.array(data['gt_classes'])[0], np.array(model_output_val)[0], file_name, 
+                     np.array(bboxes), shape)
 
         recall = sum(recalls) / len(recalls)
         acc_strict = sum(accs_strict) / len(accs_strict)
