@@ -6,7 +6,7 @@ from model_cutie2 import CUTIE2 as CUTIE
     
 class CUTIE2(CUTIE):
     def __init__(self, num_vocabs, num_classes, params, trainable=True):
-        self.name = "CUTIE2_atrousSPP" # 
+        self.name = "CUTIE2_dilate" # 
         
         self.data_grid = tf.placeholder(tf.int32, shape=[None, None, None, 1], name='data_grid')
         self.data_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='data_image')

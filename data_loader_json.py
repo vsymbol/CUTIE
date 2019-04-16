@@ -37,10 +37,11 @@ class DataLoader():
         self.random = False
         self.data_laundry = False
         self.encoding_factor = 1 # ensures the size (rows/cols) of grid table compat with the network
-        self.classes = ['DontCare', 'Table']
-        #self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
+        #self.classes = ['DontCare', 'Table']
+        self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
         
         self.doc_path = params.doc_path
+        self.doc_test_path = params.test_path
         self.use_cutie2 = params.use_cutie2 
         self.text_case = params.text_case 
         self.tokenize = params.tokenize
@@ -163,31 +164,35 @@ class DataLoader():
     def next_batch(self):
         batch_size = self.batch_size
         
-        if len(self.training_data_tobe_fetched) < batch_size:
-            self.training_data_tobe_fetched = [i for i in range(len(self.training_docs))]            
-        selected_index = random.sample(self.training_data_tobe_fetched, batch_size)
-        self.training_data_tobe_fetched = list(set(self.training_data_tobe_fetched).difference(set(selected_index)))
-
-        training_docs = [self.training_docs[x] for x in selected_index]
-        
-        ## data augmentation in each batch if self.data_augmentation==True
-        rows, cols, pre_rows, pre_cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra, dropout=self.data_augmentation_dropout)
-        if self.data_augmentation_extra:
-            print('Training grid AUGMENT size: ({},{}) from ({},{})'\
-                  .format(rows, cols, pre_rows, pre_cols))
-        
-        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, updated_cols, ps_indices_x, ps_indices_y = \
-            self._positional_mapping(training_docs, self.training_labels, rows, cols)   
-        if updated_cols > cols:
-            print('Training grid EXPAND size: ({},{}) from ({},{})'\
-                  .format(rows, updated_cols, rows, cols))
-            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
-                self._positional_mapping(training_docs, self.training_labels, rows, updated_cols, update_col=False)  
-        
-        ## load image and generate corresponding @ps_1dindices
-        images, ps_1d_indices = [], []
-        if self.use_cutie2:
-            images, ps_1d_indices = self._positional_sampling(file_names, ps_indices_x, ps_indices_y, updated_cols)                
+        while True:
+            if len(self.training_data_tobe_fetched) < batch_size:
+                self.training_data_tobe_fetched = [i for i in range(len(self.training_docs))]            
+            selected_index = random.sample(self.training_data_tobe_fetched, batch_size)
+            self.training_data_tobe_fetched = list(set(self.training_data_tobe_fetched).difference(set(selected_index)))
+    
+            training_docs = [self.training_docs[x] for x in selected_index]
+            
+            ## data augmentation in each batch if self.data_augmentation==True
+            rows, cols, pre_rows, pre_cols = self._cal_rows_cols(training_docs, extra_augmentation=self.data_augmentation_extra, dropout=self.data_augmentation_dropout)
+            if self.data_augmentation_extra:
+                print('Training grid AUGMENT size: ({},{}) from ({},{})'\
+                      .format(rows, cols, pre_rows, pre_cols))
+            
+            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, updated_cols, ps_indices_x, ps_indices_y = \
+                self._positional_mapping(training_docs, self.training_labels, rows, cols)   
+            if updated_cols > cols:
+                print('Training grid EXPAND size: ({},{}) from ({},{})'\
+                      .format(rows, updated_cols, rows, cols))
+                grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
+                    self._positional_mapping(training_docs, self.training_labels, rows, updated_cols, update_col=False)  
+            
+            ## load image and generate corresponding @ps_1dindices
+            images, ps_1d_indices = [], []
+            if self.use_cutie2:
+                images, ps_1d_indices = self._positional_sampling(self.doc_path, file_names, ps_indices_x, ps_indices_y, updated_cols)   
+                #print("image fetched {}".format(len(images)))          
+                if len(images) == batch_size:
+                    break
         
         batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
                  'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
@@ -198,30 +203,33 @@ class DataLoader():
     def fetch_validation_data(self):
         batch_size = 1
         
-        if len(self.validation_data_tobe_fetched) == 0:
-            self.validation_data_tobe_fetched = [i for i in range(len(self.validation_docs))]            
-        selected_index = random.sample(self.validation_data_tobe_fetched, 1)
-        self.validation_data_tobe_fetched = list(set(self.validation_data_tobe_fetched).difference(set(selected_index)))
-
-        validation_docs = [self.validation_docs[x] for x in selected_index]
-        
-        ## fixed validation shape leads to better result (to be verified)
-        real_rows, real_cols, _, _ = self._cal_rows_cols(validation_docs, extra_augmentation=False)
-        rows = max(self.rows_target, real_rows)
-        cols = max(self.rows_target, real_cols)
-        
-        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, updated_cols, ps_indices_x, ps_indices_y = \
-            self._positional_mapping(validation_docs, self.validation_labels, rows, cols)   
-        if updated_cols > cols:
-            print('Validation grid EXPAND size: ({},{}) from ({},{})'\
-                  .format(rows, updated_cols, rows, cols))
-            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
-                self._positional_mapping(validation_docs, self.validation_labels, rows, updated_cols, update_col=False)     
-                
-        ## load image and generate corresponding @ps_1dindices
-        images, ps_1d_indices = [], []
-        if self.use_cutie2:
-            images, ps_1d_indices = self._positional_sampling(file_names, ps_indices_x, ps_indices_y, updated_cols)                
+        while True:
+            if len(self.validation_data_tobe_fetched) == 0:
+                self.validation_data_tobe_fetched = [i for i in range(len(self.validation_docs))]            
+            selected_index = random.sample(self.validation_data_tobe_fetched, 1)
+            self.validation_data_tobe_fetched = list(set(self.validation_data_tobe_fetched).difference(set(selected_index)))
+    
+            validation_docs = [self.validation_docs[x] for x in selected_index]
+            
+            ## fixed validation shape leads to better result (to be verified)
+            real_rows, real_cols, _, _ = self._cal_rows_cols(validation_docs, extra_augmentation=False)
+            rows = max(self.rows_target, real_rows)
+            cols = max(self.rows_target, real_cols)
+            
+            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, updated_cols, ps_indices_x, ps_indices_y = \
+                self._positional_mapping(validation_docs, self.validation_labels, rows, cols)   
+            if updated_cols > cols:
+                print('Validation grid EXPAND size: ({},{}) from ({},{})'\
+                      .format(rows, updated_cols, rows, cols))
+                grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
+                    self._positional_mapping(validation_docs, self.validation_labels, rows, updated_cols, update_col=False)     
+                    
+            ## load image and generate corresponding @ps_1dindices
+            images, ps_1d_indices = [], []
+            if self.use_cutie2:
+                images, ps_1d_indices = self._positional_sampling(self.doc_path, file_names, ps_indices_x, ps_indices_y, updated_cols)  
+                if len(images) == batch_size:
+                    break          
         
         batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
                  'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
@@ -232,31 +240,34 @@ class DataLoader():
     def fetch_test_data(self): 
         batch_size = 1
         
-        if len(self.test_data_tobe_fetched) == 0:
-            self.test_data_tobe_fetched = [i for i in range(len(self.test_docs))]
-            return None
-                    
-        selected_index = self.test_data_tobe_fetched[0]
-        self.test_data_tobe_fetched = list(set(self.test_data_tobe_fetched).difference(set([selected_index])))
-
-        test_docs = [self.test_docs[selected_index]]
-        
-        real_rows, real_cols, _, _ = self._cal_rows_cols(test_docs, extra_augmentation=False)
-        rows = max(self.rows_target, real_rows) # small shaped documents have better performance with shape 64
-        cols = max(self.cols_target, real_cols) # large shaped docuemnts have better performance with shape 80
+        while True:
+            if len(self.test_data_tobe_fetched) == 0:
+                self.test_data_tobe_fetched = [i for i in range(len(self.test_docs))]
+                return None
+                        
+            selected_index = self.test_data_tobe_fetched[0]
+            self.test_data_tobe_fetched = list(set(self.test_data_tobe_fetched).difference(set([selected_index])))
+    
+            test_docs = [self.test_docs[selected_index]]
             
-        grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, updated_cols, ps_indices_x, ps_indices_y = \
-            self._positional_mapping(test_docs, self.test_labels, rows, cols)   
-        if updated_cols > cols:
-            print('Test grid EXPAND size: ({},{}) from ({},{})'\
-                  .format(rows, updated_cols, rows, cols))
-            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
-                self._positional_mapping(test_docs, self.test_labels, rows, updated_cols, update_col=False)    
+            real_rows, real_cols, _, _ = self._cal_rows_cols(test_docs, extra_augmentation=False)
+            rows = max(self.rows_target, real_rows) # small shaped documents have better performance with shape 64
+            cols = max(self.cols_target, real_cols) # large shaped docuemnts have better performance with shape 80
                 
-        ## load image and generate corresponding @ps_1dindices
-        images, ps_1d_indices = [], []
-        if self.use_cutie2:
-            images, ps_1d_indices = self._positional_sampling(file_names, ps_indices_x, ps_indices_y, updated_cols)                
+            grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, updated_cols, ps_indices_x, ps_indices_y = \
+                self._positional_mapping(test_docs, self.test_labels, rows, cols)   
+            if updated_cols > cols:
+                print('Test grid EXPAND size: ({},{}) from ({},{})'\
+                      .format(rows, updated_cols, rows, cols))
+                grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
+                    self._positional_mapping(test_docs, self.test_labels, rows, updated_cols, update_col=False)    
+                    
+            ## load image and generate corresponding @ps_1dindices
+            images, ps_1d_indices = [], []
+            if self.use_cutie2:
+                images, ps_1d_indices = self._positional_sampling(self.doc_test_path, file_names, ps_indices_x, ps_indices_y, updated_cols)          
+                if len(images) == batch_size:
+                    break          
         
         batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
                  'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
@@ -468,14 +479,14 @@ class DataLoader():
             
         return grid_tables, gird_labels, bboxes, label_mapids, bbox_mapids, file_names, cols, ps_indices_x, ps_indices_y
     
-    def _positional_sampling(self, file_names, ps_indices_x, ps_indices_y, updated_cols):
+    def _positional_sampling(self, path, file_names, ps_indices_x, ps_indices_y, updated_cols):
         images, ps_1d_indices = [], []
         
         ## load image and generate corresponding @ps_1dindices
         max_h, max_w = 0, updated_cols
         for i in range(len(file_names)):
             file_name = file_names[i]
-            file_path = join(self.doc_path, file_name) # TBD: ensure image is upright
+            file_path = join(path, file_name) # TBD: ensure image is upright
             ps_1d_x = np.array(ps_indices_x[i], dtype=np.float32).reshape([-1])
             ps_1d_y = np.array(ps_indices_y[i], dtype=np.float32).reshape([-1])
             
@@ -498,8 +509,10 @@ class DataLoader():
                 image = cv2.resize(image, (max_w, h))
                 image = (image-127.5) / 255
             else:
-                print('Warning: {} image not found!'.format(file_path))
-                image, ps_1d = None, None            
+                #print('Warning: {} image not found!'.format(file_path))
+                print('{} ignored due to image file not found.'.format(file_path))
+                image, ps_1d = None, None
+                break
                 
             if image is not None and ps_1d is not None: # ignore data with no images                 
                 ps_1d_indices.append(ps_1d)
@@ -508,14 +521,15 @@ class DataLoader():
                 if h > max_h:
                     max_h = h
             else:
-                print('{} ignored due to image file not found.'.format(file_path))
+                pass
+                #print('{} ignored due to image file not found.'.format(file_path))
                 
         ## pad image to the same shape
         for i,image in enumerate(images): 
             pad_img = np.zeros([max_h, max_w, 3], dtype=image.dtype)
             pad_img[:image.shape[0], :, :] = image
             images[i] = pad_img
-            
+        
         return images, ps_1d_indices
     
     def load_data(self, data_files, update_dict=False):
@@ -731,10 +745,10 @@ class DataLoader():
             cls = line['field_name']
             if cls in self.classes:
                 label_dressed[file_id][cls] = {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} 
-                #label_dressed[file_id][cls]['key_id'] = line.get('key_id', [])
-                label_dressed[file_id][cls]['value_id'] = line['id'] # value_id
-                #label_dressed[file_id][cls]['key_text'] = line.get('key_text', []) 
-                label_dressed[file_id][cls]['value_text'] = line['text'] # value_text
+                label_dressed[file_id][cls]['key_id'] = line.get('key_id', [])
+                label_dressed[file_id][cls]['value_id'] = line['value_id'] # value_id
+                label_dressed[file_id][cls]['key_text'] = line.get('key_text', []) 
+                label_dressed[file_id][cls]['value_text'] = line['value_text'] # value_text
                 
         # handle corrupted data
         for cls in label_dressed[file_id]: 

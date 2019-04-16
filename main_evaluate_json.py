@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser(description='CUTIE parameters')
 parser.add_argument('--use_cutie2', type=bool, default=False) # True to read image from doc_path 
 parser.add_argument('--doc_path', type=str, default='data/table_small') # modify this
 parser.add_argument('--save_prefix', type=str, default='table', help='prefix for load ckpt model') # modify this
+parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 
