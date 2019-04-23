@@ -90,8 +90,6 @@ if __name__ == '__main__':
                 }
             fetches = [model_output]
             
-            if data['file_name'][0] != '000009682304_CLMREC_9-5.png':
-                continue
             print(data['file_name'][0])
             print(data['grid_table'].shape, data['data_image'].shape, data['ps_1d_indices'].shape)
             

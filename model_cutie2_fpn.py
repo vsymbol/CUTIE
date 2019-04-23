@@ -40,16 +40,16 @@ class CUTIE2(CUTIE):
         
         ## image
         (self.feed('data_image')
-             .conv(3, 3, 128, 1, 1, name='image_encoder1_1')
+             .conv(3, 3, 32, 1, 1, name='image_encoder1_1')
+             .conv(3, 3, 64, 2, 2, name='image_encoder1_1')
+             .conv(3, 3, 64, 1, 1, name='image_encoder1_2')
+             .conv(3, 3, 128, 2, 2, name='image_encoder1_2')
              .conv(3, 3, 128, 1, 1, name='image_encoder1_2')
-             .dilate_conv(3, 3, 128, 1, 1, 2, name='image_encoder1_5')
-             .dilate_conv(3, 3, 128, 1, 1, 4, name='image_encoder1_6')
-             .dilate_conv(3, 3, 128, 1, 1, 8, name='image_encoder1_7')
-             .dilate_conv(3, 3, 128, 1, 1, 16, name='image_encoder1_8'))
+             .conv(3, 3, 256, 2, 2, name='image_encoder1_2'))
          
         # feature map positional mapping
-        (self.feed('image_encoder1_8', 'ps_1d_indices', 'data_grid')
-             .positional_sampling(128, name='positional_sampling'))
+        (self.feed('image_featuremap', 'ps_1d_indices', 'data_grid')
+             .positional_sampling(32, name='positional_sampling'))
          
         ## concate image with grid
         (self.feed('positional_sampling', 'embedding')

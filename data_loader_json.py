@@ -38,7 +38,8 @@ class DataLoader():
         self.data_laundry = False
         self.encoding_factor = 1 # ensures the size (rows/cols) of grid table compat with the network
         #self.classes = ['DontCare', 'Table']
-        self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
+        self.classes = ['DontCare', 'Column']
+        #self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
         
         self.doc_path = params.doc_path
         self.doc_test_path = params.test_path
@@ -193,6 +194,8 @@ class DataLoader():
                 #print("image fetched {}".format(len(images)))          
                 if len(images) == batch_size:
                     break
+            else:
+                break
         
         batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
                  'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
@@ -229,7 +232,9 @@ class DataLoader():
             if self.use_cutie2:
                 images, ps_1d_indices = self._positional_sampling(self.doc_path, file_names, ps_indices_x, ps_indices_y, updated_cols)  
                 if len(images) == batch_size:
-                    break          
+                    break        
+            else:
+                break  
         
         batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
                  'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
@@ -268,6 +273,8 @@ class DataLoader():
                 images, ps_1d_indices = self._positional_sampling(self.doc_test_path, file_names, ps_indices_x, ps_indices_y, updated_cols)          
                 if len(images) == batch_size:
                     break          
+            else:
+                break
         
         batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
                  'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
@@ -371,7 +378,7 @@ class DataLoader():
                 left, top, right, bottom = item[4][:]
                 
                 dict_id = self.word_to_index[text]                
-                class_id = self._dress_class(file_name, word_id, labels)
+                entity_id, class_id = self._dress_class(file_name, word_id, labels)
                 
                 bbox_id += 1
 #                 if self.fill_bbox: # TBD: overlap avoidance
@@ -406,11 +413,12 @@ class DataLoader():
                 h_c = (x_left - left + (x_right-x_left)/2) / (right-left) # h_c is used for sorting items
                 row = int(rows * v_c) 
                 col = int(cols * h_c) 
-                items.append([row, col, [box_y, box_x], [v_c, h_c], file_name, dict_id, class_id, bbox_id, [x_left, y_top, x_right-x_left, y_bottom-y_top]])                       
+                items.append([row, col, [box_y, box_x], [v_c, h_c], file_name, dict_id, class_id, entity_id, bbox_id, [x_left, y_top, x_right-x_left, y_bottom-y_top]])                       
             
             items.sort(key=lambda x: (x[0], x[3], x[5])) # sort according to row > h_c > bbox_id
             for item in items:
-                row, col, [box_y, box_x], [v_c, h_c], file_name, dict_id, class_id, bbox_id, box = item
+                row, col, [box_y, box_x], [v_c, h_c], file_name, dict_id, class_id, entity_id, bbox_id, box = item
+                entity_class_id = entity_id*self.num_classes + class_id
                 
                 while col < cols and grid_table[row, col] != 0:
                     col += 1            
@@ -427,7 +435,7 @@ class DataLoader():
                         #      format(file_name, self.index_to_word[dict_id], row, rows, cols))
                     else:
                         grid_table[row, col] = dict_id
-                        grid_label[row, col] = class_id                       
+                        grid_label[row, col] = entity_class_id                       
                         bbox_mapid[row*cols+col] = bbox_id                       
                         bbox[row*cols+col] = box   
                 elif self.pm_strategy==1 or self.pm_strategy==2:
@@ -453,7 +461,7 @@ class DataLoader():
                             print('overlap!')
                     
                     grid_table[row, col] = dict_id
-                    grid_label[row, col] = class_id
+                    grid_label[row, col] = entity_class_id
                     ps_x[row, col] = box_x
                     ps_y[row, col] = box_y
                     bbox_mapid[row*cols+col] = bbox_id     
@@ -535,7 +543,7 @@ class DataLoader():
     def load_data(self, data_files, update_dict=False):
         """
         label_dressed in format:
-        {file_id: {class: {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} } }
+        {file_id: {class: [{'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''}, ] } }
         load doc words with location and class returned in format: 
         [[file_name, text, word_id, [x_left, y_top, x_right, y_bottom], [left, top, right, bottom], max_row_words, max_col_words] ]
         """
@@ -737,51 +745,54 @@ class DataLoader():
         """
         dress and preserve only interested data.
         label_dressed in format:
-        {file_id: {class: {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} } }
+        {file_id: {class: [{'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''}, ] } }
         """
         label_dressed = dict()
-        label_dressed[file_id] = {cls:{} for cls in self.classes[1:]}
+        label_dressed[file_id] = {cls:[] for cls in self.classes[1:]}
         for line in content:
             cls = line['field_name']
             if cls in self.classes:
-                label_dressed[file_id][cls] = {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} 
-                label_dressed[file_id][cls]['key_id'] = line.get('key_id', [])
-                label_dressed[file_id][cls]['value_id'] = line['value_id'] # value_id
-                label_dressed[file_id][cls]['key_text'] = line.get('key_text', []) 
-                label_dressed[file_id][cls]['value_text'] = line['value_text'] # value_text
+                #identity = line.get('identity', 0) 
+                label_dressed[file_id][cls].append( {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} )
+                label_dressed[file_id][cls][-1]['key_id'] = line.get('key_id', [])
+                label_dressed[file_id][cls][-1]['value_id'] = line['value_id'] # value_id
+                label_dressed[file_id][cls][-1]['key_text'] = line.get('key_text', []) 
+                label_dressed[file_id][cls][-1]['value_text'] = line['value_text'] # value_text
                 
         # handle corrupted data
         for cls in label_dressed[file_id]: 
-            if len(label_dressed[file_id][cls]) == 0: # no relevant class in sample @file_id
-                continue
-            if (len(label_dressed[file_id][cls]['key_text'])>0 and len(label_dressed[file_id][cls]['key_id'])==0) or \
-               (len(label_dressed[file_id][cls]['value_text'])>0 and len(label_dressed[file_id][cls]['value_id'])==0):
-                return None
+            for idx, label in enumerate(label_dressed[file_id][cls]):
+                if len(label) == 0: # no relevant class in sample @file_id
+                    continue
+                if (len(label['key_text'])>0 and len(label['key_id'])==0) or \
+                   (len(label['value_text'])>0 and len(label['value_id'])==0):
+                    return None
             
         return label_dressed
 
     def _dress_class(self, file_name, word_id, labels):
         """
         label_dressed in format:
-        {file_name: {class: {'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''} } }
+        {file_id: {class: [{'key_id':[], 'value_id':[], 'key_text':'', 'value_text':''}, ] } }
         """
         if file_name in labels:
             for cls, cls_labels in labels[file_name].items():
-                for key, values in cls_labels.items():
-                    if (key=='key_id' or key=='value_id') and word_id in values:
-                        if key == 'key_id':
-                            if self.data_mode == 0:
-                                return self.classes.index(cls) * 2 - 1 # odd
-                            elif self.data_mode == 1:
-                                return self.classes.index(cls)
-                            else: # ignore key_id when self.data_mode is not 0 or 1
-                                return 0 
-                        elif key == 'value_id':
-                            if self.data_mode == 0:
-                                return self.classes.index(cls) * 2 # even 
-                            else: # when self.data_mode is 1 or 2
-                                return self.classes.index(cls) 
-            return 0 # 0 is of class type 'DontCare'
+                for idx, cls_label in enumerate(cls_labels):
+                    for key, values in cls_label.items():
+                        if (key=='key_id' or key=='value_id') and word_id in values:
+                            if key == 'key_id':
+                                if self.data_mode == 0:
+                                    return idx, self.classes.index(cls) * 2 - 1 # odd
+                                elif self.data_mode == 1:
+                                    return idx, self.classes.index(cls)
+                                else: # ignore key_id when self.data_mode is not 0 or 1
+                                    return 0, 0
+                            elif key == 'value_id':
+                                if self.data_mode == 0:
+                                    return idx, self.classes.index(cls) * 2 # even 
+                                else: # when self.data_mode is 1 or 2
+                                    return idx, self.classes.index(cls) 
+            return 0, 0 # 0 is of class type 'DontCare'
         print("No matched labels found for {}".format(file_name))
     
     def _dress_text(self, text, update_dict):
