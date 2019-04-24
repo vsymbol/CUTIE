@@ -115,7 +115,7 @@ class CUTIE(Model):
         with tf.variable_scope('HardNegativeMining'):
             labels = tf.reshape(labels, [-1])  
             cross_entropy = tf.reshape(cross_entropy, [-1])
-              
+            
             fg_idx = tf.where(tf.not_equal(labels, 0))
             fgs = tf.gather(cross_entropy, fg_idx)
             bg_idx = tf.where(tf.equal(labels, 0))
@@ -125,7 +125,7 @@ class CUTIE(Model):
             num_bg = tf.cond(tf.shape(bgs)[0]<num, lambda:tf.shape(bgs)[0], lambda:num)
             sorted_bgs, _ = tf.nn.top_k(tf.transpose(bgs), num_bg, sorted=True)
             cross_entropy = fgs + sorted_bgs
-            
+        
         # total loss
         model_loss = tf.reduce_mean(cross_entropy)
         regularization_loss = tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES), name='regularization')
@@ -138,3 +138,8 @@ class CUTIE(Model):
         logits = self.get_output('cls_logits')
         softmax_logits = self.get_output('softmax') #cls_logits
         return model_loss, regularization_loss, total_loss, logits, softmax_logits 
+    
+    def build_multi_loss(self):
+        labels = self.get_output('gt_classes')
+        cls_logits = self.get_output('cls_logits')
+        

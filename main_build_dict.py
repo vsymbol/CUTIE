@@ -9,6 +9,7 @@ from data_loader_json import DataLoader
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 parser.add_argument('--dict_path', type=str, default='dict/table') 
 parser.add_argument('--doc_path', type=str, default='data/table') 
+parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 parser.add_argument('--text_case', type=bool, default=True) # case sensitive
 parser.add_argument('--tokenize', type=bool, default=True) # tokenize input text
 parser.add_argument('--batch_size', type=int, default=32) 

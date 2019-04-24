@@ -37,8 +37,8 @@ class DataLoader():
         self.random = False
         self.data_laundry = False
         self.encoding_factor = 1 # ensures the size (rows/cols) of grid table compat with the network
-        #self.classes = ['DontCare', 'Table']
-        self.classes = ['DontCare', 'Column']
+        self.classes = ['DontCare', 'Table']
+        #self.classes = ['DontCare', 'Column']
         #self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
         
         self.doc_path = params.doc_path
@@ -226,7 +226,7 @@ class DataLoader():
                       .format(rows, updated_cols, rows, cols))
                 grid_table, gt_classes, bboxes, label_mapids, bbox_mapids, file_names, _, ps_indices_x, ps_indices_y = \
                     self._positional_mapping(validation_docs, self.validation_labels, rows, updated_cols, update_col=False)     
-                    
+            
             ## load image and generate corresponding @ps_1dindices
             images, ps_1d_indices = [], []
             if self.use_cutie2:
@@ -234,7 +234,13 @@ class DataLoader():
                 if len(images) == batch_size:
                     break        
             else:
-                break  
+                break
+            
+        def build_gt_pyramid(self):
+            rate = self.encoding_factor
+            for gt_class in gt_classes:
+                pass
+                
         
         batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
                  'data_image': np.array(images), 'ps_1d_indices': np.array(ps_1d_indices), # @images and @ps_1d_indices are only used for CUTIEv2
