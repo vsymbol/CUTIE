@@ -37,7 +37,8 @@ class DataLoader():
         self.random = False
         self.data_laundry = False
         self.encoding_factor = 1 # ensures the size (rows/cols) of grid table compat with the network
-        self.classes = ['DontCare', 'Table']
+        #self.classes = ['DontCare', 'Table']
+        self.classes = ['DontCare', 'Column0', 'Column1', 'Column2', 'Column3', 'Column4', 'Column5']
         #self.classes = ['DontCare', 'Column']
         #self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
         
@@ -236,10 +237,29 @@ class DataLoader():
             else:
                 break
             
-        def build_gt_pyramid(self):
-            rate = self.encoding_factor
+        def build_gt_pyramid(self, gt_classes):
+            gt_classes = np.array(gt_classes)
+            
+            rate = 4 # self.pooling_factor
+            b, h, w = np.shape(gt_classes)
+            same_padding_left = (rate-w%rate)//2 if w%rate else 0
+            same_padding_right = rate-(rate-w%rate)//2 if w%rate else 0
+            same_padding_top = (rate-h%rate)//2 if h%rate else 0
+            same_padding_bottom = rate-(rate-h%rate)//2 if h%rate else 0
             for gt_class in gt_classes:
-                pass
+                pad_v =  np.pad(gt_class, ((same_padding_top, same_padding_bottom), (0,0)), 'constant', constant_values=((0,0),(0,0)))
+                pad_h =  np.pad(gt_class, ((0,0), (same_padding_left, same_padding_right)), 'constant', constant_values=((0,0),(0,0)))
+                
+                ## find mask range for each single entity
+                num_entities = np.max(gt_classes) / self.num_classes
+                entity_ranges = [[] for _ in range(0,num_entities)]
+                for i in range(1, num_entities):
+                    if i % self.num_classes: # only consider non <DontCare> classes
+                        range_y, range_x = np.where(gt_classes==i)
+                        # entity_ranges[i] = [top, left, bottom, right, height, width]
+                        entity_ranges[i] = [min(range_y), min(range_x), max(range_y), max(range_x), 
+                                            max(range_y) - min(range_y), max(range_x) - min(range_x)] 
+                           
                 
         
         batch = {'grid_table': np.array(grid_table), 'gt_classes': np.array(gt_classes), 
@@ -288,6 +308,66 @@ class DataLoader():
                  'file_name': file_names, 'shape': [rows,cols]}
         return batch
     
+    def _form_label_matrix(self, gt_classes, target_h, target_w):
+        """
+        build gt_classes and gt_masks with given target featuremap shape (height, width)
+        by inspecting bboxes regions (x,y,w,h)
+        for table / row / column identity segmentation
+        """
+        def has_entity_with_augmentation(entity_ranges, roi, use_jittering=False):                    
+            ## find mask with maximum overlap
+            max_iou = 0
+            max_idx = None
+            roi_t, roi_l, roi_b, roi_r = roi
+            roi_h = roi_b - roi_t
+            roi_w = roi_r - roi_l
+            roi_cy = roi_t + roi_h/2
+            roi_cx = roi_l + roi_w/2
+            for idx, entity in enumerate(entity_ranges):
+                if len(entity):
+                    t, l, b, r, h, w = entity
+                    if l>roi_l and r<roi_r and t>roi_t and b<roi_b: # overlap 1
+                        iou = h*w / (roi_h*roi_w)
+                    elif l<roi_l and r>roi_r and t<roi_t and b>roi_b: # overlap 2
+                        iou = roi_h*roi_w / (h*w)
+                    elif l>roi_r or t>roi_b or b<roi_t or r<roi_l: # no intersection
+                        continue
+                    else:
+                        iou = min(h*w, roi_h*roi_w) / max(h*w, roi_h*roi_w)
+                        
+                    # TBD: add jittering augmentation method  
+                    if use_jittering:
+                        pass                          
+                    if iou > max_iou:
+                        max_idx = idx
+                        max_iou = iou
+                        
+            ## check centrality / containment / uniqueness
+            t, l, b, r, h, w = entity[idx]
+            cy = t + h/2
+            cx = l + w/2
+            if roi_t+h/3 < cy and cy < toi_b-h/3 and roi_l+w/3 < cx and cx < roi_r-w/3: # centrality
+                if (w > h and roi_w > w*0.9) or (w < h and roi_h > h*0.9): # containment
+                    if True: # uniqueness is already checked with maixmum IOU
+                        return True
+            return False                 
+    
+        shape = gt_classes.shape
+        rate_v = shape[0] / target_h
+        rate_h = shape[1] / target_w
+        dst_classes = [[[] for i in range(target_h)] for j in range(target_w)]
+        dst_masks = [[[] for i in range(target_h)] for j in range(target_w)]
+        for i in range(target_h):
+            for j in range(target_w):
+                roi = [rate_h*j, rate_v*i, rate_h*(j+1), rate_v*(i+1)] # [top, left, bottom, right]
+                
+                dst_classes[i][j] = has_entity_with_augmentation(entity_ranges, roi, False)
+                
+                mask = gt_classes[roi[1]:roi[3], roi[0]:roi[2]]
+                dst_masks[i][j] = mask if dst_classes[i][j] else np.zeros(np.shape(mask))
+        
+        return np.array(dst_classes), np.array(dst_masks)
+        
     def data_shape_statistic(self):        
         def shape_statistic(docs):
             res_all = defaultdict(int)

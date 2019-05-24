@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  4 APR 2019 13:47
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  24 MAY 2019 10:33
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -427,11 +427,11 @@ File: Receipts.jpg Graphic file (type jpg)
 Package pdftex.def Info: Receipts.jpg  used on input line 103.
 (pdftex.def)             Requested size: 234.76587pt x 180.667pt.
 
+[3 <./Receipts.jpg>]
 Underfull \hbox (badness 2189) in paragraph at lines 116--117
 []\OT1/ptm/m/n/10 Both CUTIE-A and CUITE-B con-ducts se-man-ti-cal
  []
 
-[3 <./Receipts.jpg>]
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 118.
 <mCorrect_0.jpg, id=91, 867.24pt x 1541.76pt>
@@ -603,51 +603,75 @@ File: hFalseLabel_1.jpg Graphic file (type jpg)
 <use hFalseLabel_1.jpg>
 Package pdftex.def Info: hFalseLabel_1.jpg  used on input line 244.
 (pdftex.def)             Requested size: 85.36908pt x 113.81555pt.
+ [6] [7 <./mFalsePositive_0.jpg> <./mFalsePositive_1.jpg> <./mFalsePositive_3.j
+pg> <./hFalsePositive_0.jpg> <./tFalsePositive_0.jpg> <./hFalsePositive_1.jpg> 
+<./mFalseLabel_0.jpg> <./mFalseLabel_1.jpg> <./mFalseLabel_2.jpg> <./mFalseLabe
+l_3.jpg> <./hFalseLabel_0.jpg> <./tFalseLabel_4.jpg> <./tFalseLabel_0.jpg> <./t
+FalseLabel_5.jpg> <./hFalseLabel_1.jpg>]
+<table_3.png, id=214, 1093.08376pt x 1541.76pt>
+File: table_3.png Graphic file (type png)
+<use table_3.png>
+Package pdftex.def Info: table_3.png  used on input line 306.
+(pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
+<table_2.png, id=215, 1093.08376pt x 1541.76pt>
+File: table_2.png Graphic file (type png)
+<use table_2.png>
+Package pdftex.def Info: table_2.png  used on input line 308.
+(pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
+<table_1.png, id=216, 1093.08376pt x 1541.76pt>
+File: table_1.png Graphic file (type png)
+<use table_1.png>
+Package pdftex.def Info: table_1.png  used on input line 310.
+(pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
+<column_0.png, id=217, 1093.08376pt x 1541.76pt>
+File: column_0.png Graphic file (type png)
+<use column_0.png>
+Package pdftex.def Info: column_0.png  used on input line 317.
+(pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
+<column_3.png, id=218, 1093.08376pt x 1541.76pt>
+File: column_3.png Graphic file (type png)
+<use column_3.png>
+Package pdftex.def Info: column_3.png  used on input line 319.
+(pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
+<column_4.png, id=219, 1093.08376pt x 1541.76pt>
+File: column_4.png Graphic file (type png)
+<use column_4.png>
+Package pdftex.def Info: column_4.png  used on input line 321.
+(pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
 
-Underfull \vbox (badness 1281) has occurred while \output is active []
-
- [6 <./mFalsePositive_0.jpg> <./mFalsePositive_1.jpg> <./mFalsePositive_3.jpg> 
-<./hFalsePositive_0.jpg> <./tFalsePositive_0.jpg> <./hFalsePositive_1.jpg>]
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
+ [8 <./table_3.png (PNG copy)> <./table_2.png (PNG copy)> <./table_1.png (PNG c
+opy)> <./column_0.png (PNG copy)> <./column_3.png (PNG copy)> <./column_4.png (
+PNG copy)>] (./ms.bbl)
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 348.
 
-Underfull \vbox (badness 1960) has occurred while \output is active []
-
- [7 <./mFalseLabel_0.jpg> <./mFalseLabel_1.jpg> <./mFalseLabel_2.jpg> <./mFalse
-Label_3.jpg> <./hFalseLabel_0.jpg> <./tFalseLabel_4.jpg> <./tFalseLabel_0.jpg> 
-<./tFalseLabel_5.jpg> <./hFalseLabel_1.jpg>] (./ms.bbl)
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 322.
-
-
-(/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
+ (/usr/local/texlive/2018/texmf-dist/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 322.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 348.
 
-Overfull \hbox (284.5526pt too wide) in paragraph at lines 316--326
+Overfull \hbox (24.83229pt too wide) in paragraph at lines 342--352
  [] 
  []
 
-[8]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 330.
- [9
-
-]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 330.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 356.
+[9] [10]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 356.
  (./ms.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 330.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 330.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 330.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 356.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 356.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 356.
  ) 
 Here is how much of TeX's memory you used:
- 7694 strings out of 492649
- 113052 string characters out of 6129622
- 220713 words of memory out of 5000000
- 11330 multiletter control sequences out of 15000+600000
+ 7740 strings out of 492649
+ 113701 string characters out of 6129622
+ 225381 words of memory out of 5000000
+ 11355 multiletter control sequences out of 15000+600000
  26528 words of font info for 63 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 37i,10n,39p,1846b,369s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 37i,10n,39p,1845b,369s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
 exlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/te
 xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/tex
@@ -663,10 +687,10 @@ ist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2018/texmf-dist/font
 s/type1/urw/times/utmb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/ur
 w/times/utmr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/times/ut
 mri8a.pfb>
-Output written on ms.pdf (9 pages, 7430707 bytes).
+Output written on ms.pdf (10 pages, 9736457 bytes).
 PDF statistics:
- 298 PDF objects out of 1000 (max. 8388607)
- 240 compressed objects within 3 object streams
- 104 named destinations out of 1000 (max. 500000)
- 151 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 326 PDF objects out of 1000 (max. 8388607)
+ 261 compressed objects within 3 object streams
+ 118 named destinations out of 1000 (max. 500000)
+ 181 words of extra memory for PDF output out of 10000 (max. 10000000)
 

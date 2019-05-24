@@ -302,7 +302,7 @@ class Model(object):
         
     
     @layer
-    def max_pool(self, layer_input, k_h, k_w, s_h, s_w, name, padding='VALID'):
+    def max_pool(self, layer_input, k_h, k_w, s_h, s_w, name, padding='SAME'):
         return tf.nn.max_pool(layer_input, [1,k_h,k_w,1], [1,s_h,s_w,1], name=name, padding=padding)
     
     

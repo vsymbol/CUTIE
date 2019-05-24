@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex ms"] 1554356610 "ms.aux" "ms.bbl" "ms" 1554356852
+["bibtex ms"] 1558663362 "ms.aux" "ms.bbl" "ms" 1558665213
   "./ieee.bst" 1381470258 19623 f9cd22458ca68af2567100f1aed905e8 ""
-  "ms.aux" 1554356851 10238 621d51d2783348ed22a4cd51a9b44ac7 ""
+  "ms.aux" 1558665213 11859 c208098c2bc6fa2dd46296aadc7badc9 ""
   "ms.bib" 1553839840 6031 910e59afee79fe65b72a1f4cc8fb1e6c ""
   (generated)
-  "ms.blg"
   "ms.bbl"
-["pdflatex"] 1554356850 "ms.tex" "ms.pdf" "ms" 1554356852
+  "ms.blg"
+["pdflatex"] 1558665212 "ms.tex" "ms.pdf" "ms" 1558665213
   "/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc" 1480098666 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2018/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1480098688 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -112,6 +112,9 @@
   "/usr/local/texlive/2018/texmf.cnf" 1523934483 577 0b39adfd7c93507ff20c9c14c2f1a33f ""
   "Model.jpg" 1553828564 170163 347e65f918d417c3f776dbf4ab2910ed ""
   "Receipts.jpg" 1553828541 168124 68e67e88547ed562d7721f861b16d072 ""
+  "column_0.png" 1557398467 429833 f2bc9b01916a93ea079a12db2e297d40 ""
+  "column_3.png" 1557398453 442079 6ffa9e35b1907ce5b74c4e0c9d46d512 ""
+  "column_4.png" 1557399058 314521 1763a480ae5f8e15521cc45978dbf3cd ""
   "cvpr.sty" 1381470512 8185 796f568e727fc66dae196368ca9e0e61 ""
   "hCorrect_0.jpg" 1553827771 286183 f18cca135f2def6818f35a434adac5b1 ""
   "hCorrect_1.jpg" 1553827896 123763 08828980b675d029927ed912d2e6710d ""
@@ -137,14 +140,17 @@
   "mFalsePositive_0.jpg" 1553828285 187093 9ab4d4eedc1cb663073478e7141aa8d6 ""
   "mFalsePositive_1.jpg" 1553828247 266566 92d323a4538fd8a241ba107cda92353d ""
   "mFalsePositive_3.jpg" 1553828239 229188 e215ddb1b0128c595150113029081e17 ""
-  "ms.aux" 1554356851 10238 621d51d2783348ed22a4cd51a9b44ac7 ""
-  "ms.bbl" 1554356610 2356 3f300775cac7e3b5cd283382dfe68509 "bibtex ms"
-  "ms.tex" 1554356849 38207 8ac941a60476fbc21bb54fff8a8a6f33 ""
+  "ms.aux" 1558665213 11859 c208098c2bc6fa2dd46296aadc7badc9 ""
+  "ms.bbl" 1558663362 2356 3f300775cac7e3b5cd283382dfe68509 "bibtex ms"
+  "ms.tex" 1558665201 40541 c1f075c1d3c3bf731191aa805757deaf ""
   "tFalseLabel_0.jpg" 1553828122 297641 ec71a1ac1d04a9b1383045082282f492 ""
   "tFalseLabel_4.jpg" 1553828114 231443 eb3f3c9c71715fb09647280571886cdb ""
   "tFalseLabel_5.jpg" 1553828106 166021 02e91056b1133957a34115fd26cb3cc6 ""
   "tFalsePositive_0.jpg" 1553828098 218548 5b22d88a58d9c5aa6a84b6fbf614c0d1 ""
+  "table_1.png" 1556085313 450918 58da367d30cda9dd0e1561f709d8059e ""
+  "table_2.png" 1556085309 304109 b518125acb484b2d4bb43e2e611eb91f ""
+  "table_3.png" 1556087250 364277 fd40f9932f416259bd4c9a7047995324 ""
   (generated)
   "ms.aux"
-  "ms.pdf"
   "ms.log"
+  "ms.pdf"
