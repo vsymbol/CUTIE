@@ -16,14 +16,14 @@ from utils import *
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 parser.add_argument('--use_cutie2', type=bool, default=False) # True to read image from doc_path 
 parser.add_argument('--is_table', type=bool, default=False) # True to read image from doc_path 
-parser.add_argument('--doc_path', type=str, default='data/column_small') # modify this
-parser.add_argument('--save_prefix', type=str, default='column', help='prefix for load ckpt model') # modify this
+parser.add_argument('--doc_path', type=str, default='data/SROIE') # modify this
+parser.add_argument('--save_prefix', type=str, default='SROIE', help='prefix for load ckpt model') # modify this
 parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
 parser.add_argument('--fill_bbox', type=bool, default=False) # augment data row/col in each batch
 
 parser.add_argument('--e_ckpt_path', type=str, default='../graph/CUTIE/graph/') # modify this
-parser.add_argument('--ckpt_file', type=str, default='CUTIE_atrousSPP_d20000c7(r80c80)_iter_40000.ckpt')
+parser.add_argument('--ckpt_file', type=str, default='CUTIE_atrousSPP_d20000c5(r80c80)_iter_29201.ckpt')
 parser.add_argument('--positional_mapping_strategy', type=int, default=1)
 parser.add_argument('--rows_target', type=int, default=80)  
 parser.add_argument('--cols_target', type=int, default=80) 
@@ -31,9 +31,9 @@ parser.add_argument('--rows_ulimit', type=int, default=80)
 parser.add_argument('--cols_ulimit', type=int, default=80) 
 
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/table') # 40000 or table or 20000TC
+parser.add_argument('--load_dict_from_path', type=str, default='dict/SROIEnc') # 40000 or table or 20000TC
 parser.add_argument('--tokenize', type=bool, default=True) # tokenize input text
-parser.add_argument('--text_case', type=bool, default=True) # case sensitive
+parser.add_argument('--text_case', type=bool, default=False) # case sensitive
 parser.add_argument('--dict_path', type=str, default='dict/---') # not used if load_dict is True
 
 parser.add_argument('--restore_ckpt', type=bool, default=True) 
@@ -114,7 +114,8 @@ if __name__ == '__main__':
             recalls += [recall]
             accs_strict += [acc_strict] 
             accs_soft += [acc_soft]
-            #print(res.decode()) # show res for current batch  
+            if acc_strict != 1:
+                print(res.decode()) # show res for current batch
             
             # visualize result
             shape = data['shape']

@@ -30,9 +30,9 @@
 \title{CUTIE: Learning to Understand Documents with Convolutional Universal Text Information Extractor}
 
 \author{
-  Xiaohui Zhao, Zhuo Wu, Endi Niu, and Xiaoguang Wang \\
+  Xiaohui Zhao, Endi Niu, Zhuo Wu, and Xiaoguang Wang \\
   New IT Accenture \\
-{\tt\small xh.zhao@outlook.com zhuo.wu@accenture.com henryniu14@gmail.com danny.x.wang@accenture.com}
+{\tt\small xh.zhao@outlook.com henryniu14@gmail.com zhuo.wu@accenture.com danny.x.wang@accenture.com}
 % Additional authors and addresses can be added with ``\and'',
 }
 
@@ -41,7 +41,7 @@
 
 %%%%%%%%% ABSTRACT
 \begin{abstract}
-   Extracting key information from documents, such as receipts or invoices, and preserving the interested texts to structured data is crucial in the document-intensive streamline processes of office automation in areas that includes but not limited to accounting, financial, and taxation areas. To avoid designing expert rules for each specific type of document, some published works attempt to tackle the problem by learning a model to explore the semantic context in text sequences based on the Named Entity Recognition (NER) method in the NLP field. In this paper, we propose to harness the effective information from both semantic meaning and spatial distribution of texts in documents. Specifically, our proposed model, Convolutional Universal Text Information Extractor (CUTIE), applies convolutional neural networks on gridded texts where texts are embedded as features with semantical connotations. We further explore the effect of employing different structures of convolutional neural network and propose a fast and portable structure. We demonstrate the effectiveness of the proposed method on a dataset with up to $4,484$ labelled receipts, without any pre-training or post-processing, achieving state of the art performance that is much higher than the BERT for NER but with only $1/10$ parameters and without requiring the $3,300$M word dataset for pre-training. Experimental results also demonstrate that the proposed CUTIE model being able to achieve the state of the art performance with a much smaller amount of training data.
+   Extracting key information from documents, such as receipts or invoices, and preserving the interested texts to structured data is crucial in the document-intensive streamline processes of office automation in areas that includes but not limited to accounting, financial, and taxation areas. To avoid designing expert rules for each specific type of document, some published works attempt to tackle the problem by learning a model to explore the semantic context in text sequences based on the Named Entity Recognition (NER) method in the NLP field. In this paper, we propose to harness the effective information from both semantic meaning and spatial distribution of texts in documents. Specifically, our proposed model, Convolutional Universal Text Information Extractor (CUTIE), applies convolutional neural networks on gridded texts where texts are embedded as features with semantical connotations. We further explore the effect of employing different structures of convolutional neural network and propose a fast and portable structure. We demonstrate the effectiveness of the proposed method on a dataset with up to $4,484$ labelled receipts, without any pre-training or post-processing, achieving state of the art performance that is much higher than the BERT for NER but with only $1/10$ parameters and without requiring the $3,300$M word dataset for pre-training. Experimental results also demonstrate that the proposed CUTIE model being able to achieve the state of the art performance in terms of either speed and accuracy with a much smaller amount of training data.
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
@@ -102,7 +102,7 @@ where $c_{g_t}$ is the mean center of the target augment gird size, $r_{g_t}$ is
 \begin{center}
 \includegraphics[width=0.99\linewidth]{Receipts.jpg}
 \end{center}
-   \caption{Example of scanned taxi receipt images. We provide two colored rectangles to help readers find the key information about distance of travel and total amount with blue and red, respectively. Note the different types of spatial layouts and key information texts in these receipt images.}
+   \caption{Example of scanned taxi receipt images. We provide two colored rectangles to help readers find the key information about distance of travel and total amount with blue and red, respectively. Note the different types of spatial layouts and key information texts in these receipt images. }
 \label{fig:receipts}
 \end{figure}
 
@@ -159,7 +159,7 @@ where $r$ is the atrous rate that indicates the sampling stride of the input sig
 
 \section{Experiments}
 \label{experiment}
-The proposed method is evaluated on a dataset with $3$ types of scanned document images, which contain $8$ key information classes and $1$ don't care class. For each specific key information class, multiple tokens can be included. The overall performance is referred as strict average precision (AP) and measured in terms of per-class accuracy across the $9$ classes, where one class is determined as correct only when every single token in the class is correct. To achieve deeper analysis of the performance of the proposed method, we propose to use one more criteria, soft average precision (softAP), where the prediction of a key information class is determined as correct as if positive ground truths are correctly predicted even if some false positives are included in the final prediction. SoftAP is important since it indicates model's capability of extracting correct key information with tolerance of incorporating certain false positives. In fact, post processings can be employed to eliminate the false positives. Therefore, joint analysis of AP and softAP provides a better understanding of the model performance.
+The proposed method is evaluated on ICDAR 2019 robust reading challenge on SROIE dataset and also on a self-built dataset with $3$ types of scanned document images, which contain $8$ key information classes and $1$ don't care class. For each specific key information class, multiple tokens can be included. The overall performance is referred as strict average precision (AP) and measured in terms of per-class accuracy across the $9$ classes, where one class is determined as correct only when every single token in the class is correct. To achieve deeper analysis of the performance of the proposed method, we propose to use one more criteria, soft average precision (softAP), where the prediction of a key information class is determined as correct as if positive ground truths are correctly predicted even if some false positives are included in the final prediction. SoftAP is important since it indicates model's capability of extracting correct key information with tolerance of incorporating certain false positives. In fact, post processings can be employed to eliminate the false positives. Therefore, joint analysis of AP and softAP provides a better understanding of the model performance.
 
 We compare the performance of the proposed method with two state of the art methods CloudScan \cite{cloudscan} and BERT \cite{bert}. For comparison, the Cloud Scan model for SROIE is trained from scratch but with several expert designed features as described in \cite{cloudscan}. The BERT model for SROIE is transform learned with the Google released base model that is pre-trained on a huge dataset with $3,300$M words \cite{bert,bertgit}. To provide a fair comparison, $4,484$ samples with around $1,500$ each from Taxi, Meals Entertainment (ME), and Hotel, where $3,375$ samples are used for training and $1,125$ are used for testing, as reported in Table \ref{tab:dataset}. A single model is trained on the dataset for all these $3$ types of document receipts either for CloudScan, BERT, or CUTIE.
 
@@ -191,12 +191,14 @@ We use a learning rate of $1e-3$ with Adam optimizer and step decay learning str
 \subfloat{\fcolorbox{white}{white}{}}
 \subfloat{\includegraphics[width=0.21\linewidth]{hCorrect_3.jpg}}  
 \end{center}
-   \caption{Example of CUITE inference results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The result is perfectly correct as if the filled rectangles overlap with the boundary-only rectangles. We mask out certain private information with filled gray rectangles in the figure.}
+   \caption{Example of CUITE inference results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The result is perfectly correct as if the filled rectangles overlap with the boundary-only rectangles. We mask out certain private information with filled gray rectangles in these figures. (zooming in to check the details)}
 \label{fig:result}
 \end{figure*}
 
 \subsection{Dataset}
-The dataset contains $4,484$ annotated scanned Spanish receipt documents, including taxi receipts, meals entertainment (ME) receipts, and hotel receipts, with $9$ different key information classes. We generate the texts and corresponding bounding boxes with Google's OCR API. Each text and their bounding box is manually labelled as one of the $9$ different classes: 'DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', and 'TaxRate'. We then employ the tokenizer introduced in Section \ref{pm} to segment texts into minimum token units, where text bounding boxes are also segmented accordingly. 
+The ICDAR 2019 SROIE data set (task 3) contains $1000$ whole scanned receipt images. Each receipt image contains around about four key text fields, such as goods name, unit price, date, and total cost. The text annotated in the dataset mainly consists of digits and English characters. The dataset is split into a training/validation set (“trainval”) and a test set (“test”). The “trainval” set consists of $627$ receipt images which is made available to the participants along with their annotations. Since the test annotation is not avaliable yet, we conduct laundry on the trainval set and selected $517$ samples, where the filtered $55$ samples were wrongly labeled. Then we split the trainval set in the ratio of $75:25$, where $75\%$ are used as training data and $25\%$ are used for validation.
+
+The self-built dataset contains $4,484$ annotated scanned Spanish receipt documents, including taxi receipts, meals entertainment (ME) receipts, and hotel receipts, with $9$ different key information classes. We generate the texts and corresponding bounding boxes with Google's OCR API. Each text and their bounding box is manually labelled as one of the $9$ different classes: 'DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', and 'TaxRate'. We then employ the tokenizer introduced in Section \ref{pm} to segment texts into minimum token units, where text bounding boxes are also segmented accordingly. 
 
 The dataset in this work is much more difficult than the neat scanned document images, since various layouts of receipts were captured in different scenarios with mobile phones. Examples of the scanned document images in our dataset are illustrated in Figure \ref{fig:receipts}, note that the colored rectangles are only for visual reference and the actual labelled data are in token-level rather than the line-level as shown in the figure.
 
@@ -220,7 +222,7 @@ Typical examples of receipts with low AP but high softAP score are shown in Figu
 \subfloat{\fcolorbox{white}{white}{}}
 \subfloat{\includegraphics[width=0.29\linewidth]{hFalsePositive_1.jpg}}
 \end{center}
-   \caption{False positive examples of CUITE prediction results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The false positives are results with the boundary-only rectangles being not overlapped with the filled rectangles. We mask out certain private information with filled gray rectangles in the figure.}
+   \caption{False positive examples of CUITE prediction results. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. The false positives are results with the boundary-only rectangles being not overlapped with the filled rectangles. We mask out certain private information with filled gray rectangles in these figures. (zooming in to check the details)}
 \label{fig:falsepositive}
 \end{figure}
 
@@ -243,7 +245,7 @@ Furthermore, we find that some wrong cases are actually correct since the ground
 \subfloat{\fcolorbox{white}{white}{}}
 \subfloat{\includegraphics[width=0.36\linewidth]{hFalseLabel_1.jpg}}\\
 \end{center}
-   \caption{False labelling examples of CUITE prediction results, where the error is actually caused by the wrong labelling of human labeler. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. We mask out certain private information with filled gray rectangles in the figure.}
+   \caption{False labelling examples of CUITE prediction results, where the error is actually caused by the wrong labelling of human labeler. Color legend in the top-left corner indicates the key information classes. Each color indicates a key information class, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. We mask out certain private information with filled gray rectangles in these figures. (zooming in to check the details)}
 \label{fig:falselabel}
 \end{figure}
 
@@ -272,6 +274,19 @@ Furthermore, we find that some wrong cases are actually correct since the ground
 \end{tabular}
 \end{center}
 	\label{tab:samples}
+\end{table*}
+
+We also evaluate the CUTIE-B model on the ICDAR 2019 SROIE trainval set and list the results in Table \ref{tab:sroie}. The result in class level indicates that the inferenced result is perfectly the same with the ground truth, whereas the result in soft class level indicates that the inferenced result incorporates the ground truth but also included some unrelated text tokens. The result in token level indicates the token classification accuracy of each class in spite of the 'DontCare' class.
+\begin{table*}
+	\caption{Performance evaluation of CUTIE-B on ICDAR 2019 SROIE task 3.}
+\begin{center}
+\begin{tabular}{l | c | c | c}
+	 & class level & class level (soft) & token level \\
+	\hline
+	CUTIE-B & 86.7\% & 92.7\% & 94.2\% \\
+\end{tabular}
+\end{center}
+	\label{tab:sroie}
 \end{table*}
 
 \subsection{Ablation Studies}
@@ -309,7 +324,7 @@ Here, we introduce another dataset with $613$ image samples where a text token i
 \subfloat{\fcolorbox{white}{white}{}}
 \subfloat{\includegraphics[width=0.31\linewidth]{table_1.png}} 
 \end{center}
-   \caption{Locating the table region with CUTIE-B. Table tokens are indicated with yellow bounding boxes and table region is indicated with pink boxes, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. We mask out certain private information with filled red rectangles in the figure.}
+   \caption{Locating the table region with CUTIE-B. Table tokens are indicated with yellow bounding boxes and table regions are indicated with pink boxes, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. We mask out certain private information with filled red rectangles in these figures. (zooming in to check the details)}
 \label{fig:table}
 \end{figure}
 \begin{figure}
@@ -320,13 +335,13 @@ Here, we introduce another dataset with $613$ image samples where a text token i
 \subfloat{\fcolorbox{white}{white}{}}
 \subfloat{\includegraphics[width=0.31\linewidth]{column_4.png}} 
 \end{center}
-   \caption{Identifying column tokens with CUTIE-B. Color legend in the top-left corner indicates the column id, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. We mask out certain private information with filled red rectangles in the figure.}
+   \caption{Identifying column tokens with CUTIE-B. Color legend in the top-left corner indicates the column id, where filled rectangles are the ground truths while the boundary-only rectangles are the inference results. We mask out certain private information with filled red rectangles in these figures. (zooming in to check the details)}
 \label{fig:column}
 \end{figure}
 
 
 \section{Discussion}
-Automatically extracting interested words / information from the scanned document images is of great interest to various services and applications. This paper proposes CUTIE to tackle this problem without requirement of any pre-training or post processing. Experimental results verifies the effectiveness of the proposed method. In contrast to the previous methods, the proposed method is easy to train and requires much smaller amount of training data while achieving state of the art performance. The performance gain is mainly achieved by exploring three key factors: the spatial relationship among texts, the semantic information of texts, and the grid positional mapping mechanism. One interesting finding is that the trained CUTIE model correctly predicts certain key information that is neglected to be labelled by the human labeler, which further proves the effectiveness of the proposed method. It is also worth mention that, as observed from experimental results, incorporating better semantical feature processing module or involving image-level features may further boost the model performance and we leave it to future research.
+Automatically extracting interested words / information from the scanned document images is of great interest to various services and applications. This paper proposes CUTIE to tackle this problem without requirement of any pre-training or post processing. Experimental results verify the effectiveness of the proposed method. In contrast to the previous methods, the proposed method is easy to train and requires much smaller amount of training data while achieving state of the art performance with processing speed up to 50 samples per second. The performance gain is mainly achieved by exploring three key factors: the spatial relationship among texts, the semantic information of texts, and the grid positional mapping mechanism. One interesting finding is that the trained CUTIE model correctly predicts certain key information that is neglected to be labelled by the human labeler, which further proves the effectiveness of the proposed method. It is also worth mention that, as observed from experimental results, incorporating better semantical feature processing module or involving image-level features may further boost the model performance and we leave it to future research.
 
 {\small
 \bibliographystyle{ieee}
@@ -337,7 +352,7 @@ Automatically extracting interested words / information from the scanned documen
 \subsection{Model Structure}
 We report the CUTIE-B model in Table \ref{tab:cutie}. Tokens are firstly embedd into $128$ dimensional features. Then, $4$ consecutive convolution operations are conducted in the conv block with stride $1$ and $4$ consecutive atrous convolution are conducted in the atrous conv block with stride $1$ and rate $2$. Following the atrous conv block, an ASPP module is employed to fuse multi-resolution features. The low level but high resolution feature from the $1$st output of the convolution block is also added to the model in the shortcut layer with a concatenation operation and a $1\times1$ convolution. Finally, inference output is achieved through a $1\times1$ convolution.
 \begin{table*}
-	\caption{Structure of the proposed CUTIE-B model. }
+	\caption{Structure of the proposed CUTIE-B model.}
 \begin{center}
 \begin{tabular}{l | c | c | c | c}
 	layer name & operations & input dimension & output diemnsion & comments \\

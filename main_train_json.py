@@ -16,9 +16,9 @@ from model_cutie2_aspp import CUTIE2 as CUTIEv2
 
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
-parser.add_argument('--use_cutie2', type=bool, default=True) # True to read image from doc_path 
-parser.add_argument('--doc_path', type=str, default='data/taxi_small')
-parser.add_argument('--save_prefix', type=str, default='taxi', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--use_cutie2', type=bool, default=False) # True to read image from doc_path 
+parser.add_argument('--doc_path', type=str, default='data/SROIE')
+parser.add_argument('--save_prefix', type=str, default='SROIE', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
 # ckpt
@@ -30,7 +30,7 @@ parser.add_argument('--ckpt_file', type=str, default='meals/CUTIE_highresolution
 
 # dict
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/table') # 40000 or 20000TC or table
+parser.add_argument('--load_dict_from_path', type=str, default='dict/SROIE') # 40000 or 20000TC or table
 parser.add_argument('--tokenize', type=bool, default=True) # tokenize input text
 parser.add_argument('--text_case', type=bool, default=True) # case sensitive
 parser.add_argument('--update_dict', type=bool, default=False)
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     data_loader = DataLoader(params, update_dict=params.update_dict, load_dictionary=params.load_dict, data_split=0.75)
     num_words = max(20000, data_loader.num_words)
     num_classes = data_loader.num_classes
-    for _ in range(2):
+    for _ in range(2000):
         a = data_loader.next_batch()
         b = data_loader.fetch_validation_data()
     #    c = data_loader.fetch_test_data()

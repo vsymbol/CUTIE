@@ -37,10 +37,11 @@ class DataLoader():
         self.random = False
         self.data_laundry = False
         self.encoding_factor = 1 # ensures the size (rows/cols) of grid table compat with the network
-        #self.classes = ['DontCare', 'Table']
-        self.classes = ['DontCare', 'Column0', 'Column1', 'Column2', 'Column3', 'Column4', 'Column5']
+        self.classes = ['DontCare', 'company', 'date', 'address', 'total'] # for ICDAR2019 SROIE
+        #self.classes = ['DontCare', 'Table'] # for table
+        #self.classes = ['DontCare', 'Column0', 'Column1', 'Column2', 'Column3', 'Column4', 'Column5'] # for column
         #self.classes = ['DontCare', 'Column']
-        #self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate']
+        #self.classes = ['DontCare', 'VendorName', 'VendorTaxID', 'InvoiceDate', 'InvoiceNumber', 'ExpenseAmount', 'BaseAmount', 'TaxAmount', 'TaxRate'] # for Spanish project
         
         self.doc_path = params.doc_path
         self.doc_test_path = params.test_path
@@ -929,7 +930,7 @@ class DataLoader():
         y_bottom = max(positions[1::2])
         w = x_right - x_left
         h = y_bottom - y_top
-        return x_left, y_top, x_right, y_bottom       
+        return int(x_left), int(y_top), int(x_right), int(y_bottom)       
     
     def _get_filenames(self, data_path):
         files = []
