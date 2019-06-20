@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  18 JUN 2019 10:56
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2019.3.11)  18 JUN 2019 13:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -417,9 +417,6 @@ File: Model.jpg Graphic file (type jpg)
 <use Model.jpg>
 Package pdftex.def Info: Model.jpg  used on input line 56.
 (pdftex.def)             Requested size: 491.89041pt x 125.94789pt.
-
-Underfull \vbox (badness 2961) has occurred while \output is active []
-
  [1{/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
 
 
@@ -429,7 +426,8 @@ File: Receipts.jpg Graphic file (type jpg)
 <use Receipts.jpg>
 Package pdftex.def Info: Receipts.jpg  used on input line 103.
 (pdftex.def)             Requested size: 234.76587pt x 180.667pt.
- [3 <./Receipts.jpg>]
+
+[3 <./Receipts.jpg>]
 Underfull \hbox (badness 2189) in paragraph at lines 116--117
 []\OT1/ptm/m/n/10 Both CUTIE-A and CUITE-B con-ducts se-man-ti-cal
  []
@@ -511,10 +509,7 @@ Overfull \hbox (0.53659pt too wide) in paragraph at lines 186--193
  [][][][][][][][][][][][][][] 
  []
 
-
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
- [4]
+[4]
 
 LaTeX Warning: Text page 5 contains only floats.
 
@@ -533,77 +528,77 @@ Overfull \vbox (0.62346pt too high) has occurred while \output is active []
 <./mCorrect_4.jpg> <./mCorrect_5.jpg> <./mCorrect_9.jpg> <./mCorrect_7.jpg> <./
 mCorrect_8.jpg> <./hCorrect_0.jpg> <./hCorrect_1.jpg> <./hCorrect_2.jpg> <./hCo
 rrect_3.jpg>]
-<mFalsePositive_0.jpg, id=149, 1156.32pt x 1541.76pt>
+<mFalsePositive_0.jpg, id=150, 1156.32pt x 1541.76pt>
 File: mFalsePositive_0.jpg Graphic file (type jpg)
 <use mFalsePositive_0.jpg>
 Package pdftex.def Info: mFalsePositive_0.jpg  used on input line 214.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<mFalsePositive_1.jpg, id=150, 1156.32pt x 1541.76pt>
+<mFalsePositive_1.jpg, id=151, 1156.32pt x 1541.76pt>
 File: mFalsePositive_1.jpg Graphic file (type jpg)
 <use mFalsePositive_1.jpg>
 Package pdftex.def Info: mFalsePositive_1.jpg  used on input line 216.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<mFalsePositive_3.jpg, id=151, 1156.32pt x 1541.76pt>
+<mFalsePositive_3.jpg, id=152, 1156.32pt x 1541.76pt>
 File: mFalsePositive_3.jpg Graphic file (type jpg)
 <use mFalsePositive_3.jpg>
 Package pdftex.def Info: mFalsePositive_3.jpg  used on input line 218.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<hFalsePositive_0.jpg, id=152, 1156.32pt x 1541.76pt>
+<hFalsePositive_0.jpg, id=153, 1156.32pt x 1541.76pt>
 File: hFalsePositive_0.jpg Graphic file (type jpg)
 <use hFalsePositive_0.jpg>
 Package pdftex.def Info: hFalsePositive_0.jpg  used on input line 219.
 (pdftex.def)             Requested size: 68.76782pt x 91.67822pt.
-<tFalsePositive_0.jpg, id=153, 1410.26875pt x 1540.75626pt>
+<tFalsePositive_0.jpg, id=154, 1410.26875pt x 1540.75626pt>
 File: tFalsePositive_0.jpg Graphic file (type jpg)
 <use tFalsePositive_0.jpg>
 Package pdftex.def Info: tFalsePositive_0.jpg  used on input line 221.
 (pdftex.def)             Requested size: 82.99902pt x 90.67813pt.
-<hFalsePositive_1.jpg, id=154, 1156.32pt x 1541.76pt>
+<hFalsePositive_1.jpg, id=155, 1156.32pt x 1541.76pt>
 File: hFalsePositive_1.jpg Graphic file (type jpg)
 <use hFalsePositive_1.jpg>
 Package pdftex.def Info: hFalsePositive_1.jpg  used on input line 223.
 (pdftex.def)             Requested size: 68.76782pt x 91.67822pt.
-<mFalseLabel_0.jpg, id=156, 988.69376pt x 1541.76pt>
+<mFalseLabel_0.jpg, id=157, 988.69376pt x 1541.76pt>
 File: mFalseLabel_0.jpg Graphic file (type jpg)
 <use mFalseLabel_0.jpg>
 Package pdftex.def Info: mFalseLabel_0.jpg  used on input line 232.
 (pdftex.def)             Requested size: 66.39777pt x 103.53499pt.
-<mFalseLabel_1.jpg, id=157, 1266.7325pt x 1541.76pt>
+<mFalseLabel_1.jpg, id=158, 1266.7325pt x 1541.76pt>
 File: mFalseLabel_1.jpg Graphic file (type jpg)
 <use mFalseLabel_1.jpg>
 Package pdftex.def Info: mFalseLabel_1.jpg  used on input line 234.
 (pdftex.def)             Requested size: 80.62535pt x 98.12416pt.
-<mFalseLabel_2.jpg, id=158, 1104.125pt x 1541.76pt>
+<mFalseLabel_2.jpg, id=159, 1104.125pt x 1541.76pt>
 File: mFalseLabel_2.jpg Graphic file (type jpg)
 <use mFalseLabel_2.jpg>
 Package pdftex.def Info: mFalseLabel_2.jpg  used on input line 236.
 (pdftex.def)             Requested size: 73.51155pt x 102.64102pt.
-<mFalseLabel_3.jpg, id=159, 1156.32pt x 1541.76pt>
+<mFalseLabel_3.jpg, id=160, 1156.32pt x 1541.76pt>
 File: mFalseLabel_3.jpg Graphic file (type jpg)
 <use mFalseLabel_3.jpg>
 Package pdftex.def Info: mFalseLabel_3.jpg  used on input line 237.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<hFalseLabel_0.jpg, id=160, 1156.32pt x 1541.76pt>
+<hFalseLabel_0.jpg, id=161, 1156.32pt x 1541.76pt>
 File: hFalseLabel_0.jpg Graphic file (type jpg)
 <use hFalseLabel_0.jpg>
 Package pdftex.def Info: hFalseLabel_0.jpg  used on input line 239.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<tFalseLabel_4.jpg, id=161, 1156.32pt x 1541.76pt>
+<tFalseLabel_4.jpg, id=162, 1156.32pt x 1541.76pt>
 File: tFalseLabel_4.jpg Graphic file (type jpg)
 <use tFalseLabel_4.jpg>
 Package pdftex.def Info: tFalseLabel_4.jpg  used on input line 241.
 (pdftex.def)             Requested size: 73.51155pt x 98.00653pt.
-<tFalseLabel_0.jpg, id=162, 1156.32pt x 1541.76pt>
+<tFalseLabel_0.jpg, id=163, 1156.32pt x 1541.76pt>
 File: tFalseLabel_0.jpg Graphic file (type jpg)
 <use tFalseLabel_0.jpg>
 Package pdftex.def Info: tFalseLabel_0.jpg  used on input line 242.
 (pdftex.def)             Requested size: 85.36908pt x 113.81555pt.
-<tFalseLabel_5.jpg, id=163, 543.02875pt x 1155.31625pt>
+<tFalseLabel_5.jpg, id=164, 543.02875pt x 1155.31625pt>
 File: tFalseLabel_5.jpg Graphic file (type jpg)
 <use tFalseLabel_5.jpg>
 Package pdftex.def Info: tFalseLabel_5.jpg  used on input line 244.
 (pdftex.def)             Requested size: 52.17018pt x 110.99019pt.
-<hFalseLabel_1.jpg, id=164, 1156.32pt x 1541.76pt>
+<hFalseLabel_1.jpg, id=165, 1156.32pt x 1541.76pt>
 File: hFalseLabel_1.jpg Graphic file (type jpg)
 <use hFalseLabel_1.jpg>
 Package pdftex.def Info: hFalseLabel_1.jpg  used on input line 246.
@@ -617,37 +612,45 @@ Underfull \vbox (badness 1496) has occurred while \output is active []
 alseLabel_0.jpg> <./mFalseLabel_1.jpg> <./mFalseLabel_2.jpg> <./mFalseLabel_3.j
 pg> <./hFalseLabel_0.jpg> <./tFalseLabel_4.jpg> <./tFalseLabel_0.jpg> <./tFalse
 Label_5.jpg> <./hFalseLabel_1.jpg>]
-<table_3.png, id=214, 1093.08376pt x 1541.76pt>
+<table_3.png, id=215, 1093.08376pt x 1541.76pt>
 File: table_3.png Graphic file (type png)
 <use table_3.png>
 Package pdftex.def Info: table_3.png  used on input line 321.
 (pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
-<table_2.png, id=215, 1093.08376pt x 1541.76pt>
+<table_2.png, id=216, 1093.08376pt x 1541.76pt>
 File: table_2.png Graphic file (type png)
 <use table_2.png>
 Package pdftex.def Info: table_2.png  used on input line 323.
 (pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
-<table_1.png, id=216, 1093.08376pt x 1541.76pt>
+<table_1.png, id=217, 1093.08376pt x 1541.76pt>
 File: table_1.png Graphic file (type png)
 <use table_1.png>
 Package pdftex.def Info: table_1.png  used on input line 325.
 (pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
-<column_0.png, id=217, 1093.08376pt x 1541.76pt>
+<column_0.png, id=218, 1093.08376pt x 1541.76pt>
 File: column_0.png Graphic file (type png)
 <use column_0.png>
 Package pdftex.def Info: column_0.png  used on input line 332.
 (pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
-<column_3.png, id=218, 1093.08376pt x 1541.76pt>
+<column_3.png, id=219, 1093.08376pt x 1541.76pt>
 File: column_3.png Graphic file (type png)
 <use column_3.png>
 Package pdftex.def Info: column_3.png  used on input line 334.
 (pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
-<column_4.png, id=219, 1093.08376pt x 1541.76pt>
+<column_4.png, id=220, 1093.08376pt x 1541.76pt>
 File: column_4.png Graphic file (type png)
 <use column_4.png>
 Package pdftex.def Info: column_4.png  used on input line 336.
 (pdftex.def)             Requested size: 73.51155pt x 103.67613pt.
- [8] (./ms.bbl)
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [8 <./table_3.png (PNG copy)> <./table_2.png (PNG copy)> <./table_1.png (PNG c
+opy)>]
+(./ms.bbl
+Underfull \vbox (badness 1033) has occurred while \output is active []
+
+)
 LaTeX Font Info:    Try loading font information for OMS+ptm on input line 363.
 
 
@@ -661,9 +664,8 @@ Overfull \hbox (24.83229pt too wide) in paragraph at lines 357--367
  [] 
  []
 
-[9 <./table_3.png (PNG copy)> <./table_2.png (PNG copy)> <./table_1.png (PNG co
-py)> <./column_0.png (PNG copy)> <./column_3.png (PNG copy)> <./column_4.png (P
-NG copy)>]
+[9 <./column_0.png (PNG copy)> <./column_3.png (PNG copy)> <./column_4.png (PNG
+ copy)>]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 371.
  [10
 
@@ -677,11 +679,11 @@ Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 371.
 Here is how much of TeX's memory you used:
  7743 strings out of 492649
  113726 string characters out of 6129622
- 223654 words of memory out of 5000000
+ 225654 words of memory out of 5000000
  11356 multiletter control sequences out of 15000+600000
  26528 words of font info for 63 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 37i,10n,39p,1845b,369s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 37i,10n,39p,1853b,369s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
 exlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/te
 xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/tex
@@ -697,7 +699,7 @@ ist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2018/texmf-dist/font
 s/type1/urw/times/utmb8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/ur
 w/times/utmr8a.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/urw/times/ut
 mri8a.pfb>
-Output written on ms.pdf (11 pages, 9738769 bytes).
+Output written on ms.pdf (11 pages, 9738479 bytes).
 PDF statistics:
  332 PDF objects out of 1000 (max. 8388607)
  266 compressed objects within 3 object streams
