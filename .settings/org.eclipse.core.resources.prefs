@@ -1,0 +1,5 @@
+eclipse.preferences.version=1
+encoding/data_loader_json.py=utf-8
+encoding/main_data_tokenizer.py=utf-8
+encoding/main_evaluate_json.py=utf-8
+encoding/tokenization.py=utf-8

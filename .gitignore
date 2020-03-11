@@ -1,0 +1,9 @@
+outputs/
+data/
+logs/
+graph/
+results/
+*.pyc
+.DS_Store
+*/.DS_Store
+task*
