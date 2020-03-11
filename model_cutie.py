@@ -1,6 +1,6 @@
 # written by Xiaohui Zhao
 # 2018-12 
-# xh.zhao@accenture.com
+# xh.zhao@outlook.com
 import tensorflow as tf
 from model_framework import Model
     

@@ -1,6 +1,6 @@
 # written by Xiaohui Zhao
 # 2018-12 
-# xiaohui.zhao@accenture.com
+# xiaohui.zhao@outlook.com
 import tensorflow as tf
 import math
 

@@ -1,6 +1,6 @@
 # written by Xiaohui Zhao
 # 2018-01 
-# xiaohui.zhao@accenture.com
+# xiaohui.zhao@outlook.com
 import numpy as np
 import csv
 from os.path import join

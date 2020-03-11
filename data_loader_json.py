@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # 2019-01 
 # written by Xiaohui Zhao
-# xiaohui.zhao@accenture.com
+# xiaohui.zhao@outlook.com
 from os import walk
 from os.path import isfile, join
 import csv, re, random, json

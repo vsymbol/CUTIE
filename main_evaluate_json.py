@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # written by Xiaohui Zhao
 # 2018-01 
-# xh.zhao@accenture.com
+# xh.zhao@outlook.com
 import tensorflow as tf
 import numpy as np
 import argparse
