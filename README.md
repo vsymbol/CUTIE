@@ -23,6 +23,9 @@ Result evaluated on 4,484 receipt documents, including taxi receipts, meals ente
 pip install -r requirements.txt
 ```
 
+1. Generate your own dictionary with main_build_dict.py / main_data_tokenizer.py
+2. Train your model with main_train_json.py
+
 CUTIE achieves best performance with rows/cols well configured. For more insights, refer to statistics in the file (others/TrainingStatistic.xlsx).
 
 ![Chart](https://github.com/vsymbol/CUTIE/others/chart.jpg)
