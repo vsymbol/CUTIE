@@ -12,9 +12,9 @@ Result evaluated on 4,484 receipt documents, including taxi receipts, meals ente
 | BERT      | 110M      |  88.1 / -     |  71.7 / -     |
 | CUTIE     |**14M**    |**94.0 / 97.3**|**74.6 / 87.0**|
 
-![Taxi](https://github.com/vsymbol/CUTIE/others/example_1.jpg)
+![Taxi](https://github.com/vsymbol/CUTIE/raw/master/others/example_1.jpg)
 
-![Hotel](https://github.com/vsymbol/CUTIE/others/example_2.jpg)
+![Hotel](https://github.com/vsymbol/CUTIE/raw/master/others/example_2.jpg)
 
 
 ## Installation & Usage
@@ -28,7 +28,7 @@ pip install -r requirements.txt
 
 CUTIE achieves best performance with rows/cols well configured. For more insights, refer to statistics in the file (others/TrainingStatistic.xlsx).
 
-![Chart](https://github.com/vsymbol/CUTIE/others/chart.jpg)
+![Chart](https://github.com/vsymbol/CUTIE/raw/master/others/chart.jpg)
 
 
 ## TLDR
