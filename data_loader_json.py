@@ -37,7 +37,8 @@ class DataLoader():
         self.random = False
         self.data_laundry = False
         self.encoding_factor = 1 # ensures the size (rows/cols) of grid table compat with the network
-        self.classes = ['DontCare', 'company', 'date', 'address', 'total'] # for ICDAR2019 SROIE
+        #self.classes = ['DontCare', 'company', 'date', 'address', 'total'] # for ICDAR2019 SROIE
+        self.classes = ['O','ADDRESS_CONTRACTOR', 'DATE_RECEIVED', 'TOTAL_WITH_TAX', 'NAME_CONTRACTOR', 'REGON_SELLER', 'ADDRESS_SELLER', 'TOTAL_PAY', 'VAT_ID_CONTRACTOR', 'DATE_PAYMENT', 'PAYMENT_METHOD', 'TOTAL_CURRENCY', 'TOTAL_TAX', 'DOC_NR', 'PAYMENT_BANK_NR', 'TOTAL_WITHOUT_TAX', 'NAME_SELLER', 'VAT_ID_SELLER', 'DATE_SALE', 'DATE_CREATION', 'DATE_EXECUTION']
         #self.classes = ['DontCare', 'Table'] # for table
         #self.classes = ['DontCare', 'Column0', 'Column1', 'Column2', 'Column3', 'Column4', 'Column5'] # for column
         #self.classes = ['DontCare', 'Column']
