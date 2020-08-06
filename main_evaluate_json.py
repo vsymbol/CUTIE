@@ -63,7 +63,8 @@ if __name__ == '__main__':
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         try:
-            ckpt_path = os.path.join(params.e_ckpt_path, params.save_prefix, params.ckpt_file)
+            #ckpt_path = os.path.join(params.e_ckpt_path, params.save_prefix, params.ckpt_file)
+            ckpt_path = '/content/content/CUTIE/graph/INVOICE/CUTIE_atrousSPP_best.ckpt'
             ckpt = tf.train.get_checkpoint_state(ckpt_path)
             print('Restoring from {}...'.format(ckpt_path))
             ckpt_saver.restore(sess, ckpt_path)
