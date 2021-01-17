@@ -1,7 +1,13 @@
 # CUTIE
 
+CUTIE 是用于“票据文档” 2D 关键信息提取/命名实体识别/槽位填充 算法。
+请了解，使用CUTIE前，可先基于任意OCR算法，对“票据文档” 中的文字检测和识别后，将格式化后的文本送入CUTIE网络，具体流程可参照论文。
+
+CUTIE can be considered as one type of 2-Dimensional Key Information Extraction, 2-D NER (Named Entity Recognition) or a 2-Dimensional 2D Slot Filling algorithm.
+N.B. Before training / inference with CUTIE. Struct your detected and recognized texts in your scanned document images with any type of OCR algorithm. Refer to the CUTIE paper for details about the process.
+
 TensorFlow implementation of the paper "CUTIE: Learning to Understand Documents with Convolutional Universal Text Information Extractor."
-Xiaohui Zhao [ArXiv 2019](https://arxiv.org/abs/1903.12363v4)
+Xiaohui Zhao [Paper Link](https://arxiv.org/abs/1903.12363v4)
 
 ## Results
 
