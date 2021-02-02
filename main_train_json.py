@@ -17,8 +17,8 @@ from model_cutie2_aspp import CUTIE2 as CUTIEv2
 parser = argparse.ArgumentParser(description='CUTIE parameters')
 # data
 parser.add_argument('--use_cutie2', type=bool, default=False) # True to read image from doc_path 
-parser.add_argument('--doc_path', type=str, default='data/SROIE')
-parser.add_argument('--save_prefix', type=str, default='SROIE', help='prefix for ckpt') # TBD: save log/models with prefix
+parser.add_argument('--doc_path', type=str, default='invoice_data')
+parser.add_argument('--save_prefix', type=str, default='invoice', help='prefix for ckpt') # TBD: save log/models with prefix
 parser.add_argument('--test_path', type=str, default='') # leave empty if no test data provided
 
 # ckpt
@@ -30,7 +30,7 @@ parser.add_argument('--ckpt_file', type=str, default='meals/CUTIE_highresolution
 
 # dict
 parser.add_argument('--load_dict', type=bool, default=True, help='True to work based on an existing dict') 
-parser.add_argument('--load_dict_from_path', type=str, default='dict/SROIE') # 40000 or 20000TC or table
+parser.add_argument('--load_dict_from_path', type=str, default='dict/') # 40000 or 20000TC or table
 parser.add_argument('--tokenize', type=bool, default=True) # tokenize input text
 parser.add_argument('--text_case', type=bool, default=True) # case sensitive
 parser.add_argument('--update_dict', type=bool, default=False)
